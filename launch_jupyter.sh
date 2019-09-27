@@ -1,0 +1,1 @@
+/home/SENSETIME/guoyongzhi/anaconda3/bin/jupyter lab
