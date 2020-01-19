@@ -41,12 +41,13 @@ whitesum(t::ShiftedQtree, l, a, b) = whitesum(decode2(near(t[l],a,b)))
 
 function trainstep!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimiser=Momentum(0.05,0.9))
     l = collisionpoint[1]
-    ws1 = l .* whitesum(t1, collisionpoint...)
-    ws2 = l .* whitesum(t2, collisionpoint...)
+    ws1 = 2^l .* whitesum(t1, collisionpoint...)
+    ws2 = 2^l .* whitesum(t2, collisionpoint...)
     # @show l,ws1, ws2
     ws1 = apply!(optimiser, t1, Float64.(ws1))
     ws2 = apply!(optimiser, t2, Float64.(ws2))
     # @show ws1, ws2
+    # @show optimiser.velocity[t1], optimiser.velocity[t2]
     if all(ws1 .== ws2) #避免运动一致，相当于不运动
         ws1 = [rand((0,1,-1)), rand((0,1,-1))]
     end
@@ -67,8 +68,8 @@ function trainstep!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, op
 end
 function trainstep_mask!(mask, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimiser=Momentum(0.05,0.9))
     l = collisionpoint[1]
-    ws1 = l .* whitesum(mask, collisionpoint...)
-    ws2 = l .* whitesum(t2, collisionpoint...)
+    ws1 = 2^l .* whitesum(mask, collisionpoint...)
+    ws2 = 2^l .* whitesum(t2, collisionpoint...)
     if all(ws1 .== ws2) #避免运动一致，相当于不运动
         ws1 = [rand((0,1,-1)), rand((0,1,-1))]
     end
