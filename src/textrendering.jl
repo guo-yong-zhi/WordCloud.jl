@@ -31,7 +31,7 @@ function renderstring(str::AbstractString, size::Real=256, color=:black)
         scene,
         str,
 #       position = (100, 200),
-#         align = (:left, :center),
+        align = (:left, :center),
 #         textsize = 1,
         color = color,
 #         font = "Lisu",

@@ -1,6 +1,9 @@
 using Combinatorics
 using Random
 
+using .QTree
+
+
 function maskqtree(pic::AbstractMatrix{UInt8})
     m = log2(max(size(pic)...)*1.2)
     qt = ShiftedQtree(pic, 2^ceil(Int, m), default=QTree.FULL)
@@ -22,10 +25,10 @@ decode2(c) = [0, 2, 1][c.&0x03]
 whitesum(m::AbstractMatrix) = sum(directkernel .* m)
 whitesum(t::ShiftedQtree, l, a, b) = whitesum(decode2(near(t[l],a,b)))
 
-function trainstep!(t1, t2, cp::Tuple{Integer, Integer, Integer}, downlevel=2)
-    l = cp[1]
-    ws1 = whitesum(t1, cp...)
-    ws2 = whitesum(t2, cp...)
+function trainstep!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, speeddown=2)
+    l = collisionpoint[1]
+    ws1 = whitesum(t1, collisionpoint...)
+    ws2 = whitesum(t2, collisionpoint...)
     if all(ws1 .== ws2) #避免运动一致，相当于不运动
         ws1 = [rand((0,1,-1)), rand((0,1,-1))]
     end
@@ -34,21 +37,21 @@ function trainstep!(t1, t2, cp::Tuple{Integer, Integer, Integer}, downlevel=2)
     ul2 = log2(max(abs.(ws2)...))
 #     @show ws1, ws2
 #     @show l,ul1,ul2
-    if ul1 >= 0 #abs(ws1)>=1
+    if ul1 >= 0
         u = floor(Int, ul1)
-        shift!(t1, max(1, l+u-downlevel), (ws1 .÷ 2^u)...) #舍尾，保留最高二进制位
+        shift!(t1, max(1, l+u-speeddown), (ws1 .÷ 2^u)...) #舍尾，保留最高二进制位
 #         @show (ws1 .÷ 2^u)
     end
     if ul2 >= 0
         u = floor(Int, ul2)
-        shift!(t2, max(1, l+u-downlevel), (ws2 .÷ 2^u)...)
+        shift!(t2, max(1, l+u-speeddown), (ws2 .÷ 2^u)...)
 #         @show (ws2 .÷ 2^u)
     end
 end
-function trainstep_mask!(mask, t2, cp::Tuple{Integer, Integer, Integer}, downlevel=2)
-    l = cp[1]
-    ws1 = whitesum(mask, cp...)
-    ws2 = whitesum(t2, cp...)
+function trainstep_mask!(mask, t2, collisionpoint::Tuple{Integer, Integer, Integer}, speeddown=2)
+    l = collisionpoint[1]
+    ws1 = whitesum(mask, collisionpoint...)
+    ws2 = whitesum(t2, collisionpoint...)
     if all(ws1 .== ws2) #避免运动一致，相当于不运动
         ws1 = [rand((0,1,-1)), rand((0,1,-1))]
     end
@@ -57,72 +60,72 @@ function trainstep_mask!(mask, t2, cp::Tuple{Integer, Integer, Integer}, downlev
     ul = log2(max(abs.(ws)...)) #幂等级
     if ul >= 0
         u = floor(Int, ul)
-        shift!(t2, max(1, l+u-downlevel-1), (ws .÷ 2^u)...)
+        shift!(t2, max(1, l+u-speeddown-1), (ws .÷ 2^u)...)
 #         @show (ws .÷ 2^u)
     end
 end
 
-function trainepoch(ts, dl=2, spdl=4; splevel=-7)
-    splevel = splevel<0 ? levelnum(ts[1])+splevel : splevel
-    splevel = splevel<1 ? 1 : splevel
-    nsp = 0
-    sts = combinations(ts,2)|>collect|>shuffle
-    for (t1, t2) in sts
+function trainepoch!(qtrees, speeddown=2, speeddown_gap=4; gaplevel=-7)
+    gaplevel = gaplevel<0 ? levelnum(qtrees[1])+gaplevel : gaplevel
+    gaplevel = gaplevel<1 ? 1 : gaplevel
+    collision_times = 0
+    pairs = combinations(qtrees, 2) |> collect |> shuffle
+    for (t1, t2) in pairs
         c, cp = collision_bfs_rand(t1, t2)
         if c
-            trainstep!(t1, t2, cp, dl)
-            nsp += 1
-        elseif cp[1] < splevel
+            trainstep!(t1, t2, cp, speeddown)
+            collision_times += 1
+        elseif cp[1] < gaplevel
 #             print("s")
-            trainstep!(t1, t2, cp, spdl)
+            trainstep!(t1, t2, cp, speeddown_gap)
         end
     end
-    nsp
+    collision_times
 end
 
-function train_step_ind(mask, ts, i1, i2, cp, dl)
+function train_step_ind!(mask, qtrees, i1, i2, collisionpoint, speeddown)
     if i1 == 0
-        trainstep_mask!(mask, ts[i2], cp, dl)
+        trainstep_mask!(mask, qtrees[i2], collisionpoint, speeddown)
     elseif i2 == 0
-        trainstep_mask!(mask, ts[i1], cp, dl)
+        trainstep_mask!(mask, qtrees[i1], collisionpoint, speeddown)
     else
-        trainstep!(ts[i1], ts[i2], cp, dl)
+        trainstep!(qtrees[i1], qtrees[i2], collisionpoint, speeddown)
     end
 end
 
-function trainepoch(ts, mask, dl=2, spdl=4; splevel=-7)
-    splevel = splevel<0 ? levelnum(ts[1])+splevel : splevel
-    splevel = splevel<1 ? 1 : splevel
+function trainepoch!(qtrees, mask, speeddown=2, speeddown_gap=4; gaplevel=-7)
+    gaplevel = gaplevel<0 ? levelnum(qtrees[1])+gaplevel : gaplevel
+    gaplevel = gaplevel<1 ? 1 : gaplevel
     nsp = 0
-    indpairs = combinations(0:length(ts),2)|>collect|>shuffle
-    getqt(i) = i==0 ? mask : ts[i]
+    indpairs = combinations(0:length(qtrees),2) |> collect |> shuffle
+    getqtree(i) = i==0 ? mask : qtrees[i]
     for (i1, i2) in indpairs
-        c, cp = collision_bfs_rand(getqt(i1), getqt(i2))
+        c, cp = collision_bfs_rand(getqtree(i1), getqtree(i2))
         if c
-            train_step_ind(mask, ts, i1, i2, cp, dl)
+            train_step_ind!(mask, qtrees, i1, i2, cp, speeddown)
             nsp += 1
-        elseif cp[1] < splevel
+        elseif cp[1] < gaplevel
 #             print("s")
-            train_step_ind(mask, ts, i1, i2, cp, dl)
+            train_step_ind!(mask, qtrees, i1, i2, cp, speeddown_gap)
         end
     end
     nsp
 end
                         
-function trainepoch_gen(ts, mask, dl=2, spl=-2)
-    spl = spl<0 ? levelnum(ts[1])+spl : spl
-    spl = spl<1 ? 1 : spl
+function trainepoch_gen!(qtrees, mask, speeddown=2, nearlevel=-4)
+    nearlevel = nearlevel<0 ? levelnum(qtrees[1])+nearlevel : nearlevel
+    nearlevel = nearlevel<1 ? 1 : nearlevel
     nsp = 0
-    indpairs = combinations(0:length(ts),2)|>collect|>shuffle
-    getqt(i) = i==0 ? mask : ts[i]
+    indpairs = combinations(0:length(qtrees),2) |> collect |> shuffle
+    getqt(i) = i==0 ? mask : qtrees[i]
     nearpool = Vector{Tuple{Int,Int}}()
     for (i1, i2) in indpairs        
         c, cp = collision_bfs_rand(getqt(i1), getqt(i2))
         if c
-            train_step_ind(mask, ts, i1, i2, cp, dl)
+            train_step_ind!(mask, qtrees, i1, i2, cp, speeddown)
             push!(nearpool, (i1, i2))
             nsp += 1
-        elseif cp[1] < spl
+        elseif cp[1] < nearlevel
             push!(nearpool, (i1, i2))
         end
     end
@@ -133,20 +136,21 @@ function trainepoch_gen(ts, mask, dl=2, spl=-2)
     if length(nearpool) == 0 return nsp end
     for ni in 1:(4length(indpairs)÷length(nearpool))
         empty!(collpool)
-        for (i1, i2) in nearpool|>shuffle
+        for (i1, i2) in nearpool |> shuffle
             c, cp = collision_bfs_rand(getqt(i1), getqt(i2))
             if c
-                train_step_ind(mask, ts, i1, i2, cp, dl)
+                train_step_ind!(mask, qtrees, i1, i2, cp, speeddown)
                 push!(collpool, (i1, i2))
             end
         end
         if length(collpool) == 0 return nsp end
         for ci in 1:(4length(nearpool)÷length(collpool))
             nsp2 = 0
-            for (i1, i2) in collpool|>shuffle
+            for (i1, i2) in collpool |> shuffle
                 c, cp = collision_bfs_rand(getqt(i1), getqt(i2))
+                # @show getqt(i2)
                 if c
-                    train_step_ind(mask, ts, i1, i2, cp, dl)
+                    train_step_ind!(mask, qtrees, i1, i2, cp, speeddown)
                     nsp2 += 1
                 end
             end
@@ -154,7 +158,7 @@ function trainepoch_gen(ts, mask, dl=2, spl=-2)
                 return nsp
             end
         end
-#         @show length(indpairs),length(nearpool),length(collpool)
+        # @show length(indpairs),length(nearpool),collpool
     end
     nsp
 end
