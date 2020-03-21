@@ -1,6 +1,6 @@
 module QTree
 export　StackedQtree, ShiftedQtree, buildqtree!
-export shift!, setrshift!,　setcshift!, collision,  collision_bfs, collision_bfs_rand, findroom, levelnum
+export shift!, setrshift!,　setcshift!, collision,  collision_bfs, collision_bfs_rand, decode, levelnum
 
 using Random
 function child(ind::Tuple{Int,Int,Int}, n::Int)
@@ -29,7 +29,6 @@ Base.getindex(t::AbstractStackedQtree, inds::Tuple{Int, Int, Int}) = t[inds...]
 Base.setindex!(t::AbstractStackedQtree, v, l, r, c) =  t[l][r, c] = v
 Base.setindex!(t::AbstractStackedQtree, v, inds::Tuple{Int, Int, Int}) = t[inds...]=v
 function levelnum(t::AbstractStackedQtree) end
-Base.lastindex(t::AbstractStackedQtree) = levelnum(t)
 Base.size(t::AbstractStackedQtree) = levelnum(t)>0 ? size(t[1]) : (0,)
 
 ################ StackedQtree
@@ -86,10 +85,8 @@ mutable struct PaddedMat{T<:AbstractMatrix{UInt8}} <: AbstractMatrix{UInt8}
     cshift::Int
     default::UInt8
 end
-
-PaddedMat(l::AbstractMatrix{UInt8}, sz::Tuple{Int, Int}=size(l), rshift=0, cshift=0; default=0x00) = PaddedMat(l, sz, rshift, cshift, default)
-PaddedMat{T}(l::T, sz::Tuple{Int, Int}=size(l), rshift=0, 
-cshift=0; default=0x00) where {T<:AbstractMatrix{UInt8}} = PaddedMat(l, sz, rshift, cshift, default)
+PaddedMat(l::AbstractMatrix{UInt8}, sz::Tuple{Int, Int}=size(l), 
+    rshift=0, cshift=0; default=0x00) = PaddedMat(l, sz, rshift, cshift, default)
 
 rshift!(l::PaddedMat, v) = l.rshift += v
 cshift!(l::PaddedMat, v) = l.cshift += v
@@ -97,12 +94,8 @@ rshift(l::PaddedMat) = l.rshift
 cshift(l::PaddedMat) = l.cshift
 setrshift!(l::PaddedMat, v) = l.rshift = v
 setcshift!(l::PaddedMat, v) = l.cshift = v
-getrshift(l::PaddedMat) = l.rshift
-getcshift(l::PaddedMat) = l.cshift
-getshift(l::PaddedMat) = l.rshift, l.cshift
-getdefault(l::PaddedMat) = l.default
 inkernelbound(l::PaddedMat, r, c) = 0<r-l.rshift<=size(l.kernel,1)&&0<c-l.cshift<=size(l.kernel,2)
-kernelsize(l::PaddedMat) = size(l.kernel)
+kernelszie(l::PaddedMat) = size(l.kernel)
 kernel(l::PaddedMat) = l.kernel
 function Base.getindex(l::PaddedMat, r, c)
     if inkernelbound(l, r, c)
@@ -131,23 +124,17 @@ struct ShiftedQtree{T<:AbstractVector} <: AbstractStackedQtree
 end
 
 ShiftedQtree(l::T) where T = ShiftedQtree{T}(l)
-function ShiftedQtree(pic::PaddedMat{Array{UInt8,2}})
-    sz = size(pic, 1)
-    @assert size(pic, 1) == size(pic, 2)
+function ShiftedQtree(pic::AbstractMatrix{UInt8}, sz::Integer; default=EMPTY)
     @assert isinteger(log2(sz))
-    l = [pic]
-    m, n = kernelsize(l[end])
+    l = [PaddedMat(pic, (sz,sz), default=default)]
+    m, n = kernelszie(l[end])
     while sz != 1
         sz ÷= 2
         m, n = m÷2+1, n÷2+1
 #         @show m,n
-        push!(l, PaddedMat(similar(pic, m, n), (sz,sz), default=getdefault(pic)))
+        push!(l, PaddedMat(similar(pic, m, n), (sz,sz), default=default))
     end
     ShiftedQtree(l)
-end
-function ShiftedQtree(pic::AbstractMatrix{UInt8}, sz::Integer; default=EMPTY)
-    @assert isinteger(log2(sz))
-    ShiftedQtree(PaddedMat(pic, (sz,sz), default=default))
 end
 function ShiftedQtree(pic::AbstractMatrix{UInt8}; default=EMPTY)
     m = max(size(pic)...)
@@ -167,8 +154,8 @@ function buildqtree!(t::ShiftedQtree, layer=2)
         n2 = n÷2
         setrshift!(t[l], m2)
         setcshift!(t[l], n2)
-        for r in 1:kernelsize(t[l])[1]
-            for c in 1:kernelsize(t[l])[2]
+        for r in 1:kernelszie(t[l])[1]
+            for c in 1:kernelszie(t[l])[2]
 #                 @show (l,m2+r,n2+c)
                 qcode!(t, (l,m2+r,n2+c))
             end
@@ -190,20 +177,6 @@ function cshift!(t::ShiftedQtree, l::Integer, st::Integer)
     end
     buildqtree!(t, l+1)
 end
-function setrshift!(t::ShiftedQtree, l::Integer, st::Integer)
-    for i in l:-1:1
-        setrshift!(t[i], st)
-        st *= 2
-    end
-    buildqtree!(t, l+1)
-end
-function setcshift!(t::ShiftedQtree, l::Integer, st::Integer)
-    for i in l:-1:1
-        setcshift!(t[i], st)
-        st *= 2
-    end
-    buildqtree!(t, l+1)
-end
 
 function shift!(t::ShiftedQtree, l::Integer, st1::Integer, st2::Integer)
     for i in l:-1:1
@@ -215,15 +188,7 @@ function shift!(t::ShiftedQtree, l::Integer, st1::Integer, st2::Integer)
     buildqtree!(t, l+1)
 end
 shift!(t::ShiftedQtree, l::Integer, st::Tuple{Integer,Integer}) = shift!(t, l, st...)
-function setshift!(t::ShiftedQtree, l::Integer, st1::Integer, st2::Integer)
-    for i in l:-1:1
-        setrshift!(t[i], st1)
-        setcshift!(t[i], st2)
-        st1 *= 2
-        st2 *= 2
-    end
-    buildqtree!(t, l+1)
-end
+
 
 ################ collision
 function collision(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, i=(levelnum(Q1),1,1))
@@ -311,95 +276,6 @@ function collision_bfs_rand(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, 
         end
     end
     return false, i #no collision
-end
-
-function findroom(ground, q=[(levelnum(ground),1,1)])
-    i = q[1]
-    if ground[i] == EMPTY
-        return i
-    elseif ground[i] == FULL
-        return nothing
-    end
-    while !isempty(q)
-        i = popfirst!(q)
-        for cn in shuffle(1:4)
-            ci = child(i, cn)
-            if ground[ci] == EMPTY
-                return ci
-            elseif ground[ci] == HALF
-                push!(q, ci)
-            end
-        end
-    end
-    return nothing
-end
-
-function overlap(p1::UInt8, p2::UInt8)
-    if p1 == FULL || p2 == FULL
-        return FULL
-    elseif p1 == EMPTY && p2 == EMPTY
-        return EMPTY
-    else
-        error("roung code")
-    end
-end
-
-overlap(p1::AbstractMatrix, p2::AbstractMatrix) = overlap.(p1, p2)
-
-"将p2叠加到p1上"
-function overlap!(p1::PaddedMat, p2::PaddedMat)
-    @assert size(p1) == size(p2)
-    rs, cs = getshift(p2)
-    for i in 1:kernelsize(p2)[1]
-        for j in 1:kernelsize(p2)[2]
-            p1[rs+i, cs+j] = overlap(p1[rs+i, cs+j], p2[rs+i, cs+j])
-        end
-    end
-    return p1
-end
-
-function overlap2!(tree1::ShiftedQtree, tree2::ShiftedQtree)
-    overlap!(tree1[1], tree2[1])
-    tree1 |> buildqtree!
-end
-
-function overlap!(tree1::ShiftedQtree, tree2::ShiftedQtree, ind::Tuple{Int, Int, Int})
-    if !(tree1[ind] == FULL || tree2[ind] == EMPTY)
-        if ind[1] == 1
-            tree1[ind] = FULL
-        else
-            for ci in 1:4
-                overlap!(tree1, tree2, child(ind, ci))
-            end
-            qcode!(tree1, ind)
-        end
-    end
-end
-
-function overlap!(tree1::ShiftedQtree, tree2::ShiftedQtree)
-    @assert lastindex(tree1) == lastindex(tree2)
-    @assert size(tree1[end]) == size(tree1[end]) == (1, 1)
-    overlap!(tree1, tree2, (lastindex(tree1), 1, 1))
-end
-
-"将sortedtrees依次叠加到ground上，同时修改sortedtrees的shift"
-function placement!(ground, sortedtrees)
-    pos = []
-    for t in sortedtrees
-        ind = findroom(ground)
-        # @show ind
-        if ind === nothing
-            return pos
-        end
-        push!(pos, ind)
-        l, r, c = ind
-        x = floor(2^(l-1)*(r-1) + 2^(l-2))
-        y = floor(2^(l-1)*(c-1) + 2^(l-2))
-        m, n = kernelsize(t[1])
-        setshift!(t, 1, x-m÷2, y-n÷2) #居中
-        overlap!(ground, t)
-    end
-    return pos
 end
 
 end
