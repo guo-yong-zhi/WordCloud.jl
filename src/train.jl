@@ -29,6 +29,9 @@ function trainstep!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, sp
     l = collisionpoint[1]
     ws1 = whitesum(t1, collisionpoint...)
     ws2 = whitesum(t2, collisionpoint...)
+    if rand()<0.1 #破坏周期运动
+        ws1 .+= [rand((0,1,-1)), rand((0,1,-1))]
+    end
     if all(ws1 .== ws2) #避免运动一致，相当于不运动
         ws1 = [rand((0,1,-1)), rand((0,1,-1))]
     end
