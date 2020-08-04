@@ -26,7 +26,6 @@ end
 
 function renderstring(str::AbstractString, size::Real=256, color=:black)
     scene = Scene(resolution = (size, size))
-    st = Stepper(scene, "output")
     t=text!(
         scene,
         str,
@@ -38,8 +37,8 @@ function renderstring(str::AbstractString, size::Real=256, color=:black)
         show_axis = false,
         scale_plot = false,
     )
-    step!(st)
-    img = GLMakie.scene2image(scene)
+    update!(scene)
+    img = GLMakie.scene2image(t)
     removeborder(img, img[1,1])
 end
 end
