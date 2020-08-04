@@ -1,5 +1,5 @@
 module QTree
-export　StackedQtree, ShiftedQtree, buildqtree!
+export　AbstractStackedQtree, StackedQtree, ShiftedQtree, buildqtree!
 export shift!, setrshift!,　setcshift!, collision,  collision_bfs, collision_bfs_rand, findroom, levelnum
 
 using Random
