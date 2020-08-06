@@ -6,12 +6,13 @@ function occupied(imgs::AbstractVector)
     return sum(occupied, imgs)
 end
 
-function text_occupied(text, weight, scale)
+function text_occupied(text, weight, scale; radius=1)
     imgs = []
     for (c, sz) in zip(text, weight)
 #         print(c)
-        img = Render.renderstring(string(c), sz * scale, :red) .|> Gray
-        push!(imgs, 1 .- img)
+        img = Render.rendertext(string(c), sz * scale, border=radius)
+        img = Render.textmask(img, img[1], radius=radius)
+        push!(imgs, img)
     end
     return occupied(imgs)
 end
@@ -22,7 +23,10 @@ function cal_weight_scale(text, weight, target; initial_scale=64)
     return output, sqrt(target / output) * input # 假设output=k*input^2
 end
 
-function find_weight_scale(text, weight, ground_size; initial_scale=64, filling_rate=0.3, max_iter=5, error=0.05)
+function find_weight_scale(text, weight, ground_size; initial_scale=0, filling_rate=0.3, max_iter=5, error=0.05)
+    if initial_scale <= 0
+        initial_scale = √(ground_size/length(text))
+    end
     @assert sum(weight.^2) / length(weight) ≈ 1.0
     target_lower = (filling_rate - error) * ground_size
     target_upper = (filling_rate + error) * ground_size

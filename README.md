@@ -11,3 +11,8 @@ wordcloud in Julia
 * [x] 控制字体大小和填充密度的策略
 * [ ] 重新放置、旋转和缩放的策略
 * [ ] 文字颜色和方向
+
+***
+> linux添加中文字体  
+> mv wqy-microhei.ttc ~/.fonts  
+> fc-cache -vf 

@@ -1,44 +1,65 @@
 module Render
-export renderstring
+export rendertext, textmask
 
-using Makie
-using GLMakie
+using Luxor
 
-
-function removeborder(p::AbstractMatrix, v)
+function backgroundclip(p::AbstractMatrix, bgcolor; border=0)
     a = c = 1
     b = d = 0
-    while all(p[a,:] .== v) && a < size(p, 1)
+    while all(p[a,:] .== bgcolor) && a < size(p, 1)
         a += 1
     end
-    while all(p[end-b,:] .== v) && b < size(p, 2)
+    while all(p[end-b,:] .== bgcolor) && b < size(p, 1)
         b += 1
     end
-    p = p[a:end-b, :]
-    while all(p[:,c] .== v) && c < size(p, 1)
+    p = p[a-border:end-b+border, :]
+    while all(p[:,c] .== bgcolor) && c < size(p, 2)
         c += 1
     end
-    while all(p[:, end-d] .== v) && d < size(p, 2)
+    while all(p[:, end-d] .== bgcolor) && d < size(p, 2)
         d += 1
     end
-    return p[:, c:end-d]
+#     @show a,b,c,d,border,bgcolor
+    return p[:, c-border:end-d+border]
 end
 
-function renderstring(str::AbstractString, size::Real=256, color=:black)
-    scene = Scene(resolution = (size, size))
-    t=text!(
-        scene,
-        str,
-#       position = (100, 200),
-        align = (:left, :center),
-#         textsize = 1,
-        color = color,
-#         font = "Lisu",
-        show_axis = false,
-        scale_plot = false,
-    )
-    update!(scene)
-    img = GLMakie.scene2image(t)
-    removeborder(img, img[1,1])
+function rendertext(str::AbstractString, size::Real; color="black", bkcolor=(0,0,0,0), angle=0, font="WenQuanYi Micro Hei", border=0)
+    l = length(str) + 1
+    l = ceil(Int, size*l + 2border)
+    Drawing(l, l, :image)
+    origin()
+    if bkcolor isa Tuple
+        bkcolor = background(bkcolor...)
+    else
+        bkcolor = background(bkcolor)
+    end
+    bkcolor = Luxor.ARGB32(bkcolor...)
+    setcolor(color)
+    setfont(font, size)
+    settext(str, halign="center", valign="center"; angle=angle)
+    mat = image_as_matrix()
+    finish()
+    mat
+    mat = backgroundclip(mat, mat[1], border=border)
 end
+
+function dilate(mat, r)
+    mat2 = copy(mat)
+    mat2[1:end-r, :] .|= mat[1+r:end, :]
+    mat2[1+r:end, : ] .|= mat[1:end-r, :]
+    mat2[:, 1:end-r] .|= mat[:, 1+r:end]
+    mat2[:, 1+r:end] .|= mat[:, 1:end-r]
+
+    mat2[1:end-r, 1:end-r] .|= mat[1+r:end, 1+r:end]
+    mat2[1+r:end, 1+r:end ] .|= mat[1:end-r, 1:end-r]
+    mat2[1:end-r, 1+r:end ] .|= mat[1+r:end, 1:end-r]
+    mat2[1+r:end, 1:end-r ] .|= mat[1:end-r, 1+r:end]
+    mat2
+end
+
+function textmask(pic, bkcolor; radius=0)
+    mask = pic .!= bkcolor
+    dilate(mask, radius)
+end
+
 end

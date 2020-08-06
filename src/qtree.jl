@@ -1,6 +1,6 @@
 module QTree
 export　AbstractStackedQtree, StackedQtree, ShiftedQtree, buildqtree!
-export shift!, setrshift!,　setcshift!, collision,  collision_bfs, collision_bfs_rand, findroom, levelnum
+export shift!, setrshift!,　setcshift!, getshift, collision,  collision_bfs, collision_bfs_rand, findroom, levelnum
 
 using Random
 function child(ind::Tuple{Int,Int,Int}, n::Int)
