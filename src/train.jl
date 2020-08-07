@@ -6,14 +6,16 @@ using .QTree
 
 function maskqtree(pic::AbstractMatrix{UInt8})
     m = log2(max(size(pic)...)*1.2)
-    qt = ShiftedQtree(pic, 2^ceil(Int, m), default=QTree.FULL)
+    s = 2^ceil(Int, m)
+    qt = ShiftedQtree(pic, s, default=QTree.FULL)
+#     @show size(pic),m,s
     a, b = size(pic)
-    setrshift!(qt[1], -(m-a)÷2)
-    setcshift!(qt[1], -(m-b)÷2)
+    setrshift!(qt[1], (s-a)÷2)
+    setcshift!(qt[1], (s-b)÷2)
     return qt
 end
 function maskqtree(pic::AbstractMatrix)
-    pic = map(x -> x==1 ? QTree.FULL : QTree.EMPTY, pic)
+    pic = map(x -> x==pic[1] ? QTree.FULL : QTree.EMPTY, pic)
     maskqtree(pic)
 end
 
@@ -164,4 +166,30 @@ function trainepoch_gen!(qtrees, mask, speeddown=2, nearlevel=-4)
         # @show length(indpairs),length(nearpool),collpool
     end
     nsp
+end
+
+function train!(ts, maskqt, nepoch=1, args...; kargs...)
+    ep = 0
+    nc = 0
+    while true
+        nc = trainepoch!(ts, maskqt, args..., kargs...)
+        ep += 1
+        if ep >= nepoch || nc == 0
+            break
+        end
+    end
+    ep, nc
+end
+
+function train_gen!(ts, maskqt, nepoch=1, args...; kargs...)
+    ep = 0
+    nc = 0
+    while true
+        nc = trainepoch_gen!(ts, maskqt, args..., kargs...)
+        ep += 1
+        if ep >= nepoch || nc == 0
+            break
+        end
+    end
+    ep, nc
 end

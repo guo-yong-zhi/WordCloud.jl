@@ -1,3 +1,4 @@
+## occupied
 function occupied(img::AbstractMatrix)
     return sum(img .!= 0)
 end
@@ -17,6 +18,40 @@ function text_occupied(text, weight, scale; radius=1)
     return occupied(imgs)
 end
 
+## prepare
+function preparebackground(img, bgcolor)
+    maskqt = maskqtree(mask.|>Gray) |> buildqtree!
+    groundsize = size(maskqt[1], 1)
+    groundoccupied = occupied(mask .!= bgcolor)
+    return img, maskqt, groundsize, groundoccupied
+end
+
+ele_expend(e) = Base.Iterators.repeated(e)
+ele_expend(l::Vector) = Base.Iterators.cycle(l)
+ele_expend(t::Tuple) = IterGen(st->rand(t))
+
+struct IterGen
+    generator
+end
+Base.iterate(it::IterGen, state=0) = it.generator(state),state+1
+
+function prepare_texts(texts, weights, colors, angles, groundsize; bgcolor=(0,0,0,0), border=1)
+    ts = []
+    imgs = []
+    mimgs = []
+    for (txt,sz,color,an) in zip(texts, weights, colors, angles)
+#         print(c)
+        img, mimg = rendertext(string(txt),sz, color=color, bgcolor=bgcolor,
+            angle=an, border=border, returnmask=true)
+        t = ShiftedQtree(mimg, groundsize) |> buildqtree!
+        push!(ts, t)
+        push!(imgs, img)
+        push!(mimgs, mimg)
+    end
+    return imgs, mimgs, ts
+end
+
+## weight_scale
 function cal_weight_scale(text, weight, target; initial_scale=64)
     input = initial_scale
     output = text_occupied(text, weight, input)
@@ -45,3 +80,4 @@ function find_weight_scale(text, weight, ground_size; initial_scale=0, filling_r
     end
     return sc
 end
+
