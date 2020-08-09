@@ -1,10 +1,10 @@
 ## occupied
-function occupied(img::AbstractMatrix)
-    return sum(img .!= 0)
+function occupied(img::AbstractMatrix, bgvalue=0)
+    return sum(img .!= bgvalue)
 end
 
-function occupied(imgs::AbstractVector)
-    return sum(occupied, imgs)
+function occupied(imgs::AbstractVector, bgvalue=0)
+    return sum(p->occupied(p, bgvalue), imgs)
 end
 
 function text_occupied(text, weight, scale; radius=1)

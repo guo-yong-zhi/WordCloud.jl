@@ -29,38 +29,44 @@ whitesum(t::ShiftedQtree, l, a, b) = whitesum(decode2(near(t[l],a,b)))
 
 function trainstep!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, speeddown=2)
     l = collisionpoint[1]
-    ws1 = whitesum(t1, collisionpoint...)
-    ws2 = whitesum(t2, collisionpoint...)
-    if rand()<0.1 #破坏周期运动
-        ws1 .+= [rand((0,1,-1)), rand((0,1,-1))]
+    ks1 = kernelsize(t1[1])
+    ks1 = ks1[1] * ks1[2]
+    ks2 = kernelsize(t2[1])
+    ks2 = ks2[1] * ks2[2]
+    if rand()<ks2/ks1 #ks1越大移动概率越小，ks1<=ks2时必然移动（质量越大，惯性越大运动越少）
+        ws1 = whitesum(t1, collisionpoint...)
+        if ws1[1]==ws1[2]==0 || rand()<0.1 #避免静止及破坏周期运动
+            ws1 .+= [rand((0,1,-1)), rand((0,1,-1))]
+        end
+        ul1 = log2(max(abs.(ws1)...)) #幂等级
+        if ul1 >= 0
+            u = floor(Int, ul1)
+            shift!(t1, max(1, l+u-speeddown), (ws1 .÷ 2^u)...) #舍尾，保留最高二进制位
+    #         @show (ws1 .÷ 2^u)
+        end
     end
-    if all(ws1 .== ws2) #避免运动一致，相当于不运动
-        ws1 = [rand((0,1,-1)), rand((0,1,-1))]
-    end
-   
-    ul1 = log2(max(abs.(ws1)...)) #幂等级
-    ul2 = log2(max(abs.(ws2)...))
-#     @show ws1, ws2
-#     @show l,ul1,ul2
-    if ul1 >= 0
-        u = floor(Int, ul1)
-        shift!(t1, max(1, l+u-speeddown), (ws1 .÷ 2^u)...) #舍尾，保留最高二进制位
-#         @show (ws1 .÷ 2^u)
-    end
-    if ul2 >= 0
-        u = floor(Int, ul2)
-        shift!(t2, max(1, l+u-speeddown), (ws2 .÷ 2^u)...)
-#         @show (ws2 .÷ 2^u)
+    if rand()<ks1/ks2
+        ws2 = whitesum(t2, collisionpoint...)
+        if ws2[1]==ws2[2]==0 || rand()<0.1 #避免静止及破坏周期运动
+            ws2 .+= [rand((0,1,-1)), rand((0,1,-1))]
+        end
+        ul2 = log2(max(abs.(ws2)...))
+        # @show ws2,ul2
+        if ul2 >= 0
+            u = floor(Int, ul2)
+            shift!(t2, max(1, l+u-speeddown), (ws2 .÷ 2^u)...)
+            # @show (ws2 .÷ 2^u)
+        end
     end
 end
 function trainstep_mask!(mask, t2, collisionpoint::Tuple{Integer, Integer, Integer}, speeddown=2)
     l = collisionpoint[1]
     ws1 = whitesum(mask, collisionpoint...)
     ws2 = whitesum(t2, collisionpoint...)
-    if all(ws1 .== ws2) #避免运动一致，相当于不运动
-        ws1 = [rand((0,1,-1)), rand((0,1,-1))]
-    end
     ws = ws2 .- ws1
+    if ws[1]==ws[2]==0 || rand()<0.1 #避免静止及破坏周期运动
+        ws .+= [rand((0,1,-1)), rand((0,1,-1))]
+    end
    
     ul = log2(max(abs.(ws)...)) #幂等级
     if ul >= 0
