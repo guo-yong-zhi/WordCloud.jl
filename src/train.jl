@@ -70,9 +70,8 @@ function trainstep_mask!(mask, t2, collisionpoint::Tuple{Integer, Integer, Integ
     end
 end
 
-function trainepoch!(qtrees, speeddown=2, speeddown_gap=4; gaplevel=-7)
+function trainepoch!(qtrees, speeddown=2, speeddown_gap=4; gaplevel=0)
     gaplevel = gaplevel<0 ? levelnum(qtrees[1])+gaplevel : gaplevel
-    gaplevel = gaplevel<1 ? 1 : gaplevel
     collision_times = 0
     pairs = combinations(qtrees, 2) |> collect |> shuffle
     for (t1, t2) in pairs
@@ -98,11 +97,23 @@ function train_step_ind!(mask, qtrees, i1, i2, collisionpoint, speeddown)
     end
 end
 
-function trainepoch!(qtrees, mask, speeddown=2, speeddown_gap=4; gaplevel=-7)
+function list_collision(qtrees, mask)
+    collist = []
+    indpairs = combinations(0:length(qtrees), 2) |> collect
+    getqtree(i) = i==0 ? mask : qtrees[i]
+    for (i1, i2) in indpairs
+        c, cp = collision_bfs_rand(getqtree(i1), getqtree(i2))
+        if c
+            push!(collist, (i1, i2))
+        end
+    end
+    collist
+end
+
+function trainepoch!(qtrees, mask; speeddown=2, speeddown_gap=4, gaplevel=0)
     gaplevel = gaplevel<0 ? levelnum(qtrees[1])+gaplevel : gaplevel
-    gaplevel = gaplevel<1 ? 1 : gaplevel
     nsp = 0
-    indpairs = combinations(0:length(qtrees),2) |> collect |> shuffle
+    indpairs = combinations(0:length(qtrees), 2) |> collect |> shuffle
     getqtree(i) = i==0 ? mask : qtrees[i]
     for (i1, i2) in indpairs
         c, cp = collision_bfs_rand(getqtree(i1), getqtree(i2))
@@ -110,14 +121,14 @@ function trainepoch!(qtrees, mask, speeddown=2, speeddown_gap=4; gaplevel=-7)
             train_step_ind!(mask, qtrees, i1, i2, cp, speeddown)
             nsp += 1
         elseif cp[1] < gaplevel
-#             print("s")
+            print("s")
             train_step_ind!(mask, qtrees, i1, i2, cp, speeddown_gap)
         end
     end
     nsp
 end
                         
-function trainepoch_gen!(qtrees, mask, speeddown=2, nearlevel=-4)
+function trainepoch_gen!(qtrees, mask; speeddown=2, nearlevel=-4)
     nearlevel = nearlevel<0 ? levelnum(qtrees[1])+nearlevel : nearlevel
     nearlevel = nearlevel<1 ? 1 : nearlevel
     nsp = 0
@@ -172,7 +183,7 @@ function train!(ts, maskqt, nepoch=1, args...; kargs...)
     ep = 0
     nc = 0
     while true
-        nc = trainepoch!(ts, maskqt, args..., kargs...)
+        nc = trainepoch!(ts, maskqt, args...; kargs...)
         ep += 1
         if ep >= nepoch || nc == 0
             break
@@ -185,7 +196,7 @@ function train_gen!(ts, maskqt, nepoch=1, args...; kargs...)
     ep = 0
     nc = 0
     while true
-        nc = trainepoch_gen!(ts, maskqt, args..., kargs...)
+        nc = trainepoch_gen!(ts, maskqt, args...; kargs...)
         ep += 1
         if ep >= nepoch || nc == 0
             break

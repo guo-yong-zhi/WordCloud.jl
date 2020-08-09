@@ -87,10 +87,11 @@ end
 function overlay!(img1, img2, x=1, y=1)
     h1, w1 = size(img1)
     h2, w2 = size(img2)
-    h3 = min(h2, h1-y+1)
-    w3 = min(w2, w1-x+1)
-    img1v = @view img1[y:y+h3-1, x:x+w3-1]
-    img2v = @view img2[1:h3, 1:w3]
+    img1v = @view img1[max(1,y):min(h1,y+h2-1), max(1,x):min(w1,x+w2-1)]
+    img2v = @view img2[max(1,-y+2):min(h2,-y+h1+1), max(1,-x+2):min(w2,-x+w1+1)]
+#     @show (h1, w1),(h2, w2),(x,y)
+#     @show [max(1,y):min(h1,y+h2-1), max(1,x):min(w1,x+w2-1)]
+#     @show [max(1,-y+2):min(h2,-y+h1+1), max(1,-x+2):min(w2,-x+w1+1)]
     img1v .= overlay.(img1v, img2v)
     img1
 end
