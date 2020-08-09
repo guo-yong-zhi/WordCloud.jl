@@ -179,7 +179,7 @@ function trainepoch_gen!(qtrees, mask; speeddown=2, nearlevel=-4)
     nsp
 end
 
-function train!(ts, maskqt, nepoch=1, args...; kargs...)
+function train!(ts, maskqt, nepoch=1, args...; callbackstep=0, callbackfun, kargs...)
     ep = 0
     nc = 0
     while true
@@ -188,11 +188,14 @@ function train!(ts, maskqt, nepoch=1, args...; kargs...)
         if ep >= nepoch || nc == 0
             break
         end
+        if callbackstep>0 && ep%callbackstep==0
+            callbackfun(ep)
+        end
     end
     ep, nc
 end
 
-function train_gen!(ts, maskqt, nepoch=1, args...; kargs...)
+function train_gen!(ts, maskqt, nepoch=1, args...; callbackstep=0, callbackfun, kargs...)
     ep = 0
     nc = 0
     while true
@@ -200,6 +203,9 @@ function train_gen!(ts, maskqt, nepoch=1, args...; kargs...)
         ep += 1
         if ep >= nepoch || nc == 0
             break
+        end
+        if callbackstep>0 && ep%callbackstep==0
+            callbackfun(ep)
         end
     end
     ep, nc
