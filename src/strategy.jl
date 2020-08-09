@@ -81,3 +81,34 @@ function find_weight_scale(text, weight, ground_size; initial_scale=0, filling_r
     return sc
 end
 
+function max_collisional_index(qtrees, mask)
+    l = length(qtrees)
+    for i in l:-1:1
+        for j in 0:i-1
+            getqtree(i) = i==0 ? mask : qtrees[i]
+            c, cp = collision(getqtree(i), getqtree(j))
+            if c
+                return i
+            end
+        end
+    end
+    nothing
+end
+
+function max_collisional_index_rand(qtrees, mask)
+    l = length(qtrees)
+    for i in l:-1:1
+        if rand() > 0.8
+            continue
+        end
+        for j in 0:i-1
+            getqtree(i) = i==0 ? mask : qtrees[i]
+            c, cp = collision(getqtree(i), getqtree(j))
+            if c
+                return i
+            end
+        end
+    end
+    nothing
+end
+
