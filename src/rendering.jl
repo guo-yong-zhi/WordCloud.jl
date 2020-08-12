@@ -1,5 +1,5 @@
 module Render
-export rendertext, textmask, overlay!, shape
+export rendertext, textmask, overlay!, shape, ellipse, box
 
 using Luxor
 using Colors
@@ -71,15 +71,14 @@ end
 
 function overlay(color1, color2)
 #     @show color1, color2
+    a2 = Colors.alpha(color2)
+    if a2 == 0 return color1 end
+    if a2 == 1 return color2 end
+    a1 = Colors.alpha(color1)
     c1 = [Colors.red(color1), Colors.green(color1), Colors.blue(color1)]
     c2 = [Colors.red(color2), Colors.green(color2), Colors.blue(color2)]
-    a1 = Colors.alpha(color1)
-    a2 = Colors.alpha(color2) 
     a = a1 + a2 - a1 * a2
     c = (c1 .* a1 .* (1-a2) .+ c2 .* a2) ./ (a>0 ? a : 1)
-#     c = max.(1., c)
-#     a = max(1., a)
-#     @show (c..., a>1), a1, a2, c1, c2
     typeof(color1)(c..., a)
 end
 
@@ -90,8 +89,6 @@ function overlay!(img1, img2, x=1, y=1)
     img1v = @view img1[max(1,y):min(h1,y+h2-1), max(1,x):min(w1,x+w2-1)]
     img2v = @view img2[max(1,-y+2):min(h2,-y+h1+1), max(1,-x+2):min(w2,-x+w1+1)]
 #     @show (h1, w1),(h2, w2),(x,y)
-#     @show [max(1,y):min(h1,y+h2-1), max(1,x):min(w1,x+w2-1)]
-#     @show [max(1,-y+2):min(h2,-y+h1+1), max(1,-x+2):min(w2,-x+w1+1)]
     img1v .= overlay.(img1v, img2v)
     img1
 end

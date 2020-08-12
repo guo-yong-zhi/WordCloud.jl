@@ -1,27 +1,31 @@
 module QTree
 export AbstractStackedQtree, StackedQtree, ShiftedQtree, buildqtree!,
     shift!, setrshift!,　setcshift!, getshift, collision,  collision_bfs, collision_bfs_rand,
-    findroom, levelnum, outofbounds, kernelsize 
+    findroom, levelnum, outofbounds, kernelsize, placement! 
 
 using Random
+using Combinatorics
+
+const PERM4 = permutations(1:4)|>collect
+@assert length(PERM4) == 24
+shuffle4() = @inbounds PERM4[rand(1:24)]
 function child(ind::Tuple{Int,Int,Int}, n::Int)
     s = 4 - n
-    (ind[1] - 1, 2ind[2] - s & 0x01, 2ind[3] - (s & 0x02) >> 1)
+    @inbounds (ind[1] - 1, 2ind[2] - s & 0x01, 2ind[3] - (s & 0x02) >> 1)
 end
 parent(ind::Tuple{Int,Int,Int}) = (ind[1] + 1, (ind[2] + 1) ÷ 2, (ind[3] + 1) ÷ 2)
 
 function qcode(Q, i)
-    c1 = Q[child(i, 1)] |> first
-    c2 = Q[child(i, 2)] |> first
-    c3 = Q[child(i, 3)] |> first
-    c4 = Q[child(i, 4)] |> first
+    @inbounds c1 = Q[child(i, 1)] |> first
+    @inbounds c2 = Q[child(i, 2)] |> first
+    @inbounds c3 = Q[child(i, 3)] |> first
+    @inbounds c4 = Q[child(i, 4)] |> first
     c1 | c2 | c3 | c4
 end
-qcode!(Q, i) = Q[i] = qcode(Q, i)
+qcode!(Q, i) = @inbounds Q[i] = qcode(Q, i)
 decode(c) = [0., 1., 0.5][c .& 0x03]
 
 const FULL = 0xaa; EMPTY = 0x55; HALF = 0xff
-
 
 abstract type AbstractStackedQtree end
 function Base.getindex(t::AbstractStackedQtree, l::Integer) end
@@ -34,15 +38,8 @@ Base.lastindex(t::AbstractStackedQtree) = levelnum(t)
 Base.size(t::AbstractStackedQtree) = levelnum(t) > 0 ? size(t[1]) : (0,)
 
 ################ StackedQtree
-struct StackedQtree{T <: AbstractVector} <: AbstractStackedQtree
+struct StackedQtree{T <: AbstractVector{<:AbstractMatrix{UInt8}}} <: AbstractStackedQtree
     layers::T
-    function StackedQtree{T}(l::T) where T <: AbstractVector
-        if eltype(l) <: AbstractMatrix{UInt8}
-            return new(l)
-        else
-            error("Roung Type $(eltype(l)). should be AbstractMatrix{UInt8}")
-        end
-    end
 end
 
 StackedQtree(l::T) where T = StackedQtree{T}(l)
@@ -105,30 +102,21 @@ getdefault(l::PaddedMat) = l.default
 inkernelbounds(l::PaddedMat, r, c) = 0 < r - l.rshift <= size(l.kernel, 1) && 0 < c - l.cshift <= size(l.kernel, 2)
 kernelsize(l::PaddedMat) = size(l.kernel)
 kernel(l::PaddedMat) = l.kernel
+function Base.checkbounds(l::PaddedMat, I...) end #关闭边界检查，允许负索引、超界索引
 function Base.getindex(l::PaddedMat, r, c)
     if inkernelbounds(l, r, c)
-        return l.kernel[r - l.rshift, c - l.cshift]
+        return @inbounds l.kernel[r - l.rshift, c - l.cshift]
     end
-    return l.default
-#     if 0<r<=l.size[1] && 0<c<=l.size[2]
-#         return l.default
-#     end
-# #     throw(BoundsError(l,(r,c)))
+    return l.default #负索引、超界索引返回default
 end
 function Base.setindex!(l::PaddedMat, v, r, c)
-    l.kernel[r - l.rshift, c - l.cshift] = v
+    @inbounds l.kernel[r - l.rshift, c - l.cshift] = v
 end
+
 Base.size(l::PaddedMat) = l.size
 
-struct ShiftedQtree{T <: AbstractVector} <: AbstractStackedQtree
+struct ShiftedQtree{T <: AbstractVector{<:PaddedMat}} <: AbstractStackedQtree
     layers::T
-    function ShiftedQtree{T}(l::T) where T <: AbstractVector
-        if eltype(l) <: PaddedMat
-            return new(l)
-        else
-            error("Roung Type $(eltype(l)). should be PaddedMat")
-        end
-    end
 end
 
 ShiftedQtree(l::T) where T = ShiftedQtree{T}(l)
@@ -235,7 +223,7 @@ end
 
 function collision(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, i=(levelnum(Q1), 1, 1))
     #     @show i
-    @assert size(Q1) == size(Q2)
+#     @assert size(Q1) == size(Q2)
     n1 = Q1[i]
     n2 = Q2[i]
     if n1 == EMPTY || n2 == EMPTY
@@ -257,8 +245,10 @@ function collision(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, i=(leveln
 end
 
 function collision_bfs(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, q=[(levelnum(Q1), 1, 1)])
-    @assert size(Q1) == size(Q2)
-    @assert !isempty(q)
+#     @assert size(Q1) == size(Q2)
+    if isempty(q)
+        push!(q, (levelnum(Q1), 1, 1))
+    end
     i = q[1]
     n1 = Q1[i]
     n2 = Q2[i]
@@ -289,38 +279,43 @@ function collision_bfs(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, q=[(l
 end
 
 function collision_bfs_rand(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, q=[(levelnum(Q1), 1, 1)])
-    @assert size(Q1) == size(Q2)
-    @assert !isempty(q)
+#     @assert size(Q1) == size(Q2)
+    if isempty(q)
+        push!(q, (levelnum(Q1), 1, 1))
+    end
     i = q[1]
     n1 = Q1[i]
     n2 = Q2[i]
     if n1 == EMPTY || n2 == EMPTY
-        return false, i
+        return .-i
     end
     if n1 == FULL || n2 == FULL
-        return true, i
+        return i
     end
     while !isempty(q)
 #         @show q
         # Q1[i],Q2[i]都是HALF
         i = popfirst!(q)
-        for cn in shuffle(1:4)
+        for cn in shuffle4()
             ci = child(i, cn)
 #             @show cn,ci
 #             @show Q1[ci],Q2[ci]
             if !(Q1[ci] == EMPTY || Q2[ci] == EMPTY)
                 if Q1[ci] == FULL || Q2[ci] == FULL
-                    return true, ci
+                    return ci
                 else
                     push!(q, ci)
                 end
             end
         end
     end
-    return false, i # no collision
+    return .- i # no collision
 end
 
 function findroom(ground, q=[(levelnum(ground), 1, 1)])
+    if isempty(q)
+        push!(q, (levelnum(ground), 1, 1))
+    end
     i = q[1]
     if ground[i] == EMPTY
         return i
@@ -329,7 +324,7 @@ function findroom(ground, q=[(levelnum(ground), 1, 1)])
     end
     while !isempty(q)
         i = popfirst!(q)
-        for cn in shuffle(1:4)
+        for cn in shuffle4()
             ci = child(i, cn)
             if ground[ci] == EMPTY
                 return ci
@@ -385,7 +380,7 @@ end
 
 function overlap!(tree1::ShiftedQtree, tree2::ShiftedQtree)
     @assert lastindex(tree1) == lastindex(tree2)
-    @assert size(tree1[end]) == size(tree1[end]) == (1, 1)
+    @assert size(tree1[end]) == size(tree2[end]) == (1, 1)
     overlap!(tree1, tree2, (lastindex(tree1), 1, 1))
 end
 
