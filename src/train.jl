@@ -1,11 +1,30 @@
 using Combinatorics
 using Random
-
 using .QTree
 
 
+mutable struct Momentum
+    eta::Float64
+    rho::Float64
+    velocity::IdDict
+end
+  
+Momentum(η = 0.01, ρ = 0.9) = Momentum(η, ρ, IdDict())
+Momentum(;η = 0.01, ρ = 0.9) = Momentum(η, ρ, IdDict())
+
+function apply(o::Momentum, x, Δ)
+    η, ρ = o.eta, o.rho
+    v = get!(o.velocity, x, Float64.(Δ))
+    @. v = ρ * v + (1 - ρ) * Δ
+    η * v
+end
+function apply!(o::Momentum, x, Δ)
+    @. Δ = apply(o, x, Δ)
+end
+(opt::Momentum)(x, Δ) = apply(opt::Momentum, x, Δ)
+    
 function maskqtree(pic::AbstractMatrix{UInt8})
-    m = log2(max(size(pic)...)*1.2)
+    m = log2(max(size(pic)...)*1.1)
     s = 2^ceil(Int, m)
     qt = ShiftedQtree(pic, s, default=QTree.FULL)
 #     @show size(pic),m,s
@@ -20,63 +39,66 @@ function maskqtree(pic::AbstractMatrix, bgcolor=pic[1])
 end
 
 near(a::Integer, b::Integer, r=1) = a-r:a+r, b-r:b+r
-near(m::AbstractMatrix, a::Integer, b::Integer; r=1) = @view m[near(a, b, r)...]
+near(m::AbstractMatrix, a::Integer, b::Integer, r=1) = @view m[near(a, b, r)...]
 const DIRECTKERNEL = collect.(Iterators.product(-1:1,-1:1))
 const DECODETABLE = [0, 2, 1]
 decode2(c) = DECODETABLE[c.&0x03]
 whitesum(m::AbstractMatrix) = sum(DIRECTKERNEL .* m)
 whitesum(t::ShiftedQtree, l, a, b) = whitesum(decode2(near(t[l],a,b)))
 intlog2(x::Number)=Int[0,1,1,2,2,2,2,3,3,3,3,3,3,3][x]
-function trainstep!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, speeddown=2)
-    l = collisionpoint[1]
+
+function move!(qt, ws)
+    if (-1<ws[1]<1 && -1<ws[2]<1) || rand()<0.1 #避免静止及破坏周期运动
+        ws .+= [rand((1,-1)), rand((1,-1))]
+    end
+    wm = max(abs.(ws)...)
+    if wm >= 1
+        u = floor(Int, log2(wm))
+        shift!(qt, 1+u, (trunc.(Int, ws) .÷ 2^u)...) #舍尾，保留最高二进制位
+    end
+end
+
+function trainstep!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimiser=(t, Δ)->Δ./4)
     ks1 = kernelsize(t1[1])
     ks1 = ks1[1] * ks1[2]
     ks2 = kernelsize(t2[1])
     ks2 = ks2[1] * ks2[2]
-    if rand()<ks2/ks1 #ks1越大移动概率越小，ks1<=ks2时必然移动（质量越大，惯性越大运动越少）
-        ws1 = whitesum(t1, collisionpoint...)
-        if ws1[1]==ws1[2]==0 || rand()<0.1 #避免静止及破坏周期运动
-            ws1 .+= [rand((0,1,-1)), rand((0,1,-1))]
+    l = collisionpoint[1]
+    ll = 2 ^ (l-1)
+    ws1 = ll .* whitesum(t1, collisionpoint...)
+    ws2 = ll .* whitesum(t2, collisionpoint...)
+#     @show ws1,collisionpoint,whitesum(t1, collisionpoint...)
+    ws1 = optimiser(t1, ws1)
+#     @show ws1
+    ws2 = optimiser(t2, ws2)
+    move1 = rand()<ks2/ks1 #ks1越大移动概率越小，ks1<=ks2时必然移动（质量越大，惯性越大运动越少）
+    move2 = rand()<ks1/ks2
+    if move1
+        if !move2
+            ws1 = ws1 .- ws2
         end
-        wm = max(abs.(ws1)...)
-        if wm > 0
-            u = intlog2(wm)
-            shift!(t1, max(1, l+u-speeddown), (ws1 .÷ 2^u)...) #舍尾，保留最高二进制位
-    #         @show (ws1 .÷ 2^u)
-        end
+        move!(t1, ws1)
     end
-    if rand()<ks1/ks2
-        ws2 = whitesum(t2, collisionpoint...)
-        if ws2[1]==ws2[2]==0 || rand()<0.1 #避免静止及破坏周期运动
-            ws2 .+= [rand((0,1,-1)), rand((0,1,-1))]
+    if move2
+        if !move1
+            ws2 = ws2 .- ws1
         end
-        wm = max(abs.(ws2)...)
-        if wm > 0
-            u = intlog2(wm)
-            shift!(t2, max(1, l+u-speeddown), (ws2 .÷ 2^u)...)
-            # @show (ws2 .÷ 2^u)
-        end
+        move!(t2, ws2)
     end
 end
-function trainstep_mask!(mask, t2, collisionpoint::Tuple{Integer, Integer, Integer}, speeddown=2)
+function trainstep_mask!(mask, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimiser=(t, Δ)->Δ./4)
     l = collisionpoint[1]
-    ws1 = whitesum(mask, collisionpoint...)
-    ws2 = whitesum(t2, collisionpoint...)
-    ws = ws2 .- ws1
-    if ws[1]==ws[2]==0 || rand()<0.1 #避免静止及破坏周期运动
-        ws .+= [rand((0,1,-1)), rand((0,1,-1))]
-    end
-   
-    wm = max(abs.(ws)...) #幂等级
-    if wm > 0
-        u = intlog2(wm)
-        shift!(t2, max(1, l+u-speeddown-1), (ws .÷ 2^u)...)
-#         @show (ws .÷ 2^u)
-    end
+    ll = 2 ^ (l-1)
+    ws1 = ll .* whitesum(mask, collisionpoint...)
+    ws2 = ll .* whitesum(t2, collisionpoint...)
+    ws1 = optimiser(mask, ws1)
+    ws2 = optimiser(t2, ws2)
+    ws = (ws2 .- ws1) ./ 2
+    move!(t2, ws)
 end
 
-function trainepoch!(qtrees; speeddown=2, speeddown_gap=4, gaplevel=0)
-    gaplevel = gaplevel<0 ? levelnum(qtrees[1])+gaplevel : gaplevel
+function trainepoch!(qtrees; optimiser=(t, Δ)->Δ./4, optimiser_near=(t, Δ)->Δ./4, nearlevel=0)
+    nearlevel = nearlevel<0 ? levelnum(qtrees[1])+nearlevel : nearlevel
     collision_times = 0
     pairs = combinations(qtrees, 2) |> collect |> shuffle!
     etp = typeof(levelnum(qtrees[1]))
@@ -86,24 +108,24 @@ function trainepoch!(qtrees; speeddown=2, speeddown_gap=4, gaplevel=0)
         push!(q, (levelnum(t1), 1, 1))
         cp = collision_bfs_rand(t1, t2, q)
         if cp[1] >= 0
-            trainstep!(t1, t2, cp, speeddown)
+            trainstep!(t1, t2, cp, optimiser)
             collision_times += 1
-        elseif cp[1] < gaplevel
+        elseif cp[1] < nearlevel
 #             print("s")
-            trainstep!(t1, t2, cp, speeddown_gap)
+            trainstep!(t1, t2, cp, optimiser_near)
         end
     end
     collision_times
 end
 
-function train_step_ind!(mask, qtrees, i1, i2, collisionpoint, speeddown)
+function train_step_ind!(mask, qtrees, i1, i2, collisionpoint, optimiser)
 #     @show i1, i2
     if i1 == 0
-        trainstep_mask!(mask, qtrees[i2], collisionpoint, speeddown)
+        trainstep_mask!(mask, qtrees[i2], collisionpoint, optimiser)
     elseif i2 == 0
-        trainstep_mask!(mask, qtrees[i1], collisionpoint, speeddown)
+        trainstep_mask!(mask, qtrees[i1], collisionpoint, optimiser)
     else
-        trainstep!(qtrees[i1], qtrees[i2], collisionpoint, speeddown)
+        trainstep!(qtrees[i1], qtrees[i2], collisionpoint, optimiser)
     end
 end
 
@@ -120,11 +142,14 @@ function list_collision(qtrees, mask)
     collist
 end
 
-function trainepoch!(qtrees, mask; speeddown=2, speeddown_gap=4, gaplevel=0, queue=Vector{Tuple{Int, Int, Int}}())
-    gaplevel = gaplevel<0 ? levelnum(qtrees[1])+gaplevel : gaplevel
+function trainepoch!(qtrees, mask; optimiser=(t, Δ)->Δ./4, optimiser_near=(t, Δ)->Δ./4, nearlevel=0, queue=Vector{Tuple{Int, Int, Int}}(), collpool=nothing)
+    nearlevel = nearlevel<0 ? levelnum(qtrees[1])+nearlevel : nearlevel
     nsp = 0
     indpairs = combinations(0:length(qtrees), 2) |> collect |> shuffle!
     getqtree(i) = i==0 ? mask : qtrees[i]
+    if collpool !== nothing
+        empty!(collpool)
+    end
     for (i1, i2) in indpairs
         t1 = getqtree(i1)
         t2 = getqtree(i2)
@@ -132,29 +157,33 @@ function trainepoch!(qtrees, mask; speeddown=2, speeddown_gap=4, gaplevel=0, que
         cp = collision_bfs_rand(t1, t2, queue)
 #         @show cp
         if cp[1] >= 0
-            train_step_ind!(mask, qtrees, i1, i2, cp, speeddown)
+            train_step_ind!(mask, qtrees, i1, i2, cp, optimiser)
             nsp += 1
-        elseif -cp[1] < gaplevel
-            train_step_ind!(mask, qtrees, i1, i2, .-cp, speeddown_gap)
+            if collpool !== nothing
+                push!(collpool, (i1, i2))
+            end
+        elseif -cp[1] < nearlevel
+            print("s")
+            train_step_ind!(mask, qtrees, i1, i2, .-cp, optimiser_near)
         end
     end
     nsp
 end
                         
-function trainepoch_gen!(qtrees, mask; speeddown=2, nearlevel=-4, queue=Vector{Tuple{Int, Int, Int}}())
+function trainepoch_gen!(qtrees, mask; optimiser=(t, Δ)->Δ./4, nearlevel=-4, queue=Vector{Tuple{Int, Int, Int}}(), nearpool = Vector{Tuple{Int,Int}}(), collpool = Vector{Tuple{Int,Int}}())
     nearlevel = nearlevel<0 ? levelnum(qtrees[1])+nearlevel : nearlevel
     nearlevel = nearlevel<1 ? 1 : nearlevel
     nsp = 0
     indpairs = combinations(0:length(qtrees),2) |> collect |> shuffle!
     getqt(i) = i==0 ? mask : qtrees[i]
-    nearpool = Vector{Tuple{Int,Int}}()
+    
     for (i1, i2) in indpairs
         t1 = getqt(i1)
         t2 = getqt(i2)
         empty!(queue)
         cp = collision_bfs_rand(t1, t2, queue)
         if cp[1] >= 0
-            train_step_ind!(mask, qtrees, i1, i2, cp, speeddown)
+            train_step_ind!(mask, qtrees, i1, i2, cp, optimiser)
             push!(nearpool, (i1, i2))
             nsp += 1
         elseif -cp[1] < nearlevel
@@ -164,14 +193,13 @@ function trainepoch_gen!(qtrees, mask; speeddown=2, nearlevel=-4, queue=Vector{T
     if nsp == 0
         return nsp
     end 
-    collpool = Vector{Tuple{Int,Int}}()
     if length(nearpool) == 0 return nsp end
     for ni in 1:(4length(indpairs)÷length(nearpool))
         empty!(collpool)
         for (i1, i2) in nearpool |> shuffle!
             cp = collision_bfs_rand(getqt(i1), getqt(i2))
             if cp[1] >= 0
-                train_step_ind!(mask, qtrees, i1, i2, cp, speeddown)
+                train_step_ind!(mask, qtrees, i1, i2, cp, optimiser)
                 push!(collpool, (i1, i2))
             end
         end
@@ -182,7 +210,7 @@ function trainepoch_gen!(qtrees, mask; speeddown=2, nearlevel=-4, queue=Vector{T
                 cp = collision_bfs_rand(getqt(i1), getqt(i2))
                 # @show getqt(i2)
                 if cp[1] >= 0
-                    train_step_ind!(mask, qtrees, i1, i2, cp, speeddown)
+                    train_step_ind!(mask, qtrees, i1, i2, cp, optimiser)
                     nsp2 += 1
                 end
             end
@@ -201,11 +229,11 @@ function train!(ts, maskqt, nepoch=1, args...; callbackstep=0, callbackfun=x->x,
     while true
         nc = trainepoch!(ts, maskqt, args...; queue=queue, kargs...)
         ep += 1
-        if ep >= nepoch || nc == 0
-            break
-        end
         if callbackstep>0 && ep%callbackstep==0
             callbackfun(ep)
+        end
+        if ep >= nepoch || nc == 0
+            break
         end
     end
     ep, nc
@@ -217,11 +245,11 @@ function train_gen!(ts, maskqt, nepoch=1, args...; callbackstep=0, callbackfun=x
     while true
         nc = trainepoch_gen!(ts, maskqt, args...; queue=queue, kargs...)
         ep += 1
-        if ep >= nepoch || nc == 0
-            break
-        end
         if callbackstep>0 && ep%callbackstep==0
             callbackfun(ep)
+        end
+        if ep >= nepoch || nc == 0
+            break
         end
     end
     ep, nc
@@ -245,7 +273,7 @@ function train_with_teleport!(ts, maskqt, nepoch::Number, args...;
     ep = 0
     nc = 0
     count = 0
-    nc_min = 1e6
+    nc_min = Inf
     while ep < nepoch
         nc = trainer(ts, maskqt, args...; kargs...)
         ep += 1
@@ -254,10 +282,7 @@ function train_with_teleport!(ts, maskqt, nepoch::Number, args...;
             count = 0
             nc_min = nc
         end
-        if nc == 0
-            return ep, nc
-        end
-        if count >= patient
+        if nc != 0 && count >= patient
             count = 0
             nc_min = nc
             i = teleport!(ts, maskqt, maskqtree(mask.|>Gray)|>buildqtree!)
@@ -265,6 +290,9 @@ function train_with_teleport!(ts, maskqt, nepoch::Number, args...;
         end
         if callbackstep>0 && ep%callbackstep==0
             callbackfun(ep)
+        end
+        if nc == 0
+            return ep, nc
         end
     end
     ep, nc
