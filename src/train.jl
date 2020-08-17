@@ -255,27 +255,30 @@ function train_gen!(ts, maskqt, nepoch=1, args...; callbackstep=0, callbackfun=x
     ep, nc
 end
 
-function teleport!(ts, maskqt, bgqt)
+function teleport!(ts, maskqt, args...; kargs...)
     outinds = outofbounds(maskqt, ts)
     if !isempty(outinds)
-        placement!(bgqt, ts, outinds)
+        placement!(deepcopy(maskqt), ts, outinds)
         return outinds
     end
-    ci = max_collisional_index_rand(ts, maskqt)
-    if ci !== nothing
-        placement!(bgqt, ts, ci)
+    cinds = collisional_indexes_rand(ts, maskqt, args...; kargs...)
+    if cinds !== nothing && length(cinds)>0
+        placement!(deepcopy(maskqt), ts, cinds)
     end
-    return ci
+    return cinds
 end
 
+
 function train_with_teleport!(ts, maskqt, nepoch::Number, args...; 
-        trainer=trainepoch_gen!, patient::Number=5, callbackstep=0, callbackfun=x->x, kargs...)
+        trainer=trainepoch_gen!, patient::Number=5, callbackstep=0, callbackfun=x->x,
+        queue=Vector{Tuple{Int, Int, Int}}(), kargs...)
     ep = 0
     nc = 0
     count = 0
     nc_min = Inf
+    collpool = Vector{Tuple{Int,Int}}()
     while ep < nepoch
-        nc = trainer(ts, maskqt, args...; kargs...)
+        nc = trainer(ts, maskqt, args...; collpool=collpool, queue=queue, kargs...)
         ep += 1
         count += 1
         if nc < nc_min
@@ -285,8 +288,8 @@ function train_with_teleport!(ts, maskqt, nepoch::Number, args...;
         if nc != 0 && count >= patient
             count = 0
             nc_min = nc
-            i = teleport!(ts, maskqt, maskqtree(mask.|>Gray)|>buildqtree!)
-            @show ep,nc,i
+            cinds = teleport!(ts, maskqt, collpool=collpool)
+            println("@epoch $ep, nc $nc teleport $cinds")
         end
         if callbackstep>0 && ep%callbackstep==0
             callbackfun(ep)

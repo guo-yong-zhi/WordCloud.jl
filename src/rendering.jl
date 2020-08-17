@@ -1,9 +1,10 @@
 module Render
-export rendertext, textmask, overlay!, shape, ellipse, box
+export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate
 
 using Luxor
 using Colors
 using ColorSchemes
+using ImageMagick
 
 function backgroundclip(p::AbstractMatrix, bgcolor; border=0)
     a = c = 1
@@ -125,4 +126,30 @@ function shape(shape_, width, height, args...; color="white", bgcolor=(0,0,0,0))
     mat
 end
 
+using Printf
+function gif_callback_factory()
+    counter = Iterators.Stateful(0:typemax(Int))
+    pic->save(gifdirectory*@sprintf("/%010d.png", popfirst!(counter)), pic)
+end
+function try_gif_gen(gifdirectory)
+    try
+        pipeline(`ffmpeg -f image2 -i $(gifdirectory)/%010d.png -vf 
+            palettegen -y $(gifdirectory)/result-palette.png`, stdout=devnull, stderr=devnull) |> run
+        pipeline(`ffmpeg -framerate 4 -f image2 -i $(gifdirectory)/%010d.png 
+            -i $(gifdirectory)/result-palette.png -lavfi paletteuse -y $(gifdirectory)/result.gif`,
+            stdout=devnull, stderr=devnull) |> run
+    catch e
+        @warn e
+    end
+end
+struct GIF
+    counter::Base.Iterators.Stateful{UnitRange{Int64},Union{Nothing, Tuple{Int64,Int64}}}
+    directory::String
+end
+function GIF(directory)
+    GIF(Iterators.Stateful(0:typemax(Int)), directory)
+end
+Base.push!(gif::GIF, img) = save(gif.directory*@sprintf("/%010d.png", popfirst!(gif.counter)), img)
+(gif::GIF)(img) = Base.push!(gif, img)
+generate(gif::GIF) = try_gif_gen(gif.directory)
 end

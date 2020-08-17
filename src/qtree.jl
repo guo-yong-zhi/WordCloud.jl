@@ -386,7 +386,7 @@ end
 
 "将sortedtrees依次叠加到ground上，同时修改sortedtrees的shift"
 function placement!(ground, sortedtrees)
-    pos = []
+    pos = Vector{Tuple{Int, Int, Int}}()
     for t in sortedtrees
         ind = placement!(ground, t)
         overlap!(ground, t)
