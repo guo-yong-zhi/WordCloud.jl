@@ -84,9 +84,9 @@ end
 
 function max_collisional_index(qtrees, mask)
     l = length(qtrees)
+    getqtree(i) = i==0 ? mask : qtrees[i]
     for i in l:-1:1
         for j in 0:i-1
-            getqtree(i) = i==0 ? mask : qtrees[i]
             cp = collision(getqtree(i), getqtree(j))
             if cp[1] >= 0
                 return i
@@ -99,9 +99,9 @@ end
 function max_collisional_index_rand(qtrees, mask)
     l = length(qtrees)
     b = l - floor(Int, l / 8 * randexp()) #从末尾1/8起
+    getqtree(i) = i==0 ? mask : qtrees[i]
     for i in b:-1:1
         for j in 0:i-1
-            getqtree(i) = i==0 ? mask : qtrees[i]
             cp = collision(getqtree(i), getqtree(j))
             if cp[1] >= 0
                 return i
@@ -110,7 +110,6 @@ function max_collisional_index_rand(qtrees, mask)
     end
     for i in l:-1:b+1
         for j in 0:i-1
-            getqtree(i) = i==0 ? mask : qtrees[i]
             cp = collision(getqtree(i), getqtree(j))
             if cp[1] >= 0
                 return i
@@ -118,4 +117,50 @@ function max_collisional_index_rand(qtrees, mask)
         end
     end
     nothing
+end
+
+function max_collisional_index_rand(qtrees, mask; collpool)
+    l = length(collpool)
+    b = l - floor(Int, l / 8 * randexp()) #从末尾1/8起
+    sort!(collpool)
+    getqtree(i) = i==0 ? mask : qtrees[i]
+    for k in b:-1:1
+        i, j = collpool[k]
+        cp = collision(getqtree(i), getqtree(j))
+        if cp[1] >= 0
+            return j
+        end
+    end
+    for k in l:-1:b+1
+        i, j = collpool[k]
+        cp = collision(getqtree(i), getqtree(j))
+        if cp[1] >= 0
+            return j
+        end
+    end
+    return nothing
+end
+function collisional_indexes_rand(qtrees, mask; collpool)
+    cinds = Vector{Int}()
+    l = length(collpool)
+    if l == 0
+        return cinds
+    end
+    keep = (l ./ 8 .* randexp(l)) .> l:-1:1 #约保留1/8
+    if !any(keep)
+        keep[end] = 1
+    end
+    sort!(collpool, by=x->x[2])
+#     @show collpool keep
+    getqtree(i) = i==0 ? mask : qtrees[i]
+    for (i, j) in @view collpool[keep]
+        if j in cinds
+            continue
+        end
+        cp = collision(getqtree(i), getqtree(j))
+        if cp[1] >= 0
+            push!(cinds, j)
+        end
+    end
+    return cinds
 end
