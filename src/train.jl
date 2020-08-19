@@ -9,7 +9,7 @@ mutable struct Momentum
     velocity::IdDict
 end
   
-Momentum(η = 0.01, ρ = 0.9) = Momentum(η, ρ, IdDict())
+Momentum(η, ρ = 0.9) = Momentum(η, ρ, IdDict())
 Momentum(;η = 0.01, ρ = 0.9) = Momentum(η, ρ, IdDict())
 
 function apply(o::Momentum, x, Δ)

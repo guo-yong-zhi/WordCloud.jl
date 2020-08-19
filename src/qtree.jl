@@ -1,7 +1,7 @@
 module QTree
 export AbstractStackedQtree, StackedQtree, ShiftedQtree, buildqtree!,
     shift!, setrshift!,　setcshift!, getshift, collision,  collision_bfs, collision_bfs_rand,
-    findroom, levelnum, outofbounds, kernelsize, placement! 
+    findroom, levelnum, outofbounds, kernelsize, placement!, decode, placement!
 
 using Random
 using Combinatorics
@@ -220,6 +220,7 @@ end
 function outofbounds(bgqt::ShiftedQtree, qts)
     [i for (i,t) in enumerate(qts) if !inkernelbounds(bgqt, t)]
 end
+getshift(t::ShiftedQtree, l::Integer=1) = getshift(t[l])
 
 function collision(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, i=(levelnum(Q1), 1, 1))
     #     @show i
