@@ -28,21 +28,23 @@ end
 
 iter_expand(e) = Base.Iterators.repeated(e)
 iter_expand(l::Vector) = Base.Iterators.cycle(l)
+iter_expand(r::AbstractRange) = IterGen(st->rand(r))
 iter_expand(t::Tuple) = IterGen(st->rand(t))
 
 struct IterGen
     generator
 end
 Base.iterate(it::IterGen, state=0) = it.generator(state),state+1
+Base.length(it::IterGen) = typemax(Int)
 
-function prepare_texts(texts, weights, colors, angles, groundsize; bgcolor=(0,0,0,0), border=0)
+function prepareforeground(texts, weights, colors, angles, groundsize; bgcolor=(0,0,0,0), font="", border=0)
     ts = []
     imgs = []
     mimgs = []
     for (txt,sz,color,an) in zip(texts, weights, colors, angles)
 #         print(c)
         img, mimg = rendertext(string(txt),sz, color=color, bgcolor=bgcolor,
-            angle=an, border=border, returnmask=true)
+            angle=an, border=border, font=font, returnmask=true)
         t = ShiftedQtree(mimg, groundsize) |> buildqtree!
         push!(ts, t)
         push!(imgs, img)
@@ -78,7 +80,7 @@ function find_weight_scale(texts, weights, ground_size; border=0, initial_scale=
             break
         end
     end
-    @show text_occupied(texts, weights, sc, radius=border)
+#     @show text_occupied(texts, weights, sc, radius=border)
     return sc
 end
 
@@ -96,28 +98,28 @@ function max_collisional_index(qtrees, mask)
     nothing
 end
 
-function max_collisional_index_rand(qtrees, mask)
-    l = length(qtrees)
-    b = l - floor(Int, l / 8 * randexp()) #从末尾1/8起
-    getqtree(i) = i==0 ? mask : qtrees[i]
-    for i in b:-1:1
-        for j in 0:i-1
-            cp = collision(getqtree(i), getqtree(j))
-            if cp[1] >= 0
-                return i
-            end
-        end
-    end
-    for i in l:-1:b+1
-        for j in 0:i-1
-            cp = collision(getqtree(i), getqtree(j))
-            if cp[1] >= 0
-                return i
-            end
-        end
-    end
-    nothing
-end
+# function max_collisional_index_rand(qtrees, mask)
+#     l = length(qtrees)
+#     b = l - floor(Int, l / 8 * randexp()) #从末尾1/8起
+#     getqtree(i) = i==0 ? mask : qtrees[i]
+#     for i in b:-1:1
+#         for j in 0:i-1
+#             cp = collision(getqtree(i), getqtree(j))
+#             if cp[1] >= 0
+#                 return i
+#             end
+#         end
+#     end
+#     for i in l:-1:b+1
+#         for j in 0:i-1
+#             cp = collision(getqtree(i), getqtree(j))
+#             if cp[1] >= 0
+#                 return i
+#             end
+#         end
+#     end
+#     nothing
+# end
 
 function max_collisional_index_rand(qtrees, mask; collpool)
     l = length(collpool)

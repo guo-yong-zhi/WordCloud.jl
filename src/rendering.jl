@@ -1,10 +1,14 @@
 module Render
-export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate
+export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor
 
 using Luxor
 using Colors
 using ColorSchemes
 using ImageMagick
+
+parsecolor(str::AbstractString) = parse(Colorant, str)
+parsecolor(tp::Tuple) = ARGB32(tp...)
+parsecolor(c) = c
 
 function backgroundclip(p::AbstractMatrix, bgcolor; border=0)
     a = c = 1
@@ -31,21 +35,17 @@ function rendertext(str::AbstractString, size::Real; color="black", bgcolor=(0,0
     l = ceil(Int, size*l + 2border)
     Drawing(l, l, :image)
     origin()
-    if bgcolor isa Tuple
-        bgcolor = background(bgcolor...)
-    else
-        bgcolor = background(bgcolor)
-    end
+    bgcolor = parsecolor(bgcolor)
+    bgcolor = background(bgcolor)
     bgcolor = Luxor.ARGB32(bgcolor...)
-    setcolor(color)
+    setcolor(parsecolor(color))
     setfont(font, size)
     settext(str, halign="center", valign="center"; angle=angle)
     mat = image_as_matrix()
     finish()
-    bgcolor = mat[1] #bgcolor(1,0,0,0) will be image_as_matrix trans to (0,0,0,0)
-    mat = backgroundclip(mat, bgcolor, border=border)
+    mat = backgroundclip(mat, mat[1], border=border)
     if returnmask
-        return mat, textmask(mat, bgcolor, radius=border)
+        return mat, textmask(mat, mat[1], radius=border)
     else
         return mat
     end
@@ -70,21 +70,21 @@ function textmask(pic, bgcolor; radius=0)
     dilate(mask, radius)
 end
 
-function overlay(color1, color2)
+function overlay(color1::T, color2::T) where {T}
 #     @show color1, color2
     a2 = Colors.alpha(color2)
     if a2 == 0 return color1 end
     if a2 == 1 return color2 end
-    a1 = Colors.alpha(color1)
+    a1 = Colors.alpha(color1) |> Float64
     c1 = [Colors.red(color1), Colors.green(color1), Colors.blue(color1)]
     c2 = [Colors.red(color2), Colors.green(color2), Colors.blue(color2)]
     a = a1 + a2 - a1 * a2
     c = (c1 .* a1 .* (1-a2) .+ c2 .* a2) ./ (a>0 ? a : 1)
-    typeof(color1)(c..., a)
+#     @show c, a
+    T(min.(1, c)..., min(1, a))
 end
-
 "put img2 on img1 at (x, y)"
-function overlay!(img1, img2, x=1, y=1)
+function overlay!(img1::AbstractMatrix, img2::AbstractMatrix, x=1, y=1)
     h1, w1 = size(img1)
     h2, w2 = size(img2)
     img1v = @view img1[max(1,y):min(h1,y+h2-1), max(1,x):min(w1,x+w2-1)]
@@ -92,6 +92,13 @@ function overlay!(img1, img2, x=1, y=1)
 #     @show (h1, w1),(h2, w2),(x,y)
     img1v .= overlay.(img1v, img2v)
     img1
+end
+function overlay!(img::AbstractMatrix, imgs, pos)
+    for (i, p) in zip(imgs, pos)
+#         @show pos
+        overlay!(img, i, p...)
+    end
+    img
 end
 
 schemes_colorbrewer = filter(s -> occursin("colorbrewer", colorschemes[s].category), collect(keys(colorschemes)))
@@ -109,17 +116,13 @@ schemes = [schemes_colorbrewer..., schemes_seaborn...]
 get box or ellipse image
 shape(box, 80, 50) #80*50 box
 shape(box, 80, 50, 4) #box with cornerradius=4
-shape(ellipse, 80, 50, color="red") #80*50 ellipse
+shape(ellipse, 80, 50, color="red") #80*50 red ellipse
 """
 function shape(shape_, width, height, args...; color="white", bgcolor=(0,0,0,0))
     Drawing(width, height, :image)
     origin()
-    if bgcolor isa Tuple
-        bgcolor = background(bgcolor...)
-    else
-        bgcolor = background(bgcolor)
-    end
-    setcolor(color)
+    bgcolor = parsecolor(bgcolor)
+    setcolor(parsecolor(color))
     shape_(Point(0,0), width, height, args..., :fill)
     mat = image_as_matrix()
     finish()
@@ -149,7 +152,7 @@ end
 function GIF(directory)
     GIF(Iterators.Stateful(0:typemax(Int)), directory)
 end
-Base.push!(gif::GIF, img) = save(gif.directory*@sprintf("/%010d.png", popfirst!(gif.counter)), img)
+Base.push!(gif::GIF, img) = ImageMagick.save(gif.directory*@sprintf("/%010d.png", popfirst!(gif.counter)), img)
 (gif::GIF)(img) = Base.push!(gif, img)
 generate(gif::GIF) = try_gif_gen(gif.directory)
 end
