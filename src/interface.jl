@@ -125,6 +125,8 @@ function wordcloud(texts::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:filling_rate] = filling_rate
     imgs, mimgs, qtrees = prepareforeground(texts, weights * scale, colors, angles, groundsize, 
     bgcolor=(0, 0, 0, 0), border=border, font=font);
+    params[:border] = border
+    params[:font] = font
     placement!(deepcopy(maskqtree), qtrees)
     wordcloud(texts, weights, imgs, maskimg, qtrees, maskqtree, params)
 end

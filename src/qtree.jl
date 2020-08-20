@@ -1,6 +1,6 @@
 module QTree
 export AbstractStackedQtree, StackedQtree, ShiftedQtree, buildqtree!,
-    shift!, setrshift!,　setcshift!, getshift, collision,  collision_bfs, collision_bfs_rand,
+    shift!, setrshift!,　setcshift!, setshift!, getshift, collision,  collision_bfs, collision_bfs_rand,
     findroom, levelnum, outofbounds, kernelsize, placement!, decode, placement!
 
 using Random
@@ -100,6 +100,7 @@ getcshift(l::PaddedMat) = l.cshift
 getshift(l::PaddedMat) = l.rshift, l.cshift
 getdefault(l::PaddedMat) = l.default
 inkernelbounds(l::PaddedMat, r, c) = 0 < r - l.rshift <= size(l.kernel, 1) && 0 < c - l.cshift <= size(l.kernel, 2)
+inbounds(l::PaddedMat, r, c) = 0 < r <= size(l, 1) && 0 < c  <= size(l, 2)
 kernelsize(l::PaddedMat) = size(l.kernel)
 kernel(l::PaddedMat) = l.kernel
 function Base.checkbounds(l::PaddedMat, I...) end #关闭边界检查，允许负索引、超界索引
@@ -110,7 +111,7 @@ function Base.getindex(l::PaddedMat, r, c)
     return l.default #负索引、超界索引返回default
 end
 function Base.setindex!(l::PaddedMat, v, r, c)
-    @inbounds l.kernel[r - l.rshift, c - l.cshift] = v
+    l.kernel[r - l.rshift, c - l.cshift] = v #kernel自身有边界检查
 end
 
 Base.size(l::PaddedMat) = l.size
@@ -143,6 +144,7 @@ function ShiftedQtree(pic::AbstractMatrix{UInt8}; default=EMPTY)
     ShiftedQtree(pic, 2^ceil(Int, log2(m)), default=default)
 end
 function ShiftedQtree(pic::AbstractMatrix, args...; kargs...)
+    @assert !isempty(pic)
     pic = map(x -> x == 0 ? EMPTY : FULL, pic)
     ShiftedQtree(pic, args...; kargs...)
 end
@@ -213,14 +215,16 @@ function setshift!(t::ShiftedQtree, l::Integer, st1::Integer, st2::Integer)
     end
     buildqtree!(t, l + 1)
 end
-
-function inkernelbounds(bgqt::ShiftedQtree, qt::ShiftedQtree)
-    inkernelbounds(bgqt[1], (getshift(qt[1]) .+ kernelsize(qt[1]) .÷ 2)...)
+setshift!(t::ShiftedQtree, l::Integer, st::Tuple{Integer,Integer}) = setshift!(t, l, st...)
+getshift(t::ShiftedQtree, l::Integer=1) = getshift(t[l])
+kernelsize(t::ShiftedQtree, l::Integer=1) = kernelsize(t[l])
+function inbounds(bgqt::ShiftedQtree, qt::ShiftedQtree)
+    inbounds(bgqt[1], (getshift(qt[1]) .+ kernelsize(qt[1]) .÷ 2)...)
 end
 function outofbounds(bgqt::ShiftedQtree, qts)
-    [i for (i,t) in enumerate(qts) if !inkernelbounds(bgqt, t)]
+    [i for (i,t) in enumerate(qts) if !inbounds(bgqt, t)]
 end
-getshift(t::ShiftedQtree, l::Integer=1) = getshift(t[l])
+
 
 function collision(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, i=(levelnum(Q1), 1, 1))
     #     @show i
@@ -377,6 +381,7 @@ function overlap!(tree1::ShiftedQtree, tree2::ShiftedQtree, ind::Tuple{Int,Int,I
             qcode!(tree1, ind)
         end
     end
+    tree1
 end
 
 function overlap!(tree1::ShiftedQtree, tree2::ShiftedQtree)

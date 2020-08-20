@@ -6,9 +6,8 @@ using Colors
 using ColorSchemes
 using ImageMagick
 
-parsecolor(str::AbstractString) = parse(Colorant, str)
+parsecolor(c) = parse(Colorant, c)
 parsecolor(tp::Tuple) = ARGB32(tp...)
-parsecolor(c) = c
 
 function backgroundclip(p::AbstractMatrix, bgcolor; border=0)
     a = c = 1
@@ -19,20 +18,25 @@ function backgroundclip(p::AbstractMatrix, bgcolor; border=0)
     while all(p[end-b,:] .== bgcolor) && b < size(p, 1)
         b += 1
     end
-    p = p[a-border:end-b+border, :]
+    a = max(1, a-border)
+    b = min(size(p, 1), max(size(p, 1)-b+border, a))
+    p = p[a:b, :]
     while all(p[:,c] .== bgcolor) && c < size(p, 2)
         c += 1
     end
     while all(p[:, end-d] .== bgcolor) && d < size(p, 2)
         d += 1
     end
-#     @show a,b,c,d,border,bgcolor
-    return p[:, c-border:end-d+border]
+    # @show a,b,c,d,border,bgcolor
+    # @show c, d, p
+    c = max(1, c-border)
+    d = min(size(p, 2), max(size(p, 2)-d+border, c))
+    return p[:, c:d]
 end
 
 function rendertext(str::AbstractString, size::Real; color="black", bgcolor=(0,0,0,0), angle=0, font="", border=0, returnmask=false)
     l = length(str) + 1
-    l = ceil(Int, size*l + 2border)
+    l = ceil(Int, size*l + 2border + 2)
     Drawing(l, l, :image)
     origin()
     bgcolor = parsecolor(bgcolor)
