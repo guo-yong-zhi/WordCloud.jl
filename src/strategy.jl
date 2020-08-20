@@ -166,3 +166,18 @@ function collisional_indexes_rand(qtrees, mask; collpool)
     end
     return cinds
 end
+
+function rescale!(wc::wordcloud, scale::Real)
+    qts = wc.qtrees
+    center(qt) = getshift(qt) .+ kernelsize(qt) .÷ 2
+    centers = center.(qts)
+    imgs, mimgs, qtrees = prepareforeground(wc.texts, wc.weights * scale, 
+        wc.params[:colors], wc.params[:angles], wc.params[:groundsize], 
+    bgcolor=(0, 0, 0, 0), border=wc.params[:border], font=wc.params[:font])
+    wc.imgs = imgs
+    wc.qtrees = qtrees
+    wc.params[:scale] = scale
+    lefttop(center, qt) = center .- kernelsize(qt) .÷  2
+    setshift!.(qtrees, 1, lefttop.(centers, qtrees))
+    wc
+end
