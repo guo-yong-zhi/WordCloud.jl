@@ -8,6 +8,7 @@ using ImageMagick
 
 parsecolor(c) = parse(Colorant, c)
 parsecolor(tp::Tuple) = ARGB32(tp...)
+parsecolor(gray::Real) = Gray(gray)
 
 function backgroundclip(p::AbstractMatrix, bgcolor; border=0)
     a = c = 1
@@ -126,6 +127,7 @@ function shape(shape_, width, height, args...; color="white", bgcolor=(0,0,0,0))
     Drawing(width, height, :image)
     origin()
     bgcolor = parsecolor(bgcolor)
+    background(bgcolor)
     setcolor(parsecolor(color))
     shape_(Point(0,0), width, height, args..., :fill)
     mat = image_as_matrix()

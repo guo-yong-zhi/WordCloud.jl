@@ -6,16 +6,25 @@ end
 function occupied(imgs::AbstractVector, bgvalue=0)
     return sum(p->occupied(p, bgvalue), imgs)
 end
+function box_occupied(img::AbstractMatrix)
+    return size(img, 1) * size(img, 2)
+end
+function box_occupied(imgs::AbstractVector)
+    return sum(box_occupied, imgs)
+end
+function feelingoccupied(imgs)
+    m = length(imgs) ÷ 4
+    occupied(imgs[1:m]) + box_occupied(imgs[m+1:end]) #兼顾大字的内隙和小字的占据
+end
 
 function text_occupied(texts, weights, scale; radius=0)
     imgs = []
     for (c, sz) in zip(texts, weights)
 #         print(c)
-        img = Render.rendertext(string(c), sz * scale, border=radius)
-        img = Render.textmask(img, img[1], radius=radius)
-        push!(imgs, img)
+        img, mimg = Render.rendertext(string(c), sz * scale, border=radius, returnmask=true)
+        push!(imgs, mimg)
     end
-    return occupied(imgs)
+    feelingoccupied(imgs)
 end
 
 ## prepare
@@ -64,7 +73,7 @@ function find_weight_scale(texts, weights, ground_size; border=0, initial_scale=
     if initial_scale <= 0
         initial_scale = √(ground_size/length(texts))
     end
-    @assert sum(weights.^2) / length(weights) ≈ 1.0
+    @assert sum(weights.^2 .* length.(texts)) / length(weights) ≈ 1.0
     target_lower = (filling_rate - error) * ground_size
     target_upper = (filling_rate + error) * ground_size
     step = 0
@@ -177,6 +186,7 @@ function rescale!(wc::wordcloud, scale::Real)
     wc.imgs = imgs
     wc.qtrees = qtrees
     wc.params[:scale] = scale
+    wc.params[:mimgs] = mimgs
     lefttop(center, qt) = center .- kernelsize(qt) .÷  2
     setshift!.(qtrees, 1, lefttop.(centers, qtrees))
     wc
