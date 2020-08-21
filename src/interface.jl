@@ -61,8 +61,8 @@ end
 ## kargs example
 ### style kargs
 colors = "black" #all same color  
-colors = ("black", (0.5,0.5,0.7), "yellow", "#ff0000") #choose randomly  
-colors = ["black", (0.5,0.5,0.7), "yellow", "red", (0.5,0.5,0.7), ......] #use sequentially in cycle  
+colors = ("black", (0.5,0.5,0.7), "yellow", "#ff0000", 0.2) #choose randomly  
+colors = ["black", (0.5,0.5,0.7), "yellow", "red", (0.5,0.5,0.7), 0.2, ......] #use sequentially in cycle  
 angles = 0 #all same angle  
 angles = (0, 90, 45) #choose randomly  
 angles = 0:180 #choose randomly  
@@ -106,18 +106,18 @@ function wordcloud(texts::AbstractVector{<:AbstractString}, weights::AbstractVec
             maskcolor = "black"
         end
         maskimg = randommask(maskcolor)
-        transparentcolor = get(params, :transparentcolor, ARGB(1, 1, 1, 0))
+        transparentcolor = get(params, :transparentcolor, ARGB(1, 1, 1, 0)) |> parsecolor
     else
         maskimg = params[:maskimg]
     end
-    transparentcolor = get(params, :transparentcolor, maskimg[1])
+    transparentcolor = get(params, :transparentcolor, maskimg[1]) |> parsecolor
     maskimg, maskqtree, groundsize, groundoccupied = preparebackground(maskimg, transparentcolor)
     params[:maskimg] = maskimg
     params[:maskqtree] = maskqtree
     params[:groundsize] = groundsize
     params[:groundoccupied] = groundoccupied
 
-    weights = weights ./ √(sum(weights.^2) / length(weights))
+    weights = weights ./ √(sum(weights.^2 .* length.(texts)) / length(weights))
     params[:weights] = weights
     scale = find_weight_scale(texts, weights, groundoccupied, border=border, initial_scale=0, 
     filling_rate=filling_rate, max_iter=5, error=0.03)
@@ -125,6 +125,9 @@ function wordcloud(texts::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:filling_rate] = filling_rate
     imgs, mimgs, qtrees = prepareforeground(texts, weights * scale, colors, angles, groundsize, 
     bgcolor=(0, 0, 0, 0), border=border, font=font);
+    params[:mimgs] = mimgs
+#     fr = feelingoccupied(mimgs)/groundoccupied
+#     println("scale = $scale, filling_rate = $fr")
     params[:border] = border
     params[:font] = font
     placement!(deepcopy(maskqtree), qtrees)
@@ -151,19 +154,46 @@ function paint(wc::wordcloud, file)
 end
 
 function record(wc::wordcloud, ep::Number, gif_callback)
-    resultpic = overlay!(paint(wc), rendertext(string(ep), 32), 10, 10)
+    resultpic = overlay!(paint(wc), rendertext(string(ep), 32, color="black"), 10, 10)
+    resultpic = overlay!(resultpic, rendertext(string(ep), 35, color="white"), 10, 10)
     gif_callback(resultpic)
 end
 
-function generate(wc::wordcloud, nepoch::Number=600, args...; trainer=trainepoch_gen!, optimiser=Momentum(η=1/4, ρ=0.5), patient=10, krags...)
-    ep, nc = train_with_teleport!(wc.qtrees, wc.maskqtree, nepoch, args...; trainer=trainer, optimiser=optimiser, patient=patient, krags...)
+function generate(wc::wordcloud, nepoch::Number=600, args...; retry=2,
+    trainer=trainepoch_gen!, optimiser=Momentum(η=1/4, ρ=0.5), patient=10, krags...)
+    ep, nc = -1, -1
+    for r in 1:retry
+        fr = feelingoccupied(wc.params[:mimgs])/wc.params[:groundoccupied]
+        println("#$r. scale = $(wc.params[:scale]), filling_rate = $fr")
+        ep, nc = train_with_teleport!(wc.qtrees, wc.maskqtree, nepoch, args...; 
+            trainer=trainer, optimiser=optimiser, patient=patient, krags...)
+        if nc == 0
+            break
+        end
+        sc = wc.params[:scale] * 0.95
+        rescale!(wc, sc)
+    end
+    @show ep, nc
+    if nc != 0
+        colllist = listcollision(wc.qtrees, wc.maskqtree)
+        get_text(i) = i>0 ? wc.texts[i] : "#MASK#"
+        colltexts = [(get_text(i), get_text(j)) for (i,j) in colllist]
+        if length(colllist) > 0
+            println("have $(length(colllist)) collision.",
+            " try setting a larger `nepoch` and `retry`, or lower `filling_rate` in `wordcloud` to fix that")
+            println("$colltexts")
+        end
+    end
+    wc
 end
 
 function generate_animation(wc::wordcloud, args...; outputdir="gifresult", callbackstep=1, kargs...)
     try `mkdir $(outputdir)`|>run catch end
     gif = GIF(outputdir)
     record(wc, 0, gif)
-    ep, nc = generate(wc, args...; callbackstep=callbackstep, callbackfun=ep->record(wc, ep, gif), kargs...)
+    re = generate(wc, args...; callbackstep=callbackstep, callbackfun=ep->record(wc, ep, gif), kargs...)
     Render.generate(gif)
-    ep, nc
+    re
 end
+
+Base.show(io, m::MIME"image/png", wc::wordcloud) = Base.show(io, m, paint(wc::wordcloud))

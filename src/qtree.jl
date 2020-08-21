@@ -1,6 +1,7 @@
 module QTree
 export AbstractStackedQtree, StackedQtree, ShiftedQtree, buildqtree!,
-    shift!, setrshift!,　setcshift!, setshift!, getshift, collision,  collision_bfs, collision_bfs_rand,
+    shift!, setrshift!,　setcshift!, setshift!, getshift,
+    collision,  collision_bfs, collision_bfs_rand, listcollision,
     findroom, levelnum, outofbounds, kernelsize, placement!, decode, placement!
 
 using Random
@@ -315,6 +316,19 @@ function collision_bfs_rand(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, 
         end
     end
     return .- i # no collision
+end
+
+function listcollision(qtrees::AbstractVector, mask::AbstractStackedQtree)
+    collist = []
+    indpairs = combinations(0:length(qtrees), 2) |> collect
+    getqtree(i) = i==0 ? mask : qtrees[i]
+    for (i1, i2) in indpairs
+        cp = collision_bfs_rand(getqtree(i1), getqtree(i2))
+        if cp[1] >= 0
+            push!(collist, (i1, i2))
+        end
+    end
+    collist
 end
 
 function findroom(ground, q=[(levelnum(ground), 1, 1)])

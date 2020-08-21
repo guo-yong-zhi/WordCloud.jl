@@ -11,7 +11,7 @@ include("test_qtree.jl")
     weights = randexp(length(texts)) .* 1000 .+ randexp(length(texts)) .* 200 .+ rand(20:100, length(texts));
     wc = wordcloud(texts, weights, filling_rate=0.45)
     paint(wc)
-    @show generate(wc)
+    generate(wc)
     paint(wc::wordcloud, "test.jpg")
     @test isempty(WordCloud.outofbounds(wc.maskqtree, wc.qtrees))
 end

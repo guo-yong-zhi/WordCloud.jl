@@ -129,18 +129,6 @@ function train_step_ind!(mask, qtrees, i1, i2, collisionpoint, optimiser)
     end
 end
 
-function list_collision(qtrees, mask)
-    collist = []
-    indpairs = combinations(0:length(qtrees), 2) |> collect
-    getqtree(i) = i==0 ? mask : qtrees[i]
-    for (i1, i2) in indpairs
-        cp = collision_bfs_rand(getqtree(i1), getqtree(i2))
-        if cp[1] >= 0
-            push!(collist, (i1, i2))
-        end
-    end
-    collist
-end
 
 function trainepoch!(qtrees, mask; optimiser=(t, Δ)->Δ./4, optimiser_near=(t, Δ)->Δ./4, nearlevel=0, queue=Vector{Tuple{Int, Int, Int}}(), collpool=nothing)
     nearlevel = nearlevel<0 ? levelnum(qtrees[1])+nearlevel : nearlevel
@@ -271,12 +259,11 @@ end
 
 function train_with_teleport!(ts, maskqt, nepoch::Number, args...; 
         trainer=trainepoch_gen!, patient::Number=5, callbackstep=0, callbackfun=x->x,
-        queue=Vector{Tuple{Int, Int, Int}}(), kargs...)
+        queue=Vector{Tuple{Int, Int, Int}}(), collpool = Vector{Tuple{Int,Int}}(), kargs...)
     ep = 0
     nc = 0
     count = 0
     nc_min = Inf
-    collpool = Vector{Tuple{Int,Int}}()
     while ep < nepoch
         nc = trainer(ts, maskqt, args...; collpool=collpool, queue=queue, kargs...)
         ep += 1
