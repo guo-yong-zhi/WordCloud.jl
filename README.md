@@ -9,7 +9,7 @@ wordcloud in Julia
 * [x] 引入动量加速训练
 * [x] 分代调整以优化性能
 * [x] 控制字体大小和填充密度的策略
-* [ ] 重新放置、旋转和缩放的策略
+* [x] 重新放置、旋转和缩放的策略
 * [x] 文字颜色和方向
 * [ ] 并行计算
 
@@ -22,7 +22,7 @@ texts = [string(c) for c in texts];
 weights = rand(length(texts)) .^ 2 .* 100 .+ 30;
 wc = wordcloud(texts, weights, filling_rate=0.45)
 generate(wc)
-paint(wc)
+paint(wc, "wordcloud.png")
 ```
 
 # 训练过程

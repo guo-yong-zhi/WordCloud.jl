@@ -61,12 +61,12 @@ end
 ## kargs example
 ### style kargs
 colors = "black" #all same color  
-colors = ("black", (0.5,0.5,0.7), "yellow", "#ff0000", 0.2) #choose randomly  
-colors = ["black", (0.5,0.5,0.7), "yellow", "red", (0.5,0.5,0.7), 0.2, ......] #use sequentially in cycle  
+colors = ("black", (0.5,0.5,0.7), "yellow", "#ff0000", 0.2) #choose entries randomly  
+colors = ["black", (0.5,0.5,0.7), "yellow", "red", (0.5,0.5,0.7), 0.2, ......] #use entries sequentially in cycle  
 angles = 0 #all same angle  
-angles = (0, 90, 45) #choose randomly  
-angles = 0:180 #choose randomly  
-angles = [0, 22, 4, 1, 100, 10, ......] #use sequentially in cycle  
+angles = (0, 90, 45) #choose entries randomly  
+angles = 0:180 #choose entries randomly  
+angles = [0, 22, 4, 1, 100, 10, ......] #use entries sequentially in cycle  
 filling_rate = 0.5  
 border = 1  
 ### mask kargs
@@ -99,7 +99,11 @@ function wordcloud(texts::AbstractVector{<:AbstractString}, weights::AbstractVec
         maskcolor = "white"
         try
 #             maskcolor = RGB(1,1,1) - RGB(sum(colors_o)/length(colors_o)) #补色
-            maskcolor = sum(Gray.(parsecolor.(colors_o)))/length(colors_o)<0.7 ? "white" : "black" #黑白
+            if sum(Gray.(parsecolor.(colors_o)))/length(colors_o)<0.7 #黑白
+                maskcolor = rand((1.0, (rand(0.9:0.01:1.0), rand(0.9:0.01:1.0), rand(0.9:0.01:1.0))))
+            else
+                maskcolor = rand((0.0, (rand(0.0:0.01:0.1), rand(0.0:0.01:0.1), rand(0.0:0.01:0.1))))
+            end
 #             @show sum(colors_o)/length(colors_o)
         catch
             @show "colors sum failed",colors_o
@@ -153,9 +157,10 @@ function paint(wc::wordcloud, file)
     ImageMagick.save(file, paint(wc))
 end
 
-function record(wc::wordcloud, ep::Number, gif_callback)
-    resultpic = overlay!(paint(wc), rendertext(string(ep), 32, color="black"), 10, 10)
-    resultpic = overlay!(resultpic, rendertext(string(ep), 35, color="white"), 10, 10)
+function record(wc::wordcloud, ep::Number, gif_callback=x->x)
+#     @show size(n1)
+    resultpic = overlay!(paint(wc), 
+        rendertextoutlines(string(ep), 32, color="black", linecolor="white", linewidth=1), 20, 20)
     gif_callback(resultpic)
 end
 

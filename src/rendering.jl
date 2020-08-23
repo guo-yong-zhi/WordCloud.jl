@@ -1,5 +1,5 @@
 module Render
-export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor
+export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines
 
 using Luxor
 using Colors
@@ -13,19 +13,19 @@ parsecolor(gray::Real) = Gray(gray)
 function backgroundclip(p::AbstractMatrix, bgcolor; border=0)
     a = c = 1
     b = d = 0
-    while all(p[a,:] .== bgcolor) && a < size(p, 1)
+    while a < size(p, 1) && all(p[a,:] .== bgcolor)
         a += 1
     end
-    while all(p[end-b,:] .== bgcolor) && b < size(p, 1)
+    while b < size(p, 1) && all(p[end-b,:] .== bgcolor)
         b += 1
     end
     a = max(1, a-border)
     b = min(size(p, 1), max(size(p, 1)-b+border, a))
     p = p[a:b, :]
-    while all(p[:,c] .== bgcolor) && c < size(p, 2)
+    while c < size(p, 2) && all(p[:,c] .== bgcolor)
         c += 1
     end
-    while all(p[:, end-d] .== bgcolor) && d < size(p, 2)
+    while d < size(p, 2) && all(p[:, end-d] .== bgcolor)
         d += 1
     end
     # @show a,b,c,d,border,bgcolor
@@ -55,7 +55,29 @@ function rendertext(str::AbstractString, size::Real; color="black", bgcolor=(0,0
         return mat
     end
 end
-    
+
+function rendertextoutlines(str::AbstractString, size::Real; color="black", bgcolor=(0,0,0,0), 
+        linewidth=3, linecolor="white", font="")
+    l = length(str)
+    Drawing(ceil(Int, 2l*(size + 2linewidth) + 2), ceil(Int, 2*(size + 2linewidth) + 2), :image)
+    origin()
+    bgcolor = parsecolor(bgcolor)
+    bgcolor = background(bgcolor)
+    bgcolor = Luxor.ARGB32(bgcolor...)
+    setcolor(parsecolor(color))
+#     setfont(font, size)
+    fontface(font)
+    fontsize(size)
+    setline(linewidth)
+    textoutlines(str, O, :path, halign="center", valign="center")
+    fillpreserve()
+    setcolor(linecolor)
+    strokepath()
+    mat = image_as_matrix()
+    finish()
+    mat = backgroundclip(mat, mat[1])
+end   
+
 function dilate(mat, r)
     mat2 = copy(mat)
     mat2[1:end-r, :] .|= mat[1+r:end, :]
