@@ -1,5 +1,6 @@
 module Render
-export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines
+export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
+    colorschemes, schemes
 
 using Luxor
 using Colors

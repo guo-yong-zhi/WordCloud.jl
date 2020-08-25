@@ -4,12 +4,14 @@ function occupied(img::AbstractMatrix, bgvalue=0)
 end
 
 function occupied(imgs::AbstractVector, bgvalue=0)
+    if isempty(imgs) return 0 end
     return sum(p->occupied(p, bgvalue), imgs)
 end
 function box_occupied(img::AbstractMatrix)
     return size(img, 1) * size(img, 2)
 end
 function box_occupied(imgs::AbstractVector)
+    if isempty(imgs) return 0 end
     return sum(box_occupied, imgs)
 end
 function feelingoccupied(imgs)
@@ -17,9 +19,9 @@ function feelingoccupied(imgs)
     occupied(imgs[1:m]) + box_occupied(imgs[m+1:end]) #兼顾大字的内隙和小字的占据
 end
 
-function text_occupied(texts, weights, scale; radius=0)
+function text_occupied(words, weights, scale; radius=0)
     imgs = []
-    for (c, sz) in zip(texts, weights)
+    for (c, sz) in zip(words, weights)
 #         print(c)
         img, mimg = Render.rendertext(string(c), sz * scale, border=radius, returnmask=true)
         push!(imgs, mimg)
@@ -46,11 +48,11 @@ end
 Base.iterate(it::IterGen, state=0) = it.generator(state),state+1
 Base.length(it::IterGen) = typemax(Int)
 
-function prepareforeground(texts, weights, colors, angles, groundsize; bgcolor=(0,0,0,0), font="", border=0)
+function prepareforeground(words, weights, colors, angles, groundsize; bgcolor=(0,0,0,0), font="", border=0)
     ts = []
     imgs = []
     mimgs = []
-    for (txt,sz,color,an) in zip(texts, weights, colors, angles)
+    for (txt,sz,color,an) in zip(words, weights, colors, angles)
 #         print(c)
         img, mimg = rendertext(string(txt),sz, color=color, bgcolor=bgcolor,
             angle=an, border=border, font=font, returnmask=true)
@@ -63,33 +65,36 @@ function prepareforeground(texts, weights, colors, angles, groundsize; bgcolor=(
 end
 
 ## weight_scale
-function cal_weight_scale(texts, weights, target; initial_scale=64, border=0)
+function cal_weight_scale(words, weights, target; initial_scale=64, border=0)
     input = initial_scale
-    output = text_occupied(texts, weights, input, radius=border)
+    output = text_occupied(words, weights, input, radius=border)
+#     @show input,output
     return output, sqrt(target/output) * (input+2border) - 2border# 假设output=k*(input+2border)^2
 end
 
-function find_weight_scale(texts, weights, ground_size; border=0, initial_scale=0, filling_rate=0.3, max_iter=5, error=0.05)
+function find_weight_scale(words, weights, ground_size; border=0, initial_scale=0, filling_rate=0.3, max_iter=5, error=0.05)
     if initial_scale <= 0
-        initial_scale = √(ground_size/length(texts))
+        initial_scale = √(ground_size/length(words))
     end
-    @assert sum(weights.^2 .* length.(texts)) / length(weights) ≈ 1.0
+    @assert sum(weights.^2 .* length.(words)) / length(weights) ≈ 1.0
     target_lower = (filling_rate - error) * ground_size
     target_upper = (filling_rate + error) * ground_size
     step = 0
     sc = initial_scale
     while true
-        tg, sc = cal_weight_scale(texts, weights, filling_rate * ground_size, initial_scale=sc, border=border)
-        @show sc, tg, tg / ground_size
-        if step >= max_iter
+        step = step + 1
+        if step > max_iter
             @warn "find_weight_scale reach max_iter"
             break
         end
+        tg, sc = cal_weight_scale(words, weights, filling_rate * ground_size, initial_scale=sc, border=border)
+        @show sc, tg, tg / ground_size
         if target_lower <= tg <= target_upper
             break
         end
+        
     end
-#     @show text_occupied(texts, weights, sc, radius=border)
+#     @show text_occupied(words, weights, sc, radius=border)
     return sc
 end
 
@@ -180,7 +185,7 @@ function rescale!(wc::wordcloud, scale::Real)
     qts = wc.qtrees
     center(qt) = getshift(qt) .+ kernelsize(qt) .÷ 2
     centers = center.(qts)
-    imgs, mimgs, qtrees = prepareforeground(wc.texts, wc.weights * scale, 
+    imgs, mimgs, qtrees = prepareforeground(wc.words, wc.weights * scale, 
         wc.params[:colors], wc.params[:angles], wc.params[:groundsize], 
     bgcolor=(0, 0, 0, 0), border=wc.params[:border], font=wc.params[:font])
     wc.imgs = imgs
