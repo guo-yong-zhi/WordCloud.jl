@@ -1,7 +1,6 @@
 # WordCloud
 wordcloud in Julia
 ---
-![wordcloud](res/guxiang.png)
 
 * [x] 排序 & 预放置
 * [x] 基于四叉树碰撞检测
@@ -18,14 +17,25 @@ wordcloud in Julia
 ]add WordCloud
 using WordCloud
 texts = "天地玄黄宇宙洪荒日月盈昃辰宿列张寒来暑往秋收冬藏闰余成岁律吕调阳云腾致雨露结为霜金生丽水玉出昆冈剑号巨阙珠称夜光果珍李柰菜重芥姜海咸河淡鳞潜羽翔龙师火帝鸟官人皇始制文字乃服衣裳推位让国有虞陶唐吊民伐罪周发殷汤坐朝问道垂拱平章"
-texts = [string(c) for c in texts];
-weights = rand(length(texts)) .^ 2 .* 100 .+ 30;
-wc = wordcloud(texts, weights, filling_rate=0.45)
+texts = [string(c) for c in texts]
+weights = rand(length(texts)) .^ 2 .* 100 .+ 30
+wc = wordcloud(texts, weights)
 generate(wc)
-paint(wc, "wordcloud.png")
+paint(wc, "qianziwen.png")
 ```
+# More Complex Usage
+```julia
+wc = wordcloud(
+    process(open("res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
+    maskimg = loadmask("res/alice_mask.png", color="#faeef8"),
+    colors = (WordCloud.colorschemes[:Set1_5].colors..., ),
+    angles = (0, 90),
+    filling_rate = 0.6) |> generate
+paint(wc, "alice.png")
+```
+![wordcloud](res/alice.png)
 
-# 训练过程
+# Visualization of Training
 ![training](res/training.gif)
 ***
 linux添加中文字体  
@@ -35,3 +45,8 @@ linux添加中文字体
 配置ffmpeg环境
 > add /mnt/lustre/share/ffmpeg-4.2.1/lib to ENV["LD_LIBRARY_PATH"]  
 > add /mnt/lustre/share/ffmpeg-4.2.1/bin to ENV["PATH"]  
+***
+# other wordcloud 
+> [word_cloud](https://github.com/amueller/word_cloud)  
+> [d3-cloud](https://github.com/jasondavies/d3-cloud)  
+> [wordcloud](https://github.com/timdream/wordcloud)  
