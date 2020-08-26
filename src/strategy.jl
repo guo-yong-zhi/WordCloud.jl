@@ -19,11 +19,11 @@ function feelingoccupied(imgs)
     occupied(imgs[1:m]) + box_occupied(imgs[m+1:end]) #兼顾大字的内隙和小字的占据
 end
 
-function text_occupied(words, weights, scale; radius=0)
+function text_occupied(words, weights, scale; font="", border=0, minfontsize=0)
     imgs = []
     for (c, sz) in zip(words, weights)
 #         print(c)
-        img, mimg = Render.rendertext(string(c), sz * scale, border=radius, returnmask=true)
+        img, mimg = Render.rendertext(string(c), max(minfontsize, sz * scale), font=font, border=border, returnmask=true)
         push!(imgs, mimg)
     end
     feelingoccupied(imgs)
@@ -48,13 +48,13 @@ end
 Base.iterate(it::IterGen, state=0) = it.generator(state),state+1
 Base.length(it::IterGen) = typemax(Int)
 
-function prepareforeground(words, weights, colors, angles, groundsize; bgcolor=(0,0,0,0), font="", border=0)
+function prepareforeground(words, weights, colors, angles, groundsize; bgcolor=(0,0,0,0), font="", border=0, minfontsize=0)
     ts = []
     imgs = []
     mimgs = []
     for (txt,sz,color,an) in zip(words, weights, colors, angles)
 #         print(c)
-        img, mimg = rendertext(string(txt),sz, color=color, bgcolor=bgcolor,
+        img, mimg = rendertext(string(txt), max(minfontsize, sz), color=color, bgcolor=bgcolor,
             angle=an, border=border, font=font, returnmask=true)
         t = ShiftedQtree(mimg, groundsize) |> buildqtree!
         push!(ts, t)
@@ -65,14 +65,14 @@ function prepareforeground(words, weights, colors, angles, groundsize; bgcolor=(
 end
 
 ## weight_scale
-function cal_weight_scale(words, weights, target; initial_scale=64, border=0)
+function cal_weight_scale(words, weights, target; border=0, initial_scale=64, kargs...)
     input = initial_scale
-    output = text_occupied(words, weights, input, radius=border)
+    output = text_occupied(words, weights, input; border=border, kargs...)
 #     @show input,output
     return output, sqrt(target/output) * (input+2border) - 2border# 假设output=k*(input+2border)^2
 end
 
-function find_weight_scale(words, weights, ground_size; border=0, initial_scale=0, filling_rate=0.3, max_iter=5, error=0.05)
+function find_weight_scale(words, weights, ground_size; initial_scale=0, filling_rate=0.3, max_iter=5, error=0.05, kargs...)
     if initial_scale <= 0
         initial_scale = √(ground_size/length(words))
     end
@@ -87,8 +87,8 @@ function find_weight_scale(words, weights, ground_size; border=0, initial_scale=
             @warn "find_weight_scale reach max_iter"
             break
         end
-        tg, sc = cal_weight_scale(words, weights, filling_rate * ground_size, initial_scale=sc, border=border)
-        @show sc, tg, tg / ground_size
+        tg, sc = cal_weight_scale(words, weights, filling_rate * ground_size, initial_scale=sc; kargs...)
+        @show sc, tg, tg/ground_size
         if target_lower <= tg <= target_upper
             break
         end
@@ -187,7 +187,8 @@ function rescale!(wc::wordcloud, scale::Real)
     centers = center.(qts)
     imgs, mimgs, qtrees = prepareforeground(wc.words, wc.weights * scale, 
         wc.params[:colors], wc.params[:angles], wc.params[:groundsize], 
-    bgcolor=(0, 0, 0, 0), border=wc.params[:border], font=wc.params[:font])
+        bgcolor=(0, 0, 0, 0), border=wc.params[:border], font=wc.params[:font],
+        minfontsize=wc.params[:minfontsize])
     wc.imgs = imgs
     wc.qtrees = qtrees
     wc.params[:scale] = scale

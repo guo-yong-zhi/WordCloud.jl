@@ -31,7 +31,7 @@ wc = wordcloud(
     colors = (WordCloud.colorschemes[:Set1_5].colors..., ),
     angles = (0, 90),
     filling_rate = 0.6) |> generate
-paint(wc, "alice.png")
+paint(wc, "alice.png", ratio=0.5)
 ```
 ![wordcloud](res/alice.png)
 
