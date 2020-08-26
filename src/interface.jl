@@ -53,7 +53,7 @@ mutable struct wordcloud
     words
     weights
     imgs
-    maskimg
+    mask
     qtrees
     maskqtree
     params::Dict{Symbol,Any}
@@ -72,10 +72,10 @@ angles = [0, 22, 4, 1, 100, 10, ......] #use entries sequentially in cycle
 filling_rate = 0.5  
 border = 1  
 ### mask kargs
-maskimg = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
-maskimg = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
-maskimg = shape(ellipse, 800, 600, color="white", bgcolor=(0,0,0,0)) #see doc of `shape`  
-transparentcolor = ARGB32(0,0,0,0) #set the transparent color in maskimg  
+mask = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
+mask = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
+mask = shape(ellipse, 800, 600, color="white", bgcolor=(0,0,0,0)) #see doc of `shape`  
+transparentcolor = ARGB32(0,0,0,0) #set the transparent color in mask  
 """
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter)|>collect, values(counter)|>collect; kargs...)
@@ -102,7 +102,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     angles = angles[si]
     params[:angles] = angles
     params[:font] = font
-    if !haskey(params, :maskimg)
+    if !haskey(params, :mask)
         maskcolor = "white"
         try
 #             maskcolor = RGB(1,1,1) - RGB(sum(colors_o)/length(colors_o)) #补色
@@ -116,14 +116,14 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
             @show "colors sum failed",colors_o
             maskcolor = "black"
         end
-        maskimg = randommask(maskcolor)
+        mask = randommask(maskcolor)
         transparentcolor = get(params, :transparentcolor, ARGB(1, 1, 1, 0)) |> parsecolor
     else
-        maskimg = params[:maskimg]
+        mask = params[:mask]
     end
-    transparentcolor = get(params, :transparentcolor, maskimg[1]) |> parsecolor
-    maskimg, maskqtree, groundsize, groundoccupied = preparebackground(maskimg, transparentcolor)
-#     params[:maskimg] = maskimg
+    transparentcolor = get(params, :transparentcolor, mask[1]) |> parsecolor
+    mask, maskqtree, groundsize, groundoccupied = preparebackground(mask, transparentcolor)
+#     params[:mask] = mask
 #     params[:maskqtree] = maskqtree
     params[:groundsize] = groundsize
     params[:groundoccupied] = groundoccupied
@@ -142,7 +142,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:border] = border
     params[:font] = font
     placement!(deepcopy(maskqtree), qtrees)
-    wordcloud(words, weights, imgs, maskimg, qtrees, maskqtree, params)
+    wordcloud(words, weights, imgs, mask, qtrees, maskqtree, params)
 end
 
 function getposition(wc)
@@ -152,7 +152,7 @@ function getposition(wc)
 end
 
 function paint(wc::wordcloud, args...; kargs...)
-    resultpic = convert.(ARGB32, wc.maskimg)#.|>ARGB32
+    resultpic = convert.(ARGB32, wc.mask)#.|>ARGB32
     overlay!(resultpic, wc.imgs, getposition(wc))
     if !(isempty(args) && isempty(kargs))
         resultpic = imresize(resultpic, args...; kargs...)

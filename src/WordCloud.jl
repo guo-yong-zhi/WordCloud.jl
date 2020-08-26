@@ -5,6 +5,7 @@ include("qtree.jl")
 include("rendering.jl")
 include("nlp.jl")
 using .Render
+using .QTree
 using .NLP
 include("train.jl")
 include("interface.jl")

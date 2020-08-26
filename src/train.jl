@@ -182,8 +182,8 @@ function trainepoch_gen!(qtrees, mask; optimiser=(t, Δ)->Δ./4, nearlevel=-4, q
         return nsp
     end 
     if length(nearpool) == 0 return nsp end
-#     @show length(nearpool)
-    for ni in 1:min(10, 4length(indpairs)÷length(nearpool))
+#     @show "#",length(nearpool)
+    for ni in 1 : 2length(indpairs)÷length(nearpool) #the loop cost should not exceed 2length(indpairs)
         empty!(collpool)
         for (i1, i2) in nearpool |> shuffle!
             cp = collision_bfs_rand(getqt(i1), getqt(i2))
@@ -192,9 +192,9 @@ function trainepoch_gen!(qtrees, mask; optimiser=(t, Δ)->Δ./4, nearlevel=-4, q
                 push!(collpool, (i1, i2))
             end
         end
-        if length(collpool) == 0 return nsp end
 #         @show length(collpool)
-        for ci in 1:min(10, 4length(nearpool)÷length(collpool))
+        if ni > length(collpool) break end # loop only when there are enough collisions
+        for ci in 1 : 2length(nearpool)÷length(collpool) #the loop cost should not exceed 2length(nearpool)
             nsp2 = 0
             for (i1, i2) in collpool |> shuffle!
                 cp = collision_bfs_rand(getqt(i1), getqt(i2))
@@ -204,9 +204,7 @@ function trainepoch_gen!(qtrees, mask; optimiser=(t, Δ)->Δ./4, nearlevel=-4, q
                     nsp2 += 1
                 end
             end
-            if nsp2 == 0
-                return nsp
-            end
+            if ci > nsp2 break end # loop only when there are enough collisions
         end
         # @show length(indpairs),length(nearpool),collpool
     end

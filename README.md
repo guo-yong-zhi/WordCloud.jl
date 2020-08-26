@@ -8,7 +8,7 @@ wordcloud in Julia
 * [x] 引入动量加速训练
 * [x] 分代调整以优化性能
 * [x] 控制字体大小和填充密度的策略
-* [x] 重新放置、旋转和缩放的策略
+* [x] 重新放置和缩放的策略
 * [x] 文字颜色和方向
 * [ ] 并行计算
 
@@ -27,7 +27,7 @@ paint(wc, "qianziwen.png")
 ```julia
 wc = wordcloud(
     process(open("res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
-    maskimg = loadmask("res/alice_mask.png", color="#faeef8"),
+    mask = loadmask("res/alice_mask.png", color="#faeef8"),
     colors = (WordCloud.colorschemes[:Set1_5].colors..., ),
     angles = (0, 90),
     filling_rate = 0.6) |> generate
