@@ -276,7 +276,7 @@ function train_with_teleport!(ts, maskqt, nepoch::Number, args...;
             count = 0
             nc_min = nc
             cinds = teleport!(ts, maskqt, collpool=collpool)
-            println("@epoch $ep, nc $nc teleport $cinds")
+            println("@epoch $ep, collision $nc teleport $cinds")
         end
         if callbackstep>0 && ep%callbackstep==0
             callbackfun(ep)

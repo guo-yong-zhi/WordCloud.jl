@@ -31,13 +31,21 @@ loadmask("res/heart.jpg", ratio=0.3) #scale 0.3
 loadmask("res/heart.jpg", color="red", ratio=2) #set forecolor color  
 loadmask("res/heart.jpg", color="red", transparentcolor=(1,1,1)) #set forecolor color with transparentcolor  
 """
-function loadmask(img::AbstractMatrix, args...; color=:original, transparentcolor=:auto, kargs...)
-    if color!=:original
+function loadmask(img::AbstractMatrix, args...; color=:original, backgroundcolor=:original, transparentcolor=:auto, kargs...)
+    if color!=:original || backgroundcolor!=:original
         img = ARGB.(img)
-        color = parsecolor(color)
         transparentcolor = transparentcolor==:auto ? img[1] : parsecolor(transparentcolor)
-        m = @view img[img.!=transparentcolor]
-        m .= convert.(typeof(img[1]), Colors.alphacolor.(color, Colors.alpha.(m))) #保持透明度
+        mask = img.!=transparentcolor
+        if color!=:original
+            color = parsecolor(color)
+            m = @view img[mask]
+            m .= convert.(typeof(img[1]), Colors.alphacolor.(color, Colors.alpha.(m))) #保持透明度
+        end
+        if backgroundcolor!=:original
+            backgroundcolor = parsecolor(backgroundcolor)
+            m = @view img[.~mask]
+            m .= convert.(typeof(img[1]), Colors.alphacolor.(backgroundcolor, Colors.alpha.(m))) #保持透明度
+        end
     end
     if !(isempty(args) && isempty(kargs))
         img = imresize(img, args...; kargs...)
@@ -83,7 +91,7 @@ wordcloud(counter::AbstractVector{<:Pair}; kargs...) = wordcloud(first.(counter)
 
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=randomscheme(), angles=randomangles(), font="",
-                filling_rate=0.5, border=1, kargs...)
+                filling_rate=0.5, border=1, minfontsize=:auto, kargs...)
     
     @assert length(words) == length(weights) > 0
 #     @show words,weights
@@ -101,7 +109,6 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     angles = Iterators.take(iter_expand(angles), length(words)) |> collect
     angles = angles[si]
     params[:angles] = angles
-    params[:font] = font
     if !haskey(params, :mask)
         maskcolor = "white"
         try
@@ -128,23 +135,30 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:groundsize] = groundsize
     params[:groundoccupied] = groundoccupied
     @assert groundoccupied > 0
-
+       
+    if minfontsize==:auto
+        minfontsize = min(8, sqrt(groundoccupied/length(words)/8))
+        println("set minfontsize to $minfontsize")
+        @show groundoccupied, length(words)
+    end
     weights = weights ./ √(sum(weights.^2 .* length.(words)) / length(weights))
     params[:weights] = weights
     scale = find_weight_scale(words, weights, groundoccupied, border=border, initial_scale=0, 
-    filling_rate=filling_rate, max_iter=5, error=0.03)
+    filling_rate=filling_rate, max_iter=5, error=0.03, minfontsize=minfontsize)
     params[:scale] = scale
     params[:filling_rate] = filling_rate
-    println("set filling_rate to $filling_rate")
+    println("set filling_rate to $filling_rate, with scale=$scale")
     imgs, mimgs, qtrees = prepareforeground(words, weights * scale, colors, angles, groundsize, 
-    bgcolor=(0, 0, 0, 0), border=border, font=font);
+    bgcolor=(0, 0, 0, 0), border=border, font=font, minfontsize=minfontsize);
     params[:mimgs] = mimgs
     params[:border] = border
     params[:font] = font
+    params[:minfontsize] = minfontsize
     placement!(deepcopy(maskqtree), qtrees)
     wordcloud(words, weights, imgs, mask, qtrees, maskqtree, params)
 end
-
+Base.getindex(wc::wordcloud, inds...) = wc.words[inds...]=>wc.weights[inds...]
+Base.lastindex(wc::wordcloud) = lastindex(wc.words)
 function getposition(wc)
     msy, msx = getshift(wc.maskqtree)
     pos = getshift.(wc.qtrees)
@@ -155,13 +169,16 @@ function paint(wc::wordcloud, args...; kargs...)
     resultpic = convert.(ARGB32, wc.mask)#.|>ARGB32
     overlay!(resultpic, wc.imgs, getposition(wc))
     if !(isempty(args) && isempty(kargs))
+        resultpic = convert.(ARGB{Colors.N0f8}, resultpic)
         resultpic = imresize(resultpic, args...; kargs...)
     end
     resultpic
 end
 
-function paint(wc::wordcloud, file)
-    ImageMagick.save(file, paint(wc))
+function paint(wc::wordcloud, file, args...; kargs...)
+    img = paint(wc, args...; kargs...)
+    ImageMagick.save(file, img)
+    img
 end
 
 function record(wc::wordcloud, ep::Number, gif_callback=x->x)
