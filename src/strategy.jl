@@ -84,7 +84,7 @@ function find_weight_scale(words, weights, ground_size; initial_scale=0, filling
     while true
         step = step + 1
         if step > max_iter
-            @warn "find_weight_scale reach max_iter"
+            @warn "find_weight_scale reach max_iter. This may be caused by too small background image or too many words or too big `minfontsize`."
             break
         end
         tg, sc = cal_weight_scale(words, weights, filling_rate * ground_size, initial_scale=sc; kargs...)

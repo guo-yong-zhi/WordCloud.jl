@@ -164,7 +164,7 @@ function getposition(wc)
     pos = getshift.(wc.qtrees)
     map(p->(p[2]-msx+1, p[1]-msy+1), pos)
 end
-
+QTree.placement!(wc::wordcloud) = placement!(deepcopy(wc.maskqtree), wc.qtrees)
 function paint(wc::wordcloud, args...; kargs...)
     resultpic = convert.(ARGB32, wc.mask)#.|>ARGB32
     overlay!(resultpic, wc.imgs, getposition(wc))
@@ -188,7 +188,7 @@ function record(wc::wordcloud, ep::Number, gif_callback=x->x)
     gif_callback(resultpic)
 end
 
-function generate(wc::wordcloud, nepoch::Number=100, args...; retry=3,
+function generate!(wc::wordcloud, nepoch::Number=100, args...; retry=3,
     trainer=trainepoch_gen!, optimiser=Momentum(η=1/4, ρ=0.5), patient=10, krags...)
     ep, nc = -1, -1
     for r in 1:retry
@@ -216,11 +216,14 @@ function generate(wc::wordcloud, nepoch::Number=100, args...; retry=3,
     wc
 end
 
-function generate_animation(wc::wordcloud, args...; outputdir="gifresult", callbackstep=1, kargs...)
+function generate_animation!(wc::wordcloud, args...; outputdir="gifresult", overwrite=false, callbackstep=1, kargs...)
+    if overwrite
+        try `rm -r $(outputdir)`|>run catch end
+    end
     try `mkdir $(outputdir)`|>run catch end
     gif = GIF(outputdir)
     record(wc, 0, gif)
-    re = generate(wc, args...; callbackstep=callbackstep, callbackfun=ep->record(wc, ep, gif), kargs...)
+    re = generate!(wc, args...; callbackstep=callbackstep, callbackfun=ep->record(wc, ep, gif), kargs...)
     Render.generate(gif)
     re
 end
