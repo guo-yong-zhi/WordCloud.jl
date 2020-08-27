@@ -20,7 +20,7 @@ texts = "天地玄黄宇宙洪荒日月盈昃辰宿列张寒来暑往秋收冬�
 texts = [string(c) for c in texts]
 weights = rand(length(texts)) .^ 2 .* 100 .+ 30
 wc = wordcloud(texts, weights)
-generate(wc)
+generate!(wc)
 paint(wc, "qianziwen.png")
 ```
 # More Complex Usage
@@ -30,7 +30,7 @@ wc = wordcloud(
     mask = loadmask("res/alice_mask.png", color="#faeef8"),
     colors = (WordCloud.colorschemes[:Set1_5].colors..., ),
     angles = (0, 90),
-    filling_rate = 0.6) |> generate
+    filling_rate = 0.6) |> generate!
 paint(wc, "alice.png", ratio=0.5)
 ```
 ![wordcloud](res/alice.png)

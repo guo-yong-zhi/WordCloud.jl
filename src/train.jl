@@ -157,56 +157,82 @@ function trainepoch!(qtrees, mask; optimiser=(t, Δ)->Δ./4, optimiser_near=(t, 
     end
     nsp
 end
-                        
-function trainepoch_gen!(qtrees, mask; optimiser=(t, Δ)->Δ./4, nearlevel=-4, queue=Vector{Tuple{Int, Int, Int}}(), nearpool = Vector{Tuple{Int,Int}}(), collpool = Vector{Tuple{Int,Int}}())
-    nearlevel = nearlevel<0 ? levelnum(qtrees[1])+nearlevel : nearlevel
-    nearlevel = nearlevel<1 ? 1 : nearlevel
-    nsp = 0
-    indpairs = combinations(0:length(qtrees),2) |> collect |> shuffle!
+
+function filttrain!(mask, qtrees, inpool, outpool, nearlevel2, optimiser)
     getqt(i) = i==0 ? mask : qtrees[i]
-    
-    for (i1, i2) in indpairs
-        t1 = getqt(i1)
-        t2 = getqt(i2)
-        empty!(queue)
-        cp = collision_bfs_rand(t1, t2, queue)
+    if outpool !== nothing
+        empty!(outpool)
+    end
+    nsp1 = 0
+    for (i1, i2) in inpool |> shuffle!
+        cp = collision_bfs_rand(getqt(i1), getqt(i2))
         if cp[1] >= 0
             train_step_ind!(mask, qtrees, i1, i2, cp, optimiser)
-            push!(nearpool, (i1, i2))
-            nsp += 1
-        elseif -cp[1] < nearlevel
-            push!(nearpool, (i1, i2))
+            if outpool !== nothing
+                push!(outpool, (i1, i2))
+            end
+            nsp1 += 1
+        elseif -cp[1] < nearlevel2 && outpool !== nothing
+            push!(outpool, (i1, i2))
         end
     end
-    if nsp == 0
-        return nsp
-    end 
-    if length(nearpool) == 0 return nsp end
-#     @show "#",length(nearpool)
-    for ni in 1 : 2length(indpairs)÷length(nearpool) #the loop cost should not exceed 2length(indpairs)
-        empty!(collpool)
-        for (i1, i2) in nearpool |> shuffle!
-            cp = collision_bfs_rand(getqt(i1), getqt(i2))
-            if cp[1] >= 0
-                train_step_ind!(mask, qtrees, i1, i2, cp, optimiser)
-                push!(collpool, (i1, i2))
-            end
-        end
-#         @show length(collpool)
-        if ni > length(collpool) break end # loop only when there are enough collisions
-        for ci in 1 : 2length(nearpool)÷length(collpool) #the loop cost should not exceed 2length(nearpool)
-            nsp2 = 0
-            for (i1, i2) in collpool |> shuffle!
-                cp = collision_bfs_rand(getqt(i1), getqt(i2))
-                # @show getqt(i2)
-                if cp[1] >= 0
-                    train_step_ind!(mask, qtrees, i1, i2, cp, optimiser)
-                    nsp2 += 1
-                end
-            end
-            if ci > nsp2 break end # loop only when there are enough collisions
+    nsp1
+end
+
+function trainepoch_gen!(qtrees, mask; optimiser=(t, Δ)->Δ./4, nearlevel=levelnum(qtrees[1])/2, queue=Vector{Tuple{Int, Int, Int}}(), nearpool = Vector{Tuple{Int,Int}}(), collpool = Vector{Tuple{Int,Int}}())
+    nearlevel = max(1, nearlevel<0 ? levelnum(qtrees[1])+nearlevel : nearlevel)
+    indpairs = combinations(0:length(qtrees), 2) |> collect |> shuffle!
+    @time nsp = filttrain!(mask, qtrees, indpairs, nearpool, nearlevel, optimiser)
+    if nsp == 0 return nsp end 
+    @show "###",length(indpairs), length(nearpool), length(nearpool)/length(indpairs)
+
+    @time for ni in 1 : length(indpairs)÷length(nearpool) #the loop cost should not exceed length(indpairs)
+        nsp1 = filttrain!(mask, qtrees, nearpool, collpool, 0, optimiser)
+        @show nsp1
+        if ni > 8nsp1 break end # loop only when there are enough collisions
+
+        for ci in 1 : length(nearpool)÷length(collpool) #the loop cost should not exceed length(nearpool)
+            nsp2 = filttrain!(mask, qtrees, collpool, nothing, 0, optimiser)
+            if ci > 4nsp2 break end # loop only when there are enough collisions
         end
         # @show length(indpairs),length(nearpool),collpool
+    end
+    nsp
+end
+
+function trainepoch_gen2!(qtrees, mask; optimiser=(t, Δ)->Δ./4, 
+    nearlevel1=levelnum(qtrees[1])*0.75, 
+    nearlevel2=levelnum(qtrees[1])*0.5, 
+    queue=Vector{Tuple{Int, Int, Int}}(), 
+    nearpool1 = Vector{Tuple{Int,Int}}(), 
+    nearpool2 = Vector{Tuple{Int,Int}}(), 
+    collpool = Vector{Tuple{Int,Int}}()
+    )
+    nearlevel1 = max(1, nearlevel1<0 ? levelnum(qtrees[1])+nearlevel1 : nearlevel1)
+    nearlevel2 = max(1, nearlevel2<0 ? levelnum(qtrees[1])+nearlevel2 : nearlevel2)
+
+    indpairs = combinations(0:length(qtrees), 2) |> collect |> shuffle!
+    nsp = filttrain!(mask, qtrees, indpairs, nearpool1, nearlevel1, optimiser)
+    if nsp == 0 return nsp end 
+    @show "###", length(nearpool1), length(nearpool1)/length(indpairs)
+
+    @time for ni1 in 1 : length(indpairs)÷length(nearpool1) #the loop cost should not exceed length(indpairs)
+        nsp1 = filttrain!(mask, qtrees, nearpool1, nearpool2, nearlevel2, optimiser)
+        if ni1 > nsp1 break end # loop only when there are enough collisions
+        @show nsp, nsp1
+        @show "####", length(nearpool2), length(nearpool2)/length(nearpool1)
+
+        @time for ni2 in 1 : length(nearpool1)÷length(nearpool2) #the loop cost should not exceed length(indpairs)
+            nsp2 = filttrain!(mask, qtrees, nearpool2, collpool, 0, optimiser)
+            @show nsp2# length(collpool)/length(nearpool2)
+            if nsp2==0 || ni2 > 4+nsp2 break end # loop only when there are enough collisions
+
+            for ci in 1 : length(nearpool2)÷length(collpool) #the loop cost should not exceed length(nearpool)
+                nsp3 = filttrain!(mask, qtrees, collpool, nothing, 0, optimiser)
+                if ci > 4nsp3 break end # loop only when there are enough collisions
+            end
+            # @show length(indpairs),length(nearpool),collpool
+        end
     end
     nsp
 end
@@ -265,6 +291,7 @@ function train_with_teleport!(ts, maskqt, nepoch::Number, args...;
     count = 0
     nc_min = Inf
     while ep < nepoch
+        @show "##", ep, nc, length(collpool), (count,nc_min)
         nc = trainer(ts, maskqt, args...; collpool=collpool, queue=queue, kargs...)
         ep += 1
         count += 1
@@ -272,11 +299,11 @@ function train_with_teleport!(ts, maskqt, nepoch::Number, args...;
             count = 0
             nc_min = nc
         end
-        if nc != 0 && count >= patient
+        if nc != 0 && length(collpool)>0 && (count >= patient || count > length(collpool)) #超出耐心或少数几个碰撞
             count = 0
             nc_min = nc
             cinds = teleport!(ts, maskqt, collpool=collpool)
-            println("@epoch $ep, collision $nc teleport $cinds")
+            println("@epoch $ep, count $count collision $nc teleport $cinds")
         end
         if callbackstep>0 && ep%callbackstep==0
             callbackfun(ep)
