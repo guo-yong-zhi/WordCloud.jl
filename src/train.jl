@@ -98,19 +98,17 @@ function trainstep_mask!(mask, t2, collisionpoint::Tuple{Integer, Integer, Integ
 end
 
 function trainepoch!(qtrees; optimiser=(t, Δ)->Δ./4, optimiser_near=(t, Δ)->Δ./4, nearlevel=0)
-    nearlevel = nearlevel<0 ? levelnum(qtrees[1])+nearlevel : nearlevel
+    # nearlevel = nearlevel<0 ? levelnum(qtrees[1])+nearlevel : nearlevel
     collision_times = 0
     pairs = combinations(qtrees, 2) |> collect |> shuffle!
     etp = typeof(levelnum(qtrees[1]))
     q =  Vector{Tuple{etp, etp, etp}}()
     for (t1, t2) in pairs
-        empty!(q)
-        push!(q, (levelnum(t1), 1, 1))
-        cp = collision_bfs_rand(t1, t2, q)
-        if cp[1] >= 0
+        cp = collision_bfs_rand(t1, t2, empty!(q))
+        if cp[1] > 0
             trainstep!(t1, t2, cp, optimiser)
             collision_times += 1
-        elseif cp[1] < nearlevel
+        elseif cp[1] > nearlevel
 #             print("s")
             trainstep!(t1, t2, cp, optimiser_near)
         end
@@ -131,7 +129,7 @@ end
 
 
 function trainepoch!(qtrees, mask; optimiser=(t, Δ)->Δ./4, optimiser_near=(t, Δ)->Δ./4, nearlevel=0, queue=Vector{Tuple{Int, Int, Int}}(), collpool=nothing)
-    nearlevel = nearlevel<0 ? levelnum(qtrees[1])+nearlevel : nearlevel
+    nearlevel = min(-1, nearlevel)
     nsp = 0
     indpairs = combinations(0:length(qtrees), 2) |> collect |> shuffle!
     getqtree(i) = i==0 ? mask : qtrees[i]
@@ -141,16 +139,15 @@ function trainepoch!(qtrees, mask; optimiser=(t, Δ)->Δ./4, optimiser_near=(t, 
     for (i1, i2) in indpairs
         t1 = getqtree(i1)
         t2 = getqtree(i2)
-        empty!(queue)
-        cp = collision_bfs_rand(t1, t2, queue)
+        cp = collision_bfs_rand(t1, t2, empty!(queue))
 #         @show cp
-        if cp[1] >= 0
+        if cp[1] > 0
             train_step_ind!(mask, qtrees, i1, i2, cp, optimiser)
             nsp += 1
             if collpool !== nothing
                 push!(collpool, (i1, i2))
             end
-        elseif -cp[1] < nearlevel
+        elseif cp[1] > nearlevel
             print("s")
             train_step_ind!(mask, qtrees, i1, i2, .-cp, optimiser_near)
         end
@@ -158,41 +155,39 @@ function trainepoch!(qtrees, mask; optimiser=(t, Δ)->Δ./4, optimiser_near=(t, 
     nsp
 end
 
-function filttrain!(mask, qtrees, inpool, outpool, nearlevel2, optimiser)
+function filttrain!(qtrees, mask, inpool, outpool, nearlevel2; optimiser, queue)
     getqt(i) = i==0 ? mask : qtrees[i]
-    if outpool !== nothing
-        empty!(outpool)
-    end
     nsp1 = 0
     for (i1, i2) in inpool |> shuffle!
-        cp = collision_bfs_rand(getqt(i1), getqt(i2))
-        if cp[1] >= 0
-            train_step_ind!(mask, qtrees, i1, i2, cp, optimiser)
+        cp = collision_bfs_rand(getqt(i1), getqt(i2), empty!(queue))
+        if cp[1] > nearlevel2
             if outpool !== nothing
                 push!(outpool, (i1, i2))
             end
-            nsp1 += 1
-        elseif -cp[1] < nearlevel2 && outpool !== nothing
-            push!(outpool, (i1, i2))
+            if cp[1] > 0
+                train_step_ind!(mask, qtrees, i1, i2, cp, optimiser)
+                nsp1 += 1
+            end
         end
     end
     nsp1
 end
 
-function trainepoch_gen!(qtrees, mask; optimiser=(t, Δ)->Δ./4, nearlevel=levelnum(qtrees[1])/2, queue=Vector{Tuple{Int, Int, Int}}(), nearpool = Vector{Tuple{Int,Int}}(), collpool = Vector{Tuple{Int,Int}}())
-    nearlevel = max(1, nearlevel<0 ? levelnum(qtrees[1])+nearlevel : nearlevel)
+function trainepoch_gen!(qtrees, mask; optimiser=(t, Δ)->Δ./4, nearlevel=-levelnum(qtrees[1])/2, queue=Vector{Tuple{Int, Int, Int}}(), nearpool = Vector{Tuple{Int,Int}}(), collpool = Vector{Tuple{Int,Int}}())
+    nearlevel = min(-1, nearlevel)
     indpairs = combinations(0:length(qtrees), 2) |> collect |> shuffle!
-    @time nsp = filttrain!(mask, qtrees, indpairs, nearpool, nearlevel, optimiser)
-    if nsp == 0 return nsp end 
+    @time nsp = filttrain!(qtrees, mask, indpairs, empty!(nearpool), nearlevel, optimiser=optimiser, queue=queue)
+    @show nsp
+    if nsp <= 2 return 0 end 
     @show "###",length(indpairs), length(nearpool), length(nearpool)/length(indpairs)
 
     @time for ni in 1 : length(indpairs)÷length(nearpool) #the loop cost should not exceed length(indpairs)
-        nsp1 = filttrain!(mask, qtrees, nearpool, collpool, 0, optimiser)
-        @show nsp1
+        nsp1 = filttrain!(qtrees, mask, nearpool, empty!(collpool), 0, optimiser=optimiser, queue=queue)
+        @show nsp, nsp1
         if ni > 8nsp1 break end # loop only when there are enough collisions
 
         for ci in 1 : length(nearpool)÷length(collpool) #the loop cost should not exceed length(nearpool)
-            nsp2 = filttrain!(mask, qtrees, collpool, nothing, 0, optimiser)
+            nsp2 = filttrain!(qtrees, mask, collpool, nothing, 0, optimiser=optimiser, queue=queue)
             if ci > 4nsp2 break end # loop only when there are enough collisions
         end
         # @show length(indpairs),length(nearpool),collpool
@@ -201,34 +196,35 @@ function trainepoch_gen!(qtrees, mask; optimiser=(t, Δ)->Δ./4, nearlevel=level
 end
 
 function trainepoch_gen2!(qtrees, mask; optimiser=(t, Δ)->Δ./4, 
-    nearlevel1=levelnum(qtrees[1])*0.75, 
-    nearlevel2=levelnum(qtrees[1])*0.5, 
+    nearlevel1=-levelnum(qtrees[1])*0.75, 
+    nearlevel2=-levelnum(qtrees[1])*0.5, 
     queue=Vector{Tuple{Int, Int, Int}}(), 
     nearpool1 = Vector{Tuple{Int,Int}}(), 
     nearpool2 = Vector{Tuple{Int,Int}}(), 
     collpool = Vector{Tuple{Int,Int}}()
     )
-    nearlevel1 = max(1, nearlevel1<0 ? levelnum(qtrees[1])+nearlevel1 : nearlevel1)
-    nearlevel2 = max(1, nearlevel2<0 ? levelnum(qtrees[1])+nearlevel2 : nearlevel2)
+    nearlevel1 = min(-1, nearlevel1)
+    nearlevel2 = min(-1, nearlevel2)
 
     indpairs = combinations(0:length(qtrees), 2) |> collect |> shuffle!
-    nsp = filttrain!(mask, qtrees, indpairs, nearpool1, nearlevel1, optimiser)
-    if nsp == 0 return nsp end 
+    nsp = filttrain!(qtrees, mask, indpairs, empty!(nearpool1), nearlevel1, optimiser=optimiser, queue=queue)
+    @show nsp
+    if nsp <= 2 return 0 end 
     @show "###", length(nearpool1), length(nearpool1)/length(indpairs)
 
     @time for ni1 in 1 : length(indpairs)÷length(nearpool1) #the loop cost should not exceed length(indpairs)
-        nsp1 = filttrain!(mask, qtrees, nearpool1, nearpool2, nearlevel2, optimiser)
+        nsp1 = filttrain!(qtrees, mask, nearpool1, empty!(nearpool2), nearlevel2, optimiser=optimiser, queue=queue)
         if ni1 > nsp1 break end # loop only when there are enough collisions
         @show nsp, nsp1
         @show "####", length(nearpool2), length(nearpool2)/length(nearpool1)
 
         @time for ni2 in 1 : length(nearpool1)÷length(nearpool2) #the loop cost should not exceed length(indpairs)
-            nsp2 = filttrain!(mask, qtrees, nearpool2, collpool, 0, optimiser)
+            nsp2 = filttrain!(qtrees, mask, nearpool2, empty!(collpool), 0, optimiser=optimiser, queue=queue)
             @show nsp2# length(collpool)/length(nearpool2)
             if nsp2==0 || ni2 > 4+nsp2 break end # loop only when there are enough collisions
 
             for ci in 1 : length(nearpool2)÷length(collpool) #the loop cost should not exceed length(nearpool)
-                nsp3 = filttrain!(mask, qtrees, collpool, nothing, 0, optimiser)
+                nsp3 = filttrain!(qtrees, mask, collpool, nothing, 0, optimiser=optimiser, queue=queue)
                 if ci > 4nsp3 break end # loop only when there are enough collisions
             end
             # @show length(indpairs),length(nearpool),collpool
@@ -236,28 +232,15 @@ function trainepoch_gen2!(qtrees, mask; optimiser=(t, Δ)->Δ./4,
     end
     nsp
 end
-
-function train!(ts, maskqt, nepoch=1, args...; callbackstep=0, callbackfun=x->x, queue=Vector{Tuple{Int, Int, Int}}(), kargs...)
-    ep = 0
-    nc = 0
-    while true
-        nc = trainepoch!(ts, maskqt, args...; queue=queue, kargs...)
-        ep += 1
-        if callbackstep>0 && ep%callbackstep==0
-            callbackfun(ep)
-        end
-        if ep >= nepoch || nc == 0
-            break
-        end
-    end
-    ep, nc
+function trainepoch_tree(qtrees, mask, indpairs, levels; optimiser=(t, Δ)->Δ./4, 
+    queue=Vector{Tuple{Int, Int, Int}}(), collpool = Vector{Tuple{Int,Int}}())
+    nsp1 = filttrain!(qtrees, mask, nearpool1, empty!(nearpool2), nearlevel2, optimiser=optimiser, queue=queue)
 end
-
-function train_gen!(ts, maskqt, nepoch=1, args...; callbackstep=0, callbackfun=x->x, queue=Vector{Tuple{Int, Int, Int}}(), kargs...)
+function train!(ts, maskqt, nepoch=1, args...; trainer=trainepoch_gen!, callbackstep=0, callbackfun=x->x, queue=Vector{Tuple{Int, Int, Int}}(), kargs...)
     ep = 0
     nc = 0
     while true
-        nc = trainepoch_gen!(ts, maskqt, args...; queue=queue, kargs...)
+        nc = trainer(ts, maskqt, args...; queue=queue, kargs...)
         ep += 1
         if callbackstep>0 && ep%callbackstep==0
             callbackfun(ep)
