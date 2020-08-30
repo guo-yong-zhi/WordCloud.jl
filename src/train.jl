@@ -160,7 +160,7 @@ function filttrain!(qtrees, mask, inpool, outpool, nearlevel2; optimiser, queue)
     nsp1 = 0
     for (i1, i2) in inpool |> shuffle!
         cp = collision_bfs_rand(getqt(i1), getqt(i2), empty!(queue))
-        if cp[1] > nearlevel2
+        if cp[1] >= nearlevel2
             if outpool !== nothing
                 push!(outpool, (i1, i2))
             end
@@ -232,10 +232,43 @@ function trainepoch_gen2!(qtrees, mask; optimiser=(t, Δ)->Δ./4,
     end
     nsp
 end
-function trainepoch_tree(qtrees, mask, indpairs, levels; optimiser=(t, Δ)->Δ./4, 
-    queue=Vector{Tuple{Int, Int, Int}}(), collpool = Vector{Tuple{Int,Int}}())
-    nsp1 = filttrain!(qtrees, mask, nearpool1, empty!(nearpool2), nearlevel2, optimiser=optimiser, queue=queue)
+
+function levelpools(qtrees, levels=-levelnum(qtrees[1]):-1)
+    pools = [i=>Vector{Tuple{Int, Int}}() for i in levels]
+#     @show typeof(pools)
+    for (i1, i2) in combinations(0:length(qtrees), 2)
+        push!(last(pools[1]), (i1, i2))
+    end
+    pools
 end
+
+
+function trainepoch_level!(qtrees, mask, 
+    levelpools::AbstractVector{<:Pair{Int, <:AbstractVector{Tuple{Int, Int}}}} = levelpools(qtrees);
+    optimiser=(t, Δ)->Δ./4, queue=Vector{Tuple{Int, Int, Int}}())
+    last_nc = typemax(Int)
+    nc = 0
+    if (length(levelpools) == 0) return nc end
+    outpool = length(levelpools)>= 2 ? last(levelpools[2]) : nothing
+    outlevel = length(levelpools)>= 2 ? first(levelpools[2]) : 0
+    inpool = last(levelpools[1])
+    for niter in 1:typemax(Int)
+        if outpool !== nothing empty!(outpool) end
+        nc = filttrain!(qtrees, mask, inpool, outpool, outlevel, optimiser=optimiser, queue=queue)
+        if first(levelpools[1]) < -6
+            r = outpool !== nothing ? length(outpool)/length(inpool) : 1
+            println(niter, "#"^(-first(levelpools[1])), "$(first(levelpools[1])) pool:$(length(inpool))($r) nc:$nc ")
+        end
+        if (nc == 0) break end
+#         if (nc < last_nc) last_nc = nc else break end
+        if (niter>nc) break end
+        if length(levelpools) >= 2
+            trainepoch_level!(qtrees, mask, levelpools[2:end], optimiser=optimiser, queue=queue)
+        end
+    end
+    nc
+end
+
 function train!(ts, maskqt, nepoch=1, args...; trainer=trainepoch_gen!, callbackstep=0, callbackfun=x->x, queue=Vector{Tuple{Int, Int, Int}}(), kargs...)
     ep = 0
     nc = 0
