@@ -22,6 +22,10 @@ end
     paint(wc::wordcloud, "test.jpg")
     @test isempty(WordCloud.outofbounds(wc.maskqtree, wc.qtrees))
 
+    clq = WordCloud.QTree.listcollision_qtree(wc.qtrees, wc.maskqtree)
+    cln = WordCloud.QTree.listcollision_native(wc.qtrees, wc.maskqtree)
+    @test Set(first.(clq)) == Set(first.(cln))
+
     wordcloud(["singleword"=>12], maskimg=shape(box, 200, 150, 40, color=0.15), filling_rate=0.5) #singleword & Pair
     wordcloud(process("giving a single word is ok. giving several words is ok too"), 
             maskimg=shape(box, 20, 15, 0, color=0.15), filling_rate=0.5, transparentcolor=(1,1,1,0)) #String & small mask
