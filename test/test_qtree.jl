@@ -38,4 +38,15 @@ end
     qt = WordCloud.ShiftedQtree(rand((0,0,1), 1, 2))|>WordCloud.buildqtree!
     @test WordCloud.QTree.levelnum(qt) == 2
     @test_throws AssertionError qt = WordCloud.ShiftedQtree(rand((0,0,1), 0, 0))|>WordCloud.buildqtree!
+
+    qt = WordCloud.ShiftedQtree(rand((0,0,0,1), rand(50:300), rand(50:300)), 512)|>WordCloud.buildqtree!
+    li = WordCloud.QTree.locate(qt)
+    @test qt[li]!=WordCloud.QTree.EMPTY
+    for l in WordCloud.levelnum(qt)
+        if l >= li[1]
+            @test sum(qt[li[1]].!=WordCloud.QTree.EMPTY) <= 1
+        else
+            @test sum(qt[li[1]-1].!=WordCloud.QTree.EMPTY) > 1
+        end
+    end
 end
