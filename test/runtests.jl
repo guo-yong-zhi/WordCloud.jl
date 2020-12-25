@@ -3,7 +3,7 @@ using Test
 using Random
 
 include("test_qtree.jl")
-
+include("test_lru.jl")
 @testset "nlp.jl" begin
     text = "So dim, so dark, So dense, so dull, So damp, so dank, So dead! The weather, now warm, now cold, Makes it harder Than ever to forget!"
     c = WordCloud.NLP.countwords(text)
