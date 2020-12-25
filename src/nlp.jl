@@ -30,10 +30,10 @@ end
 #     counter
 # end
 
-function process(counter::Dict{String,Int}; 
+function process(counter::Dict{String,Number}; 
     stopwords=stopwords_en,
     minlength=2, maxlength=30,
-    minfrequency=1,
+    minfrequency=0,
     maxnum=500,
     minweight=1/maxnum, maxweight=minweight*20)
     for (w, c) in counter

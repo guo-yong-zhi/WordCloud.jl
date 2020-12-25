@@ -135,26 +135,12 @@ function step_inds!(mask, qtrees, collist::Vector{QTree.ColItemType}, optimiser)
     end
 end
 
-# function trainepoch!(qtrees, mask; optimiser=(t, Δ)->Δ./4, 
-#     queue=Vector{Tuple{Int, Int, Int}}(), collist=Vector{QTree.ColItemType}())
-#     listcollision(qtrees, mask, queue=queue, collist=collist)
-#     step_inds!(mask, qtrees, collist, optimiser)
-#     collist2=Vector{QTree.ColItemType}()
-#     inds = first.(collist)|>Iterators.flatten|>Set
-#     pop!(inds,0, 0)
-#     inds = inds|>collect
-#     for ni in 1:10000
-#         listcollision(qtrees, mask, inds, queue=queue, collist=empty!(collist2))
-#         step_inds!(mask, qtrees, collist2, optimiser)
-#         nsp2 = length(collist2)
-# #         @show nsp2
-#         if nsp2 == 0 break end
-#         if ni>4+nsp2
-#             break
-#         end
-#     end
-#     length(collist)
-# end
+function trainepoch!(qtrees, mask; optimiser=(t, Δ)->Δ./4, 
+    queue=Vector{Tuple{Int, Int, Int}}(), collist=Vector{QTree.ColItemType}())
+    listcollision(qtrees, mask, queue=queue, collist=collist)
+    step_inds!(mask, qtrees, collist, optimiser)
+    length(collist)
+end
 # function trainepoch!(qtrees, mask; memory, optimiser=(t, Δ)->Δ./4, 
 #     queue=Vector{Tuple{Int, Int, Int}}(), collist=Vector{QTree.ColItemType}())
 #     listcollision(qtrees, mask, queue=queue, collist=collist)
@@ -190,46 +176,7 @@ end
 #     end
 #     length(collist)
 # end
-function trainepoch!(qtrees, mask; memory, optimiser=(t, Δ)->Δ./4, 
-    queue=Vector{Tuple{Int, Int, Int}}(), collist=Vector{QTree.ColItemType}())
-    listcollision(qtrees, mask, queue=queue, collist=collist)
-    step_inds!(mask, qtrees, collist, optimiser)
-    collist2=Vector{QTree.ColItemType}()
-    inds = first.(collist)|>Iterators.flatten|>Set
-    pop!(inds,0, 0)
-    push!(memory, inds)
-    inds = take(memory)|>collect
-    @show length(inds)
-    for ni in 1:length(qtrees)÷length(inds)
-        listcollision(qtrees, mask, inds, queue=queue, collist=empty!(collist2))
-        step_inds!(mask, qtrees, collist2, optimiser)
-        nsp2 = length(collist2)
-        @show nsp2
-        if nsp2 == 0 break end
-        if ni>nsp2
-            break
-        end
-        for ni in 1:10000
-            nsp3 = filttrain!(qtrees, mask, first.(collist), nothing, 0, optimiser=optimiser, queue=queue)
-            if ni > 4+nsp3 break end
-        end
-#         collist3=Vector{QTree.ColItemType}()
-#         inds = first.(collist2)|>Iterators.flatten|>Set
-#         pop!(inds,0, 0)
-#         inds = inds|>collect
-#         for ni in 1:10000
-#             listcollision(qtrees, mask, inds, queue=queue, collist=empty!(collist3))
-#             step_inds!(mask, qtrees, collist3, optimiser)
-#             nsp3 = length(collist3)
-#             @show nsp3
-#             if nsp3 == 0 break end
-#             if ni>4+nsp3
-#                 break
-#             end
-#         end
-    end
-    length(collist)
-end
+
 function filttrain!(qtrees, mask, inpool, outpool, nearlevel2; optimiser, queue)
     getqt(i) = i==0 ? mask : qtrees[i]
     nsp1 = 0
@@ -251,14 +198,16 @@ end
 function trainepoch_gen!(qtrees, mask; optimiser=(t, Δ)->Δ./4, nearlevel=-levelnum(qtrees[1])/2, queue=Vector{Tuple{Int, Int, Int}}(), nearpool = Vector{Tuple{Int,Int}}(), collpool = Vector{Tuple{Int,Int}}())
     nearlevel = min(-1, nearlevel)
     indpairs = combinations(0:length(qtrees), 2) |> collect |> shuffle!
-    @time nsp = filttrain!(qtrees, mask, indpairs, empty!(nearpool), nearlevel, optimiser=optimiser, queue=queue)
-    @show nsp
+    # @time 
+    nsp = filttrain!(qtrees, mask, indpairs, empty!(nearpool), nearlevel, optimiser=optimiser, queue=queue)
+    # @show nsp
     if nsp == 0 return 0 end 
-    @show "###",length(indpairs), length(nearpool), length(nearpool)/length(indpairs)
+    # @show "###",length(indpairs), length(nearpool), length(nearpool)/length(indpairs)
 
-    @time for ni in 1 : length(indpairs)÷length(nearpool) #the loop cost should not exceed length(indpairs)
+    # @time 
+    for ni in 1 : length(indpairs)÷length(nearpool) #the loop cost should not exceed length(indpairs)
         nsp1 = filttrain!(qtrees, mask, nearpool, empty!(collpool), 0, optimiser=optimiser, queue=queue)
-        @show nsp, nsp1
+        # @show nsp, nsp1
         if ni > 8nsp1 break end # loop only when there are enough collisions
 
         for ci in 1 : length(nearpool)÷length(collpool) #the loop cost should not exceed length(nearpool)
@@ -283,19 +232,21 @@ function trainepoch_gen2!(qtrees, mask; optimiser=(t, Δ)->Δ./4,
 
     indpairs = combinations(0:length(qtrees), 2) |> collect |> shuffle!
     nsp = filttrain!(qtrees, mask, indpairs, empty!(nearpool1), nearlevel1, optimiser=optimiser, queue=queue)
-    @show nsp
+    # @show nsp
     if nsp == 0 return 0 end 
-    @show "###", length(nearpool1), length(nearpool1)/length(indpairs)
+    # @show "###", length(nearpool1), length(nearpool1)/length(indpairs)
 
-    @time for ni1 in 1 : length(indpairs)÷length(nearpool1) #the loop cost should not exceed length(indpairs)
+    # @time 
+    for ni1 in 1 : length(indpairs)÷length(nearpool1) #the loop cost should not exceed length(indpairs)
         nsp1 = filttrain!(qtrees, mask, nearpool1, empty!(nearpool2), nearlevel2, optimiser=optimiser, queue=queue)
         if ni1 > nsp1 break end # loop only when there are enough collisions
-        @show nsp, nsp1
-        @show "####", length(nearpool2), length(nearpool2)/length(nearpool1)
+        # @show nsp, nsp1
+        # @show "####", length(nearpool2), length(nearpool2)/length(nearpool1)
 
-        @time for ni2 in 1 : length(nearpool1)÷length(nearpool2) #the loop cost should not exceed length(indpairs)
+        # @time 
+        for ni2 in 1 : length(nearpool1)÷length(nearpool2) #the loop cost should not exceed length(indpairs)
             nsp2 = filttrain!(qtrees, mask, nearpool2, empty!(collpool), 0, optimiser=optimiser, queue=queue)
-            @show nsp2# length(collpool)/length(nearpool2)
+            # @show nsp2# length(collpool)/length(nearpool2)
             if nsp2==0 || ni2 > 4+nsp2 break end # loop only when there are enough collisions
 
             for ci in 1 : length(nearpool2)÷length(collpool) #the loop cost should not exceed length(nearpool)

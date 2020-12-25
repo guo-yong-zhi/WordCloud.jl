@@ -193,14 +193,16 @@ function generate!(wc::wordcloud, nepoch::Number=100, args...; retry=3,
     ep, nc = -1, -1
     for r in 1:retry
         # fr = feelingoccupied(wc.params[:mimgs])/wc.params[:groundoccupied]
+        if r != 1
+            sc = wc.params[:scale] * 0.95
+            rescale!(wc, sc)
+        end
         println("#$r. scale = $(wc.params[:scale])")
         ep, nc = train_with_teleport!(wc.qtrees, wc.maskqtree, nepoch, args...; 
             trainer=trainer, optimiser=optimiser, patient=patient, krags...)
         if nc == 0
             break
         end
-        sc = wc.params[:scale] * 0.95
-        rescale!(wc, sc)
     end
     @show ep, nc
     if nc != 0
