@@ -105,7 +105,7 @@ function listcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree
     collist
 end
 function listcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree, 
-    indpairs::Vector{ColItemType}; collist=Vector{ColItemType}(),
+    indpairs::Vector{Tuple{Tuple{Int,Int},Tuple{Int,Int,Int}}}; collist=Vector{ColItemType}(),
     queue=Vector{Tuple{Int,Int,Int}}())
 getqtree(i) = i==0 ? mask : qtrees[i]
 for ((i1, i2), at) in indpairs
@@ -268,9 +268,9 @@ function locate(qt::AbstractStackedQtree, ind::Tuple{Int, Int, Int}=(levelnum(qt
 end
 IndType = Tuple{Int, Int, Int}
 LocQtreeType = QtreeNode{NamedTuple{(:loc, :cumloc, :ind),Tuple{Array{Any,1},Array{Any,1}, IndType}}}
-LocQtreeTypeInt = QtreeNode{NamedTuple{(:loc, :cumloc, :ind),Tuple{Array{Int,1},Array{Pair{Int, IndType},1}, IndType}}}
+LocQtreeTypeInt = QtreeNode{NamedTuple{(:loc, :cumloc, :ind),Tuple{Array{Int,1},Array{Int,1}, IndType}}}
 LocQtree(ind) = LocQtreeType((loc = Vector(), cumloc = Vector(), ind=ind))
-LocQtreeInt(ind) = LocQtreeTypeInt((loc = Vector{Int}(), cumloc = Vector{Pair{Int, IndType}}(), ind=ind))
+LocQtreeInt(ind) = LocQtreeTypeInt((loc = Vector{Int}(), cumloc = Vector{Int}(), ind=ind))
 function locate!(qt::AbstractStackedQtree, loctree::QtreeNode=LocQtree((levelnum(qt), 1, 1)),
     ind::Tuple{Int, Int, Int}=(levelnum(qt), 1, 1); label=qt, newnode=LocQtree)
     if qt[ind] == EMPTY
@@ -293,7 +293,7 @@ function locate!(qt::AbstractStackedQtree, loctree::QtreeNode=LocQtree((levelnum
     if loctree.children[unemptyci] === nothing
         loctree.children[unemptyci] = newnode(unempty)
     end
-    push!(loctree.value.cumloc, label=>ind)
+    push!(loctree.value.cumloc, label)
     locate!(qt, loctree.children[unemptyci], unempty, label=label, newnode=newnode)
     return loctree
 end
@@ -322,15 +322,14 @@ function listcollision_qtree(qtrees::AbstractVector, mask::AbstractStackedQtree,
         loctree = popfirst!(nodequeue)
         if length(loctree.value.loc) > 1
 #             @show length(loctree.value.loc), length(loctree.value.cumloc)
-            indpairs = combinations(loctree.value.loc, 2)
+            indpairs = combinations(loctree.value.loc, 2) |> collect
             indpairs = [(min(p...), max(p...)) for p in indpairs] |> shuffle!
             listcollision_native(qtrees, mask, indpairs, collist=collist, queue=queue, at=loctree.value.ind)
         end
         if length(loctree.value.loc) > 0 && length(loctree.value.cumloc) > 0
-            indpairs = Iterators.product(first.(loctree.value.cumloc), loctree.value.loc)  
-            indpairs = (indpairs .=> last.(loctree.value.cumloc)) |> collect |> vec
-            indpairs = [(min(p...), max(p...))=>i for (p,i) in indpairs] |> shuffle!
-            listcollision_native(qtrees, mask, indpairs, collist=collist, queue=queue)
+            indpairs = Iterators.product(loctree.value.cumloc, loctree.value.loc) |> collect |> vec
+            indpairs = [(min(p...), max(p...)) for p in indpairs] |> shuffle!
+            listcollision_native(qtrees, mask, indpairs, collist=collist, queue=queue, at=loctree.value.ind)
         end
         for c in loctree.children
             if c !== nothing

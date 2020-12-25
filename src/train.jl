@@ -2,7 +2,7 @@ using Combinatorics
 using Random
 using .QTree
 
-
+include("traintools.jl")
 mutable struct Momentum
     eta::Float64
     rho::Float64
@@ -135,20 +135,101 @@ function step_inds!(mask, qtrees, collist::Vector{QTree.ColItemType}, optimiser)
     end
 end
 
-function trainepoch!(qtrees, mask; optimiser=(t, Δ)->Δ./4, 
+# function trainepoch!(qtrees, mask; optimiser=(t, Δ)->Δ./4, 
+#     queue=Vector{Tuple{Int, Int, Int}}(), collist=Vector{QTree.ColItemType}())
+#     listcollision(qtrees, mask, queue=queue, collist=collist)
+#     step_inds!(mask, qtrees, collist, optimiser)
+#     collist2=Vector{QTree.ColItemType}()
+#     inds = first.(collist)|>Iterators.flatten|>Set
+#     pop!(inds,0, 0)
+#     inds = inds|>collect
+#     for ni in 1:10000
+#         listcollision(qtrees, mask, inds, queue=queue, collist=empty!(collist2))
+#         step_inds!(mask, qtrees, collist2, optimiser)
+#         nsp2 = length(collist2)
+# #         @show nsp2
+#         if nsp2 == 0 break end
+#         if ni>4+nsp2
+#             break
+#         end
+#     end
+#     length(collist)
+# end
+# function trainepoch!(qtrees, mask; memory, optimiser=(t, Δ)->Δ./4, 
+#     queue=Vector{Tuple{Int, Int, Int}}(), collist=Vector{QTree.ColItemType}())
+#     listcollision(qtrees, mask, queue=queue, collist=collist)
+#     step_inds!(mask, qtrees, collist, optimiser)
+#     collist2=Vector{QTree.ColItemType}()
+#     inds = first.(collist)|>Iterators.flatten|>Set
+#     pop!(inds,0, 0)
+#     push!.(memory, inds)
+#     inds = take(memory, 1000)
+#     for ni in 1:10000
+#         listcollision(qtrees, mask, inds, queue=queue, collist=empty!(collist2))
+#         step_inds!(mask, qtrees, collist2, optimiser)
+#         nsp2 = length(collist2)
+#         @show nsp2
+#         if nsp2 == 0 break end
+#         if ni>nsp2
+#             break
+#         end
+#         collist3=Vector{QTree.ColItemType}()
+#         inds = first.(collist2)|>Iterators.flatten|>Set
+#         pop!(inds,0, 0)
+#         inds = inds|>collect
+#         for ni in 1:10000
+#             listcollision(qtrees, mask, inds, queue=queue, collist=empty!(collist3))
+#             step_inds!(mask, qtrees, collist3, optimiser)
+#             nsp3 = length(collist3)
+#             @show nsp3
+#             if nsp3 == 0 break end
+#             if ni>4+nsp3
+#                 break
+#             end
+#         end
+#     end
+#     length(collist)
+# end
+function trainepoch!(qtrees, mask; memory, optimiser=(t, Δ)->Δ./4, 
     queue=Vector{Tuple{Int, Int, Int}}(), collist=Vector{QTree.ColItemType}())
     listcollision(qtrees, mask, queue=queue, collist=collist)
     step_inds!(mask, qtrees, collist, optimiser)
-    # for ni in 1:10000
-    #     nsp2 = filttrain!(qtrees, mask, first.(collist), nothing, 0, optimiser=optimiser, queue=queue)
-    #     @show nsp2
-    #     if ni>nsp2
-    #         break
-    #     end
-    # end
+    collist2=Vector{QTree.ColItemType}()
+    inds = first.(collist)|>Iterators.flatten|>Set
+    pop!(inds,0, 0)
+    push!(memory, inds)
+    inds = take(memory)|>collect
+    @show length(inds)
+    for ni in 1:length(qtrees)÷length(inds)
+        listcollision(qtrees, mask, inds, queue=queue, collist=empty!(collist2))
+        step_inds!(mask, qtrees, collist2, optimiser)
+        nsp2 = length(collist2)
+        @show nsp2
+        if nsp2 == 0 break end
+        if ni>nsp2
+            break
+        end
+        for ni in 1:10000
+            nsp3 = filttrain!(qtrees, mask, first.(collist), nothing, 0, optimiser=optimiser, queue=queue)
+            if ni > 4+nsp3 break end
+        end
+#         collist3=Vector{QTree.ColItemType}()
+#         inds = first.(collist2)|>Iterators.flatten|>Set
+#         pop!(inds,0, 0)
+#         inds = inds|>collect
+#         for ni in 1:10000
+#             listcollision(qtrees, mask, inds, queue=queue, collist=empty!(collist3))
+#             step_inds!(mask, qtrees, collist3, optimiser)
+#             nsp3 = length(collist3)
+#             @show nsp3
+#             if nsp3 == 0 break end
+#             if ni>4+nsp3
+#                 break
+#             end
+#         end
+    end
     length(collist)
 end
-
 function filttrain!(qtrees, mask, inpool, outpool, nearlevel2; optimiser, queue)
     getqt(i) = i==0 ? mask : qtrees[i]
     nsp1 = 0
@@ -172,7 +253,7 @@ function trainepoch_gen!(qtrees, mask; optimiser=(t, Δ)->Δ./4, nearlevel=-leve
     indpairs = combinations(0:length(qtrees), 2) |> collect |> shuffle!
     @time nsp = filttrain!(qtrees, mask, indpairs, empty!(nearpool), nearlevel, optimiser=optimiser, queue=queue)
     @show nsp
-    if nsp <= 5 return 0 end 
+    if nsp == 0 return 0 end 
     @show "###",length(indpairs), length(nearpool), length(nearpool)/length(indpairs)
 
     @time for ni in 1 : length(indpairs)÷length(nearpool) #the loop cost should not exceed length(indpairs)
@@ -203,7 +284,7 @@ function trainepoch_gen2!(qtrees, mask; optimiser=(t, Δ)->Δ./4,
     indpairs = combinations(0:length(qtrees), 2) |> collect |> shuffle!
     nsp = filttrain!(qtrees, mask, indpairs, empty!(nearpool1), nearlevel1, optimiser=optimiser, queue=queue)
     @show nsp
-    if nsp <= 5 return 0 end 
+    if nsp == 0 return 0 end 
     @show "###", length(nearpool1), length(nearpool1)/length(indpairs)
 
     @time for ni1 in 1 : length(indpairs)÷length(nearpool1) #the loop cost should not exceed length(indpairs)
@@ -248,13 +329,13 @@ function trainepoch_level!(qtrees, mask,
     for niter in 1:typemax(Int)
         if outpool !== nothing empty!(outpool) end
         nc = filttrain!(qtrees, mask, inpool, outpool, outlevel, optimiser=optimiser, queue=queue)
-        if first(levelpools[1]) < -6
-            r = outpool !== nothing ? length(outpool)/length(inpool) : 1
-            println(niter, "#"^(-first(levelpools[1])), "$(first(levelpools[1])) pool:$(length(inpool))($r) nc:$nc ")
-        end
+        # if first(levelpools[1]) < -6
+        #     r = outpool !== nothing ? length(outpool)/length(inpool) : 1
+        #     println(niter, "#"^(-first(levelpools[1])), "$(first(levelpools[1])) pool:$(length(inpool))($r) nc:$nc ")
+        # end
         if (nc == 0) break end
 #         if (nc < last_nc) last_nc = nc else break end
-        if (niter>nc) break end
+        if (niter > nc) break end
         if length(levelpools) >= 2
             trainepoch_level!(qtrees, mask, levelpools[2:end], optimiser=optimiser, queue=queue)
         end
@@ -317,7 +398,7 @@ function train_with_teleport!(ts, maskqt, nepoch::Number, args...;
         if callbackstep>0 && ep%callbackstep==0
             callbackfun(ep)
         end
-        if nc < 5
+        if nc == 0
             return ep, nc
         end
     end
