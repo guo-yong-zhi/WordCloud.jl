@@ -30,7 +30,7 @@ end
 #     counter
 # end
 
-function process(counter::Dict{String,Number}; 
+function process(counter::Dict{String,<:Number}; 
     stopwords=stopwords_en,
     minlength=2, maxlength=30,
     minfrequency=0,
