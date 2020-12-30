@@ -33,18 +33,22 @@ wc = wordcloud(
     filling_rate = 0.6) |> generate!
 paint(wc, "alice.png", ratio=0.5)
 ```
-![wordcloud](res/alice.png)
+![alice](res/alice.png)
 
-# Visualization of Training
-![training](res/training.gif)
+# More
+![animation](res/animation.gif)  
+[Training Animation](./examples/animation.jl)  
+![compare](res/compare.png)  
+[Comparison of Obama's and Trump's inaugural address](./examples/compare.jl)  
+
 ***
 linux添加中文字体  
 > mv wqy-microhei.ttc ~/.fonts  
 > fc-cache -vf  
 
 配置ffmpeg环境
-> add /mnt/lustre/share/ffmpeg-4.2.1/lib to ENV["LD_LIBRARY_PATH"]  
-> add /mnt/lustre/share/ffmpeg-4.2.1/bin to ENV["PATH"]  
+> add /path/to/ffmpeg-4.2.1/lib to ENV["LD_LIBRARY_PATH"]  
+> add /path/to/ffmpeg-4.2.1/bin to ENV["PATH"]  
 ***
 # other wordcloud 
 > [word_cloud](https://github.com/amueller/word_cloud)  

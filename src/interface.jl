@@ -206,7 +206,7 @@ function generate!(wc::wordcloud, nepoch::Number=100, args...; retry=3,
     end
     @show ep, nc
     if nc != 0
-        colllist = listcollision(wc.qtrees, wc.maskqtree)
+        colllist = first.(listcollision(wc.qtrees, wc.maskqtree))
         get_text(i) = i>0 ? wc.words[i] : "#MASK#"
         collwords = [(get_text(i), get_text(j)) for (i,j) in colllist]
         if length(colllist) > 0
@@ -228,6 +228,74 @@ function generate_animation!(wc::wordcloud, args...; outputdir="gifresult", over
     re = generate!(wc, args...; callbackstep=callbackstep, callbackfun=ep->record(wc, ep, gif), kargs...)
     Render.generate(gif)
     re
+end
+
+function ignore(fun, wc::wordcloud, mask::AbstractArray{Bool})
+    mem = [wc.words, wc.weights, wc.imgs, wc.qtrees, 
+            wc.params[:colors], wc.params[:angles], wc.params[:mimgs]]
+    mask = .!mask
+    wc.words = @view wc.words[mask]
+    wc.weights = @view wc.weights[mask]
+    wc.imgs = @view wc.imgs[mask]
+    wc.qtrees = @view wc.qtrees[mask]
+    wc.params[:colors] = @view wc.params[:colors][mask]
+    wc.params[:angles] = @view wc.params[:angles][mask]
+    wc.params[:mimgs] = @view wc.params[:mimgs][mask]
+    r = nothing
+    try
+        r = fun()
+    finally
+        wc.words = mem[1]
+        wc.weights = mem[2]
+        wc.imgs = mem[3]
+        wc.qtrees = mem[4]
+        wc.params[:colors] = mem[5]
+        wc.params[:angles] = mem[6]
+        wc.params[:mimgs] = mem[7]    
+    end
+    r
+end
+
+function pin(fun, wc::wordcloud, mask::AbstractArray{Bool})
+    maskqtree = wc.maskqtree
+    wcmask = wc.mask
+    maskqtree2 = deepcopy(maskqtree)
+    QTree.overlap!.(Ref(maskqtree2), wc.qtrees[mask])
+    wc.maskqtree = maskqtree2
+    resultpic = convert.(ARGB32, wc.mask)
+    wc.mask = overlay!(resultpic, wc.imgs[mask], getposition(wc)[mask])
+    r = nothing
+    try
+        r = ignore(fun, wc, mask)
+    finally
+        wc.maskqtree = maskqtree
+        wc.mask = wcmask
+    end
+    r
+end
+
+function ignore(fun, wc, ws::AbstractString)
+    ignore(fun, wc, wc.words .== ws)
+end
+
+function ignore(fun, wc, ws::AbstractSet{<:AbstractString})
+    ignore(fun, wc, wc.words .∈ Ref(ws))
+end
+
+function ignore(fun, wc, ws::AbstractArray{<:AbstractString})
+    ignore(fun, wc, Set(ws))
+end
+
+function pin(fun, wc, ws::AbstractString)
+    pin(fun, wc, wc.words .== ws)
+end
+
+function pin(fun, wc, ws::AbstractSet{<:AbstractString})
+    pin(fun, wc, wc.words .∈ Ref(ws))
+end
+
+function pin(fun, wc, ws::AbstractArray{<:AbstractString})
+    pin(fun, wc, Set(ws))
 end
 
 Base.show(io::IO, m::MIME"image/png", wc::wordcloud) = Base.show(io, m, paint(wc::wordcloud))

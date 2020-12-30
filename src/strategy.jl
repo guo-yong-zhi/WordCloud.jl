@@ -183,17 +183,15 @@ end
 
 function rescale!(wc::wordcloud, scale::Real)
     qts = wc.qtrees
-    center(qt) = getshift(qt) .+ kernelsize(qt) .÷ 2
-    centers = center.(qts)
+    centers = QTree.center.(qts)
     imgs, mimgs, qtrees = prepareforeground(wc.words, wc.weights * scale, 
         wc.params[:colors], wc.params[:angles], wc.params[:groundsize], 
         bgcolor=(0, 0, 0, 0), border=wc.params[:border], font=wc.params[:font],
         minfontsize=wc.params[:minfontsize])
-    wc.imgs = imgs
-    wc.qtrees = qtrees
+    wc.imgs .= imgs
+    wc.qtrees .= qtrees
     wc.params[:scale] = scale
-    wc.params[:mimgs] = mimgs
-    lefttop(center, qt) = center .- kernelsize(qt) .÷  2
-    setshift!.(qtrees, 1, lefttop.(centers, qtrees))
+    wc.params[:mimgs] .= mimgs
+    QTree.setcenter!.(qtrees, centers)
     wc
 end
