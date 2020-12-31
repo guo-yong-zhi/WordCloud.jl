@@ -20,7 +20,9 @@ function randommask(color, sz=800)
     end
 end
 function randomangles()
-    a = rand((0, (0,90),(0,90,45), -90:90))
+    a = rand((0, (0,90),(0,90,45),(0,-90),(0,-45,-90),-90:90))
+    println("angles: ", a)
+    a
 end
 
 import ImageTransformations.imresize
@@ -123,6 +125,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
             @show "colors sum failed",colors_o
             maskcolor = "black"
         end
+        @show maskcolor
         mask = randommask(maskcolor)
         transparentcolor = get(params, :transparentcolor, ARGB(1, 1, 1, 0)) |> parsecolor
     else
