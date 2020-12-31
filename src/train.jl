@@ -340,10 +340,10 @@ function train_with_teleport!(ts, maskqt, nepoch::Number, args...;
             count = 0
             nc_min = nc
         end
-        if nc != 0 && length(collpool)>0 && (count >= patient || count > length(collpool)) #超出耐心或少数几个碰撞
+        if nc != 0 && length(collpool)>0 && patient >0 && (count >= patient || count > length(collpool)) #超出耐心或少数几个碰撞
             nc_min = nc
             cinds = teleport!(ts, maskqt, collpool=collpool)
-            println("@epoch $ep, count $count collision $nc teleport $cinds")
+            println("@epoch $ep, count $count collision $nc($(length(collpool))) teleport $cinds")
             count = 0
         end
         if callbackstep>0 && ep%callbackstep==0
