@@ -137,12 +137,20 @@ function findroom(ground, q=[(levelnum(ground), 1, 1)])
     end
     while !isempty(q)
         i = popfirst!(q)
-        for cn in shuffle4()
-            ci = child(i, cn)
-            if ground[ci] == EMPTY
-                return ci
-            elseif ground[ci] == HALF
-                push!(q, ci)
+        if i[1] == 1
+            if ground[i] == EMPTY return i end
+        else
+            for cn in shuffle4()
+                ci = child(i, cn)
+                if ground[ci] == EMPTY
+                    if rand() < 0.7 #避免每次都是局部最优
+                        return ci 
+                    else
+                        push!(q, ci)
+                    end
+                elseif ground[ci] == HALF
+                    push!(q, ci)
+                end
             end
         end
     end
@@ -200,16 +208,17 @@ end
 
 "将sortedtrees依次叠加到ground上，同时修改sortedtrees的shift"
 function placement!(ground, sortedtrees)
-    pos = Vector{Tuple{Int, Int, Int}}()
+    # pos = Vector{Tuple{Int, Int, Int}}()
     for t in sortedtrees
         ind = placement!(ground, t)
         overlap!(ground, t)
         if ind === nothing
             return pos
         end
-        push!(pos, ind)
+        # push!(pos, ind)
     end
-    return pos
+    nothing
+    # return pos
 end
 
 function placement!(ground, qtree::ShiftedQtree)
@@ -233,8 +242,8 @@ function placement!(ground, sortedtrees, index::Number)
         end
         overlap!(ground, sortedtrees[i])
     end
-    ind = placement!(ground, sortedtrees[index])
-    return ind
+    placement!(ground, sortedtrees[index])
+    # return ind
 end
 function placement!(ground, sortedtrees, indexes)
     for i in 1:length(sortedtrees)

@@ -331,6 +331,8 @@ function train_with_teleport!(ts, maskqt, nepoch::Number, args...;
     nc = 0
     count = 0
     nc_min = Inf
+    teleport_count = 0
+    last_cinds = nothing
     while ep < nepoch
 #         @show "##", ep, nc, length(collpool), (count,nc_min)
         nc = trainer(ts, maskqt, args...; collpool=collpool, queue=queue, kargs...)
@@ -343,13 +345,25 @@ function train_with_teleport!(ts, maskqt, nepoch::Number, args...;
         if nc != 0 && length(collpool)>0 && patient >0 && (count >= patient || count > length(collpool)) #超出耐心或少数几个碰撞
             nc_min = nc
             cinds = teleport!(ts, maskqt, collpool=collpool)
-            println("@epoch $ep, count $count collision $nc($(length(collpool))) teleport $cinds")
+            println("@epoch $ep, count $count collision $nc($(length(collpool))) teleport $cinds to $(getshift.(ts[cinds]))")
             count = 0
+            cinds_set = Set(cinds)
+            if last_cinds == cinds_set
+                teleport_count += 1
+            else
+                teleport_count = 0
+            end
+            last_cinds = cinds_set
+
         end
         if callbackstep>0 && ep%callbackstep==0
             callbackfun(ep)
         end
         if nc == 0
+            return ep, nc
+        end
+        if patient > 0 && teleport_count >= patient
+            println("The teleport strategy failed after $ep epochs")
             return ep, nc
         end
     end
