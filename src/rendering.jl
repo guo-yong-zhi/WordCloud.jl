@@ -142,9 +142,10 @@ schemes = [schemes_colorbrewer..., schemes_seaborn...]
 
 """
 get box or ellipse image
-shape(box, 80, 50) #80*50 box
-shape(box, 80, 50, 4) #box with cornerradius=4
-shape(ellipse, 80, 50, color="red") #80*50 red ellipse
+## Examples
+* shape(box, 80, 50) #80*50 box
+* shape(box, 80, 50, 4) #box with cornerradius=4
+* shape(ellipse, 80, 50, color="red") #80*50 red ellipse
 """
 function shape(shape_, width, height, args...; color="white", bgcolor=(0,0,0,0))
     Drawing(width, height, :image)
@@ -163,11 +164,11 @@ function gif_callback_factory()
     counter = Iterators.Stateful(0:typemax(Int))
     pic->save(gifdirectory*@sprintf("/%010d.png", popfirst!(counter)), pic)
 end
-function try_gif_gen(gifdirectory)
+function try_gif_gen(gifdirectory; framerate=4)
     try
         pipeline(`ffmpeg -f image2 -i $(gifdirectory)/%010d.png -vf 
             palettegen -y $(gifdirectory)/result-palette.png`, stdout=devnull, stderr=devnull) |> run
-        pipeline(`ffmpeg -framerate 4 -f image2 -i $(gifdirectory)/%010d.png 
+        pipeline(`ffmpeg -framerate $(framerate) -f image2 -i $(gifdirectory)/%010d.png 
             -i $(gifdirectory)/result-palette.png -lavfi paletteuse -y $(gifdirectory)/result.gif`,
             stdout=devnull, stderr=devnull) |> run
     catch e
@@ -183,5 +184,5 @@ function GIF(directory)
 end
 Base.push!(gif::GIF, img) = ImageMagick.save(gif.directory*@sprintf("/%010d.png", popfirst!(gif.counter)), img)
 (gif::GIF)(img) = Base.push!(gif, img)
-generate(gif::GIF) = try_gif_gen(gif.directory)
+generate(gif::GIF, args...; kargs...) = try_gif_gen(gif.directory, args...; kargs...)
 end

@@ -27,11 +27,12 @@ end
 
 import ImageTransformations.imresize
 """
-loadmask("res/heart.jpg")  
-loadmask("res/heart.jpg", 256, 256) #resize to 256*256  
-loadmask("res/heart.jpg", ratio=0.3) #scale 0.3  
-loadmask("res/heart.jpg", color="red", ratio=2) #set forecolor color  
-loadmask("res/heart.jpg", color="red", transparentcolor=(1,1,1)) #set forecolor color with transparentcolor  
+## examples
+* loadmask("res/heart.jpg")  
+* loadmask("res/heart.jpg", 256, 256) #resize to 256*256  
+* loadmask("res/heart.jpg", ratio=0.3) #scale 0.3  
+* loadmask("res/heart.jpg", color="red", ratio=2) #set forecolor color  
+* loadmask("res/heart.jpg", color="red", transparentcolor=(1,1,1)) #set forecolor color with transparentcolor  
 """
 function loadmask(img::AbstractMatrix, args...; color=:original, backgroundcolor=:original, transparentcolor=:auto, kargs...)
     if color!=:original || backgroundcolor!=:original
@@ -70,22 +71,22 @@ mutable struct wordcloud
 end
 
 """
-## kargs example
+## kargs examples
 ### style kargs
-colors = "black" #all same color  
-colors = ("black", (0.5,0.5,0.7), "yellow", "#ff0000", 0.2) #choose entries randomly  
-colors = ["black", (0.5,0.5,0.7), "yellow", "red", (0.5,0.5,0.7), 0.2, ......] #use entries sequentially in cycle  
-angles = 0 #all same angle  
-angles = (0, 90, 45) #choose entries randomly  
-angles = 0:180 #choose entries randomly  
-angles = [0, 22, 4, 1, 100, 10, ......] #use entries sequentially in cycle  
-filling_rate = 0.5  
-border = 1  
+* colors = "black" #all same color  
+* colors = ("black", (0.5,0.5,0.7), "yellow", "#ff0000", 0.2) #choose entries randomly  
+* colors = ["black", (0.5,0.5,0.7), "yellow", "red", (0.5,0.5,0.7), 0.2, ......] #use entries sequentially in cycle  
+* angles = 0 #all same angle  
+* angles = (0, 90, 45) #choose entries randomly  
+* angles = 0:180 #choose entries randomly  
+* angles = [0, 22, 4, 1, 100, 10, ......] #use entries sequentially in cycle  
+* filling_rate = 0.5  
+* border = 1  
 ### mask kargs
-mask = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
-mask = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
-mask = shape(ellipse, 800, 600, color="white", bgcolor=(0,0,0,0)) #see doc of `shape`  
-transparentcolor = ARGB32(0,0,0,0) #set the transparent color in mask  
+* mask = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
+* mask = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
+* mask = shape(ellipse, 800, 600, color="white", bgcolor=(0,0,0,0)) #see doc of `shape`  
+* transparentcolor = ARGB32(0,0,0,0) #set the transparent color in mask  
 """
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter)|>collect, values(counter)|>collect; kargs...)
@@ -157,11 +158,14 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:border] = border
     params[:font] = font
     params[:minfontsize] = minfontsize
+    params[:completed] = false
+    params[:epoch] = 0
     placement!(deepcopy(maskqtree), qtrees)
     wordcloud(words, weights, imgs, mask, qtrees, maskqtree, params)
 end
 Base.getindex(wc::wordcloud, inds...) = wc.words[inds...]=>wc.weights[inds...]
 Base.lastindex(wc::wordcloud) = lastindex(wc.words)
+iscompleted(wc::wordcloud) = wc.params[:completed]
 function getposition(wc)
     msy, msx = getshift(wc.maskqtree)
     pos = getshift.(wc.qtrees)
@@ -184,10 +188,10 @@ function paint(wc::wordcloud, file, args...; kargs...)
     img
 end
 
-function record(wc::wordcloud, ep::Number, gif_callback=x->x)
+function record(wc::wordcloud, label::AbstractString, gif_callback=x->x)
 #     @show size(n1)
     resultpic = overlay!(paint(wc), 
-        rendertextoutlines(string(ep), 32, color="black", linecolor="white", linewidth=1), 20, 20)
+        rendertextoutlines(label, 32, color="black", linecolor="white", linewidth=1), 20, 20)
     gif_callback(resultpic)
 end
 
@@ -203,12 +207,16 @@ function generate!(wc::wordcloud, nepoch::Number=100, args...; retry=3,
         println("#$r. scale = $(wc.params[:scale])")
         ep, nc = train_with_teleport!(wc.qtrees, wc.maskqtree, nepoch, args...; 
             trainer=trainer, optimiser=optimiser, patient=patient, krags...)
+        wc.params[:epoch] += ep
         if nc == 0
             break
         end
     end
     @show ep, nc
-    if nc != 0
+    if nc == 0
+        wc.params[:completed] = true
+    else
+        wc.params[:completed] = false
         colllist = first.(listcollision(wc.qtrees, wc.maskqtree))
         get_text(i) = i>0 ? wc.words[i] : "#MASK#"
         collwords = [(get_text(i), get_text(j)) for (i,j) in colllist]
@@ -227,8 +235,8 @@ function generate_animation!(wc::wordcloud, args...; outputdir="gifresult", over
     end
     try `mkdir $(outputdir)`|>run catch end
     gif = GIF(outputdir)
-    record(wc, 0, gif)
-    re = generate!(wc, args...; callbackstep=callbackstep, callbackfun=ep->record(wc, ep, gif), kargs...)
+    record(wc, "0", gif)
+    re = generate!(wc, args...; callbackstep=callbackstep, callbackfun=ep->record(wc, string(ep), gif), kargs...)
     Render.generate(gif)
     re
 end
