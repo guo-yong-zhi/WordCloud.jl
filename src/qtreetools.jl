@@ -313,7 +313,8 @@ function locate!(qts::AbstractVector, loctree::QtreeNode=LocQtreeInt((levelnum(q
     end
     loctree
 end
-function locate!(qts::AbstractVector, inds::AbstractVector{Int}, loctree::QtreeNode=LocQtreeInt((levelnum(qts[1]), 1, 1))) #must have same levelnum
+function locate!(qts::AbstractVector, inds::Union{AbstractVector{Int}, AbstractSet{Int}}, 
+        loctree::QtreeNode=LocQtreeInt((levelnum(qts[1]), 1, 1))) #must have same levelnum
     for i in inds
         locate!(qts[i], loctree, label=i, newnode=LocQtreeInt)
     end
@@ -353,7 +354,7 @@ function listcollision_qtree(qtrees::AbstractVector, mask::AbstractStackedQtree;
     loctree = locate!(mask, loctree, label=0, newnode=LocQtreeInt)
     listcollision_qtree(qtrees, mask, loctree; kargs...)
 end
-function listcollision_qtree(qtrees::AbstractVector, mask::AbstractStackedQtree, inds::AbstractVector{Int}; kargs...)
+function listcollision_qtree(qtrees::AbstractVector, mask::AbstractStackedQtree, inds::Union{AbstractVector{Int}, AbstractSet{Int}}; kargs...)
     loctree = locate!(qtrees, inds)
     loctree = locate!(mask, loctree, label=0, newnode=LocQtreeInt)
     listcollision_qtree(qtrees, mask, loctree; kargs...)

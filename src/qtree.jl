@@ -223,7 +223,7 @@ callefttop(t::ShiftedQtree, center) = center .- kernelsize(t) .÷  2
 setcenter!(t::ShiftedQtree, center) = setshift!(t, 1, callefttop(t, center))
 
 function inbounds(bgqt::ShiftedQtree, qt::ShiftedQtree)
-    inbounds(bgqt[1], (getshift(qt[1]) .+ kernelsize(qt[1]) .÷ 2)...)
+    inbounds(bgqt[1], center(qt)...)
 end
 function outofbounds(bgqt::ShiftedQtree, qts)
     [i for (i,t) in enumerate(qts) if !inbounds(bgqt, t)]

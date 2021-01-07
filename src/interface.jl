@@ -21,7 +21,7 @@ function randommask(color, sz=800)
 end
 function randomangles()
     a = rand((0, (0,90),(0,90,45),(0,-90),(0,-45,-90),-90:90))
-    println("angles: ", a)
+    println("angles = ", a)
     a
 end
 
@@ -80,7 +80,7 @@ end
 * angles = (0, 90, 45) #choose entries randomly  
 * angles = 0:180 #choose entries randomly  
 * angles = [0, 22, 4, 1, 100, 10, ......] #use entries sequentially in cycle  
-* filling_rate = 0.5  
+* fillingrate = 0.5  
 * border = 1  
 ### mask kargs
 * mask = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
@@ -94,7 +94,7 @@ wordcloud(counter::AbstractVector{<:Pair}; kargs...) = wordcloud(first.(counter)
 
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=randomscheme(), angles=randomangles(), font="",
-                filling_rate=0.5, border=1, minfontsize=:auto, kargs...)
+                fillingrate=0.65, border=1, minfontsize=:auto, kargs...)
     
     @assert length(words) == length(weights) > 0
 #     @show words,weights
@@ -147,11 +147,11 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     end
     weights = weights ./ √(sum(weights.^2 .* length.(words)) / length(weights))
     params[:weights] = weights
-    scale = find_weight_scale(words, weights, groundoccupied, border=border, initial_scale=0, 
-    filling_rate=filling_rate, max_iter=5, error=0.03, minfontsize=minfontsize)
+    scale = find_weight_scale(words, weights, groundoccupied, border=border, initialscale=0, 
+    fillingrate=fillingrate, maxiter=5, error=0.03, minfontsize=minfontsize)
     params[:scale] = scale
-    params[:filling_rate] = filling_rate
-    println("set filling_rate to $filling_rate, with scale=$scale")
+    params[:fillingrate] = fillingrate
+    println("set fillingrate to $fillingrate, with scale=$scale")
     imgs, mimgs, qtrees = prepareforeground(words, weights * scale, colors, angles, groundsize, 
     bgcolor=(0, 0, 0, 0), border=border, font=font, minfontsize=minfontsize);
     params[:mimgs] = mimgs
@@ -195,8 +195,16 @@ function record(wc::wordcloud, label::AbstractString, gif_callback=x->x)
     gif_callback(resultpic)
 end
 
-function generate!(wc::wordcloud, nepoch::Number=100, args...; retry=3,
-    trainer=trainepoch_gen!, optimiser=Momentum(η=1/4, ρ=0.5), patient=10, krags...)
+"""
+# Positional Args
+* wc: the wordcloud to train
+* nepoch: training epoch nums
+# Keyword Args
+* retry: shrink & retrain times, default 3
+* patient: number of epochs before teleporting & number of identical teleportation before giving up
+* trainer: appoint a training engine
+"""
+function generate!(wc::wordcloud, args...; retry=3, krags...)
     ep, nc = -1, -1
     for r in 1:retry
         # fr = feelingoccupied(wc.params[:mimgs])/wc.params[:groundoccupied]
@@ -205,8 +213,7 @@ function generate!(wc::wordcloud, nepoch::Number=100, args...; retry=3,
             rescale!(wc, sc)
         end
         println("#$r. scale = $(wc.params[:scale])")
-        ep, nc = train_with_teleport!(wc.qtrees, wc.maskqtree, nepoch, args...; 
-            trainer=trainer, optimiser=optimiser, patient=patient, krags...)
+        ep, nc = train!(wc.qtrees, wc.maskqtree, args...; krags...)
         wc.params[:epoch] += ep
         if nc == 0
             break
@@ -215,15 +222,17 @@ function generate!(wc::wordcloud, nepoch::Number=100, args...; retry=3,
     @show ep, nc
     if nc == 0
         wc.params[:completed] = true
-    else
-        wc.params[:completed] = false
+    else #check
         colllist = first.(listcollision(wc.qtrees, wc.maskqtree))
         get_text(i) = i>0 ? wc.words[i] : "#MASK#"
         collwords = [(get_text(i), get_text(j)) for (i,j) in colllist]
         if length(colllist) > 0
+            wc.params[:completed] = false
             println("have $(length(colllist)) collision.",
-            " try setting a larger `nepoch` and `retry`, or lower `filling_rate` in `wordcloud` to fix that")
+            " try setting a larger `nepoch` and `retry`, or lower `fillingrate` in `wordcloud` to fix that")
             println("$collwords")
+        else
+            wc.params[:completed] = true
         end
     end
     wc

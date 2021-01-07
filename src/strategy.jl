@@ -15,8 +15,8 @@ function box_occupied(imgs::AbstractVector)
     return sum(box_occupied, imgs)
 end
 function feelingoccupied(imgs)
-    m = length(imgs) ÷ 4
-    occupied(imgs[1:m]) + box_occupied(imgs[m+1:end]) #兼顾大字的内隙和小字的占据
+    m = length(imgs) ÷ 100
+    occupied(imgs[1:m])/4 + 3box_occupied(imgs[1:m])/4 + box_occupied(imgs[m+1:end]) #兼顾大字的内隙和小字的占据
 end
 
 function text_occupied(words, weights, scale; font="", border=0, minfontsize=0)
@@ -65,29 +65,29 @@ function prepareforeground(words, weights, colors, angles, groundsize; bgcolor=(
 end
 
 ## weight_scale
-function cal_weight_scale(words, weights, target; border=0, initial_scale=64, kargs...)
-    input = initial_scale
+function cal_weight_scale(words, weights, target; border=0, initialscale=64, kargs...)
+    input = initialscale
     output = text_occupied(words, weights, input; border=border, kargs...)
 #     @show input,output
     return output, sqrt(target/output) * (input+2border) - 2border# 假设output=k*(input+2border)^2
 end
 
-function find_weight_scale(words, weights, ground_size; initial_scale=0, filling_rate=0.3, max_iter=5, error=0.05, kargs...)
-    if initial_scale <= 0
-        initial_scale = √(ground_size/length(words))
+function find_weight_scale(words, weights, ground_size; initialscale=0, fillingrate=0.3, maxiter=5, error=0.05, kargs...)
+    if initialscale <= 0
+        initialscale = √(ground_size/length(words))
     end
     @assert sum(weights.^2 .* length.(words)) / length(weights) ≈ 1.0
-    target_lower = (filling_rate - error) * ground_size
-    target_upper = (filling_rate + error) * ground_size
+    target_lower = (fillingrate - error) * ground_size
+    target_upper = (fillingrate + error) * ground_size
     step = 0
-    sc = initial_scale
+    sc = initialscale
     while true
         step = step + 1
-        if step > max_iter
-            @warn "find_weight_scale reach max_iter. This may be caused by too small background image or too many words or too big `minfontsize`."
+        if step > maxiter
+            @warn "find_weight_scale reach maxiter. This may be caused by too small background image or too many words or too big `minfontsize`."
             break
         end
-        tg, sc = cal_weight_scale(words, weights, filling_rate * ground_size, initial_scale=sc; kargs...)
+        tg, sc = cal_weight_scale(words, weights, fillingrate * ground_size, initialscale=sc; kargs...)
         @show sc, tg, tg/ground_size
         if target_lower <= tg <= target_upper
             break
@@ -112,29 +112,6 @@ function max_collisional_index(qtrees, mask)
     nothing
 end
 
-# function max_collisional_index_rand(qtrees, mask)
-#     l = length(qtrees)
-#     b = l - floor(Int, l / 8 * randexp()) #从末尾1/8起
-#     getqtree(i) = i==0 ? mask : qtrees[i]
-#     for i in b:-1:1
-#         for j in 0:i-1
-#             cp = collision(getqtree(i), getqtree(j))
-#             if cp[1] >= 0
-#                 return i
-#             end
-#         end
-#     end
-#     for i in l:-1:b+1
-#         for j in 0:i-1
-#             cp = collision(getqtree(i), getqtree(j))
-#             if cp[1] >= 0
-#                 return i
-#             end
-#         end
-#     end
-#     nothing
-# end
-
 function max_collisional_index_rand(qtrees, mask; collpool)
     l = length(collpool)
     b = l - floor(Int, l / 8 * randexp()) #从末尾1/8起
@@ -156,7 +133,8 @@ function max_collisional_index_rand(qtrees, mask; collpool)
     end
     return nothing
 end
-function collisional_indexes_rand(qtrees, mask; collpool)
+
+function collisional_indexes_rand(qtrees, mask, collpool::Vector{Tuple{Int,Int}})
     cinds = Vector{Int}()
     l = length(collpool)
     if l == 0
@@ -180,7 +158,9 @@ function collisional_indexes_rand(qtrees, mask; collpool)
     end
     return cinds
 end
-
+function collisional_indexes_rand(qtrees, mask, collpool::Vector{QTree.ColItemType})
+    collisional_indexes_rand(qtrees, mask, first.(collpool))
+end
 function rescale!(wc::wordcloud, scale::Real)
     qts = wc.qtrees
     centers = QTree.center.(qts)
