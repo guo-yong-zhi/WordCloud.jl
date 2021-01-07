@@ -2,16 +2,6 @@
 wordcloud in Julia
 ---
 
-* [x] 排序 & 预放置
-* [x] 基于四叉树碰撞检测
-* [x] 根据局部灰度梯度位置调整（训练迭代）
-* [x] 引入动量加速训练
-* [x] 分代调整以优化性能
-* [x] 控制字体大小和填充密度的策略
-* [x] 重新放置和缩放的策略
-* [x] 文字颜色和方向
-* [ ] 并行计算
-
 # Basic Usage 
 ```julia
 ]add WordCloud
@@ -30,7 +20,7 @@ wc = wordcloud(
     mask = loadmask("res/alice_mask.png", color="#faeef8"),
     colors = (WordCloud.colorschemes[:Set1_5].colors..., ),
     angles = (0, 90),
-    filling_rate = 0.6) |> generate!
+    fillingrate = 0.75) |> generate!
 paint(wc, "alice.png", ratio=0.5)
 ```
 ![alice](res/alice.png)
@@ -41,6 +31,16 @@ paint(wc, "alice.png", ratio=0.5)
 ![compare](res/compare.png)  
 [Comparison of Obama's and Trump's inaugural address](./examples/compare.jl)  
 
+***
+* [x] 排序 & 预放置
+* [x] 基于四叉树碰撞检测
+* [x] 根据局部灰度梯度位置调整（训练迭代）
+* [x] 引入动量加速训练
+* [x] 分代调整以优化性能
+* [x] 控制字体大小和填充密度的策略
+* [x] 重新放置和缩放的策略
+* [x] 文字颜色和方向
+* [ ] 并行计算
 ***
 linux添加中文字体  
 > mv wqy-microhei.ttc ~/.fonts  

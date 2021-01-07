@@ -4,12 +4,12 @@ stwords = ["us", "will"];
 println("==Obama's==")
 cs = WordCloud.randomscheme()
 as = WordCloud.randomangles()
-fr = 0.6 #not too high
+fr = 0.65 #not too high
 wca = wordcloud(
     process(open("res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords), 
     colors = cs,
     angles = as,
-    filling_rate = fr) |> generate!
+    fillingrate = fr) |> generate!
 println("==Trump's==")
 tb, wb = process(open("res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords)
 samemask = tb .∈ Ref(wca.words)
@@ -29,7 +29,7 @@ wcb = wordcloud(
     mask = wca.mask,
     colors = csb,
     angles = asb,
-    filling_rate = fr)
+    fillingrate = fr)
 for i in 1:length(tb)
     if samemask[i]
         ii = wainds[tb[i]]
@@ -62,4 +62,4 @@ WordCloud.ImageMagick.save("address_compare/compare.png", [ma space mb])
 gif = WordCloud.GIF("address_compare")
 record(wca, "Obama", gif)
 record(wcb, "Trump", gif)
-WordCloud.Render.generate(gif, framerate=0.5)
+WordCloud.Render.generate(gif, framerate=1)

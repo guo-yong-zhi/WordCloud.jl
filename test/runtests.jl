@@ -17,7 +17,7 @@ end
     img, img_m = WordCloud.rendertext("test", 88.3, color="blue", angle = 20, border=1, returnmask=true)
     words = [Random.randstring(rand(1:8)) for i in 1:rand(100:1000)]
     weights = randexp(length(words)) .* 1000 .+ randexp(length(words)) .* 200 .+ rand(20:100, length(words));
-    wc = wordcloud(words, weights, filling_rate=0.45)
+    wc = wordcloud(words, weights, fillingrate=0.6)
     paint(wc)
     generate!(wc)
     paint(wc::wordcloud, "test.jpg")
@@ -27,15 +27,15 @@ end
     cln = WordCloud.QTree.listcollision_native(wc.qtrees, wc.maskqtree)
     @test Set(first.(clq)) == Set(first.(cln))
 
-    wordcloud(["singleword"=>12], maskimg=shape(box, 200, 150, 40, color=0.15), filling_rate=0.5) #singleword & Pair
+    wordcloud(["singleword"=>12], maskimg=shape(box, 200, 150, 40, color=0.15), fillingrate=0.6) #singleword & Pair
     wordcloud(process("giving a single word is ok. giving several words is ok too"), 
-            maskimg=shape(box, 20, 15, 0, color=0.15), filling_rate=0.5, transparentcolor=(1,1,1,0)) #String & small mask
+            maskimg=shape(box, 20, 15, 0, color=0.15), fillingrate=0.5, transparentcolor=(1,1,1,0)) #String & small mask
     placement!(wc)
     wc = wordcloud(
             process(open("../res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
             mask = loadmask("../res/alice_mask.png", color="#faeef8", backgroundcolor=0.97),
             colors = (WordCloud.colorschemes[:Set1_5].colors..., ),
             angles = (0, 90),
-            filling_rate = 0.55);
+            fillingrate = 0.6);
 end
 
