@@ -6,12 +6,12 @@ cs = WordCloud.randomscheme()
 as = WordCloud.randomangles()
 fr = 0.65 #not too high
 wca = wordcloud(
-    process(open("res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords), 
+    process(open(pkgdir(WordCloud)*"/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords), 
     colors = cs,
     angles = as,
     fillingrate = fr) |> generate!
 println("==Trump's==")
-tb, wb = process(open("res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords)
+tb, wb = process(open(pkgdir(WordCloud)*"/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords)
 samemask = tb .∈ Ref(wca.words)
 println(sum(samemask), " same words")
 csb = Iterators.take(WordCloud.iter_expand(cs), length(tb)) |> collect
@@ -56,7 +56,8 @@ mb = paint(wcb)
 h,w = size(ma)
 space = loadmask(shape(box, w÷20, h))
 space .= WordCloud.ARGB(0,0,0,0)
-try `mkdir address_compare`|>run catch end
+try mkdir("address_compare") catch end
+
 WordCloud.ImageMagick.save("address_compare/compare.png", [ma space mb])
 
 gif = WordCloud.GIF("address_compare")
