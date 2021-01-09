@@ -201,7 +201,7 @@ end
 * nepoch: training epoch nums
 # Keyword Args
 * retry: shrink & retrain times, default 3
-* patient: number of epochs before teleporting & number of identical teleportation before giving up
+* patient: number of epochs before teleporting
 * trainer: appoint a training engine
 """
 function generate!(wc::wordcloud, args...; retry=3, krags...)
@@ -240,9 +240,9 @@ end
 
 function generate_animation!(wc::wordcloud, args...; outputdir="gifresult", overwrite=false, callbackstep=1, kargs...)
     if overwrite
-        try `rm -r $(outputdir)`|>run catch end
+        try rm(outputdir, force=true, recursive=true) catch end
     end
-    try `mkdir $(outputdir)`|>run catch end
+    try mkpath(outputdir) catch end
     gif = GIF(outputdir)
     record(wc, "0", gif)
     re = generate!(wc, args...; callbackstep=callbackstep, callbackfun=ep->record(wc, string(ep), gif), kargs...)
@@ -317,6 +317,10 @@ end
 function pin(fun, wc, ws::AbstractArray{<:AbstractString})
     pin(fun, wc, Set(ws))
 end
+
+runexample(example=:alice) = evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
+examples = join([":"*splitext(e)[1] for e in basename.(readdir(pkgdir(WordCloud)*"/examples"))], ", ")
+@doc "optional input: [" * examples * "]" runexample
 
 Base.show(io::IO, m::MIME"image/png", wc::wordcloud) = Base.show(io, m, paint(wc::wordcloud))
 Base.show(io::IO, m::MIME"text/plain", wc::wordcloud) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")

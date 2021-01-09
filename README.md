@@ -16,11 +16,11 @@ paint(wc, "qianziwen.png")
 # More Complex Usage
 ```julia
 wc = wordcloud(
-    process(open("res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
-    mask = loadmask("res/alice_mask.png", color="#faeef8"),
+    process(open(pkgdir(WordCloud)*"/res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
+    mask = loadmask(pkgdir(WordCloud)*"/res/alice_mask.png", color="#faeef8"),
     colors = (WordCloud.colorschemes[:Set1_5].colors..., ),
     angles = (0, 90),
-    fillingrate = 0.75) |> generate!
+    fillingrate = 0.7) |> generate!
 paint(wc, "alice.png", ratio=0.5)
 ```
 ![alice](res/alice.png)

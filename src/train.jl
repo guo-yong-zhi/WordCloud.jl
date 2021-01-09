@@ -380,7 +380,7 @@ function train!(ts, maskqt, nepoch::Number=-1, args...;
             count = 0
             nc_min = nc
         end
-        if nc != 0 && length(ts)/10>length(collpool)>0 && patient >0 && (count >= patient || count > length(collpool)) #超出耐心或少数几个碰撞
+        if nc != 0 && length(ts)/10>length(collpool)>0 && patient>0 && (count >= patient || count > length(collpool)) #超出耐心或少数几个碰撞
             nc_min = nc
             cinds = teleport!(ts, maskqt, collpool)
             println("@epoch $ep, count $count collision $nc($(length(collpool))) teleport $cinds to $(getshift.(ts[cinds]))")
@@ -399,8 +399,12 @@ function train!(ts, maskqt, nepoch::Number=-1, args...;
         if nc == 0
             return ep, nc
         end
-        if patient > 0 && teleport_count >= patient
+        if teleport_count >= 5
             println("The teleport strategy failed after $ep epochs")
+            return ep, nc
+        end
+        if count > max(2, 2patient, nepoch ÷ 10)
+            println("training early break after $ep epochs")
             return ep, nc
         end
     end
