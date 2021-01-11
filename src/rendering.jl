@@ -1,6 +1,6 @@
 module Render
 export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
-    colorschemes, schemes
+    colorschemes, schemes, outline
 
 using Luxor
 using Colors
@@ -77,7 +77,7 @@ function rendertextoutlines(str::AbstractString, size::Real; color="black", bgco
     mat = image_as_matrix()
     finish()
     mat = backgroundclip(mat, mat[1])
-end   
+end
 
 function dilate(mat, r)
     mat2 = copy(mat)
@@ -91,6 +91,19 @@ function dilate(mat, r)
     mat2[1:end-r, 1+r:end ] .|= mat[1+r:end, 1:end-r]
     mat2[1+r:end, 1:end-r ] .|= mat[1:end-r, 1+r:end]
     mat2
+end
+
+function outline(img; transparentcolor=:auto, color="black", linewidth=1)
+    img = deepcopy(img)
+    transparentcolor = transparentcolor==:auto ? img[1] : parsecolor(transparentcolor)
+    mask = img .!== convert(typeof(img[1]), transparentcolor)
+    mask2 = dilate(mask, 1)
+    for r in 2:linewidth #ok with small linewidth
+        mask2 .|= dilate(mask, r)
+    end
+    border = mask2 .& (.!mask)
+    img[border] .= convert(typeof(img[1]), parsecolor(color))
+    img
 end
 
 function textmask(pic, bgcolor; radius=0)

@@ -361,7 +361,7 @@ function listcollision_qtree(qtrees::AbstractVector, mask::AbstractStackedQtree,
 end
 
 function listcollision(qtrees::AbstractVector, mask::AbstractStackedQtree, args...; kargs...)
-    if length(qtrees) > 10
+    if length(qtrees) > 25
         return listcollision_qtree(qtrees, mask, args...; kargs...)
     else
         return listcollision_native(qtrees, mask, args...; kargs...)

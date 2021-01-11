@@ -172,8 +172,8 @@ function getposition(wc)
     map(p->(p[2]-msx+1, p[1]-msy+1), pos)
 end
 QTree.placement!(wc::wordcloud) = placement!(deepcopy(wc.maskqtree), wc.qtrees)
-function paint(wc::wordcloud, args...; kargs...)
-    resultpic = convert.(ARGB32, wc.mask)#.|>ARGB32
+function paint(wc::wordcloud, args...; background=wc.mask, kargs...)
+    resultpic = convert.(ARGB32, background)#.|>ARGB32
     overlay!(resultpic, wc.imgs, getposition(wc))
     if !(isempty(args) && isempty(kargs))
         resultpic = convert.(ARGB{Colors.N0f8}, resultpic)
@@ -319,8 +319,8 @@ function pin(fun, wc, ws::AbstractArray{<:AbstractString})
 end
 
 runexample(example=:alice) = evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
-examples = join([":"*splitext(e)[1] for e in basename.(readdir(pkgdir(WordCloud)*"/examples"))], ", ")
-@doc "optional input: [" * examples * "]" runexample
+examples = join([":"*e[1:end-3] for e in basename.(readdir(pkgdir(WordCloud)*"/examples")) if endswith(e, ".jl")], ", ")
+@doc "optional value: [" * examples * "]" runexample
 
 Base.show(io::IO, m::MIME"image/png", wc::wordcloud) = Base.show(io, m, paint(wc::wordcloud))
 Base.show(io::IO, m::MIME"text/plain", wc::wordcloud) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")
