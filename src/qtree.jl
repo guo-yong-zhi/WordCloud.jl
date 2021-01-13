@@ -216,11 +216,12 @@ function setshift!(t::ShiftedQtree, l::Integer, st1::Integer, st2::Integer)
     buildqtree!(t, l + 1)
 end
 setshift!(t::ShiftedQtree, l::Integer, st::Tuple{Integer,Integer}) = setshift!(t, l, st...)
+setshift!(t::ShiftedQtree, st::Tuple{Integer,Integer}) = setshift!(t, 1, st)
 getshift(t::ShiftedQtree, l::Integer=1) = getshift(t[l])
 kernelsize(t::ShiftedQtree, l::Integer=1) = kernelsize(t[l])
 center(t::ShiftedQtree) = getshift(t) .+ kernelsize(t) .÷ 2
 callefttop(t::ShiftedQtree, center) = center .- kernelsize(t) .÷  2
-setcenter!(t::ShiftedQtree, center) = setshift!(t, 1, callefttop(t, center))
+setcenter!(t::ShiftedQtree, center) = setshift!(t, callefttop(t, center))
 
 function inbounds(bgqt::ShiftedQtree, qt::ShiftedQtree)
     inbounds(bgqt[1], center(qt)...)
