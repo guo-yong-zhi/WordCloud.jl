@@ -46,7 +46,7 @@ pin(wcb, samemask) do
     placement!(wcb)
     generate!(wcb, 1000, retry=1) #allow teleport but don‘t allow rescale
 end
-if !iscompleted(wcb)
+if getstate(wcb) != :generate!
     println("=overall tuning=")
     generate!(wcb, 1000, patient=-1, retry=2) #allow rescale but don‘t allow teleport
 end
