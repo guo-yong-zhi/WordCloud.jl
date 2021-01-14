@@ -1,8 +1,10 @@
 module WordCloud
-export wordcloud, shape, ellipse, box, paint, loadmask, process, outline, 
+export wordcloud, shape, ellipse, box, paint, loadmask, process, outline, padding,
     train!, Momentum, generate!, generate_animation!
-export record, parsecolor, placement!, imageof, bitor, take, ignore, pin, runexample, init!
-export getstate, getcolor, getangle, getweight, setcolor, setangle, setweight!, getposition, setposition!
+export record, parsecolor, placement!, imageof, bitor, take, ignore, pin, runexample, showexample
+export getstate, getcolor, getangle, getweight, setcolor!, setangle!, setweight!, 
+    getposition, setposition!, getimage, initword!
+
 include("qtree.jl")
 include("rendering.jl")
 include("nlp.jl")
