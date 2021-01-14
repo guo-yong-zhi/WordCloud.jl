@@ -1,6 +1,6 @@
 module Render
 export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
-    colorschemes, schemes, outline
+    colorschemes, schemes, outline, padding
 
 using Luxor
 using Colors
@@ -104,6 +104,13 @@ function outline(img; transparentcolor=:auto, color="black", linewidth=1)
     border = mask2 .& (.!mask)
     img[border] .= convert(typeof(img[1]), parsecolor(color))
     img
+end
+
+function padding(img, r=0.1; color=img[1])
+    color = convert(typeof(img[1]), parsecolor(color))
+    p = round.(Int, size(img) .* r)
+    r = fill(color, size(img) .+ 2 .* p)
+    overlay!(r, img, reverse(p)...)
 end
 
 function textmask(pic, bgcolor; radius=0)

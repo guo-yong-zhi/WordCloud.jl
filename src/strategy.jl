@@ -34,6 +34,7 @@ function preparebackground(img, bgcolor)
     maskqt = maskqtree(img, bgcolor) |> buildqtree!
     groundsize = size(maskqt[1], 1)
     groundoccupied = occupied(img, bgcolor)
+    @assert groundoccupied==occupied(QTree.kernel(maskqt[1]), QTree.FULL)
     return img, maskqt, groundsize, groundoccupied
 end
 
@@ -48,20 +49,11 @@ end
 Base.iterate(it::IterGen, state=0) = it.generator(state),state+1
 Base.length(it::IterGen) = typemax(Int)
 
-function prepareforeground(words, weights, colors, angles, groundsize; bgcolor=(0,0,0,0), font="", border=0, minfontsize=0)
-    ts = []
-    imgs = []
-    mimgs = []
-    for (txt,sz,color,an) in zip(words, weights, colors, angles)
-#         print(c)
-        img, mimg = rendertext(string(txt), max(minfontsize, sz), color=color, bgcolor=bgcolor,
-            angle=an, border=border, font=font, returnmask=true)
-        t = ShiftedQtree(mimg, groundsize) |> buildqtree!
-        push!(ts, t)
-        push!(imgs, img)
-        push!(mimgs, mimg)
-    end
-    return imgs, mimgs, ts
+function prepareword(word, weight, color, angle, groundsize; bgcolor=(0,0,0,0), font="", border=0, minfontsize=0)
+    img, mimg = rendertext(string(word), max(minfontsize, weight), color=color, bgcolor=bgcolor,
+        angle=angle, border=border, font=font, returnmask=true)
+    t = ShiftedQtree(mimg, groundsize) |> buildqtree!
+    img, mimg, t
 end
 
 ## weight_scale
@@ -160,18 +152,4 @@ function collisional_indexes_rand(qtrees, mask, collpool::Vector{Tuple{Int,Int}}
 end
 function collisional_indexes_rand(qtrees, mask, collpool::Vector{QTree.ColItemType})
     collisional_indexes_rand(qtrees, mask, first.(collpool))
-end
-function rescale!(wc::wordcloud, scale::Real)
-    qts = wc.qtrees
-    centers = QTree.center.(qts)
-    imgs, mimgs, qtrees = prepareforeground(wc.words, wc.weights * scale, 
-        wc.params[:colors], wc.params[:angles], wc.params[:groundsize], 
-        bgcolor=(0, 0, 0, 0), border=wc.params[:border], font=wc.params[:font],
-        minfontsize=wc.params[:minfontsize])
-    wc.imgs .= imgs
-    wc.qtrees .= qtrees
-    wc.params[:scale] = scale
-    wc.params[:mimgs] .= mimgs
-    QTree.setcenter!.(qtrees, centers)
-    wc
 end

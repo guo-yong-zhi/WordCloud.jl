@@ -98,18 +98,12 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol, Any}(kargs...)
 #     @show params
-    si = sortperm(weights, rev=true)
-    words = words[si]
-    weights = weights[si]
-    weights = weights ./ √(sum(weights.^2 .* length.(words)) / length(weights))
     
     colors_o = colors
     colors = Iterators.take(iter_expand(colors), length(words)) |> collect
-    colors = colors[si]
     params[:colors] = colors
 
     angles = Iterators.take(iter_expand(angles), length(words)) |> collect
-    angles = angles[si]
     params[:angles] = angles
     
     if !haskey(params, :mask)
@@ -132,11 +126,27 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     else
         mask = params[:mask]
     end
-
+    transparentcolor = get(params, :transparentcolor, mask[1]) |> parsecolor
+    mask, maskqtree, groundsize, groundoccupied = preparebackground(mask, transparentcolor)
+    params[:groundsize] = groundsize
+    params[:groundoccupied] = groundoccupied
+    @assert groundoccupied > 0
+    minfontsize = get(params, :minfontsize, :auto)
+    if minfontsize==:auto
+        minfontsize = min(8, sqrt(groundoccupied/length(words)/8))
+        println("set minfontsize to $minfontsize")
+        @show groundoccupied, length(words)
+        params[:minfontsize] = minfontsize
+    end
+    get!(params, :border, 1)
+    get!(params, :fillingrate, 0.65)
+    get!(params, :font, "")
+    
     params[:state] = nameof(wordcloud)
     params[:epoch] = 0
     params[:indsmap] = nothing
-    wc = wordcloud(words, weights, nothing, mask, nothing, nothing, params)
+    l = length(words)
+    wc = wordcloud(words, float.(weights), Vector(undef, l), mask, Vector(undef, l), maskqtree, params)
     run(wc)
     wc
 end
@@ -157,13 +167,14 @@ getweight(wc::wordcloud, w) = wc.weights[index(wc, w)]
 setcolor!(wc::wordcloud, w, c) = wc.params[:colors][index(wc, w)] = parsecolor(c)
 setangle!(wc::wordcloud, w, a::Number) = wc.params[:angles][index(wc, w)] = a
 setweight!(wc::wordcloud, w, v::Number) = wc.weights[index(wc, w)] = v
+getimage(wc::wordcloud, w) = wc.imgs[index(wc, w)]
 
-function getposition(wc::wordcloud)
+function getposition(wc::wordcloud, mask=:)
     msy, msx = getshift(wc.maskqtree)
-    pos = getshift.(wc.qtrees)
+    pos = getshift.(wc.qtrees[mask])
     map(p->(p[2]-msx+1, p[1]-msy+1), pos)
 end
-function getposition(wc::wordcloud, w)
+function getposition(wc::wordcloud, w::Union{Number, AbstractString})
     msy, msx = getshift(wc.maskqtree)
     y, x = getshift(wc.qtrees[index(wc, w)])
     x-msx+1, y-msy+1
@@ -174,45 +185,54 @@ function setposition!(wc::wordcloud, w, x_y)
     setshift!(wc.qtrees[index(wc, w)], (y-1+msy, x-1+msx))
     x_y
 end
-
-function init!(wc::wordcloud)
+function initword!(wc, w, sz=wc.weights[index(wc, w)]*wc.params[:scale])
+    i = index(wc, w)
     params = wc.params
-    words = wc.words
-    weights = wc.weights
-    mask = wc.mask
+    img, mimg, tree = prepareword(wc.words[i], sz, params[:colors][i], params[:angles][i], params[:groundsize], 
+    bgcolor=(0,0,0,0), border=params[:border], font=params[:font], minfontsize=params[:minfontsize])
+    wc.imgs[i] = img
+    wc.qtrees[i] = tree
+    nothing
+end
 
-    transparentcolor = get(params, :transparentcolor, mask[1]) |> parsecolor
-    mask, maskqtree, groundsize, groundoccupied = preparebackground(mask, transparentcolor)
-    params[:groundsize] = groundsize
-    params[:groundoccupied] = groundoccupied
-    @assert groundoccupied > 0
-    minfontsize = get(params, :minfontsize, :auto)
-    if minfontsize==:auto
-        minfontsize = min(8, sqrt(groundoccupied/length(words)/8))
-        println("set minfontsize to $minfontsize")
-        @show groundoccupied, length(words)
-        params[:minfontsize] = minfontsize
-    end
-    scale = find_weight_scale(words, weights, groundoccupied, border=get!(params, :border, 1), initialscale=0, 
-    fillingrate=get!(params, :fillingrate, 0.65), maxiter=5, error=0.03, minfontsize=minfontsize)
-    params[:scale] = scale
+function initword!(wc::wordcloud)
+    params = wc.params
+    mask = wc.mask
+    
+    si = sortperm(wc.weights, rev=true)
+    words = wc.words[si]
+    weights = wc.weights[si]
+    weights = weights ./ √(sum(weights.^2 .* length.(words)) / length(weights))
+    wc.words .= words
+    wc.weights .= weights
+    wc.params[:colors] .= wc.params[:colors][si]
+    wc.params[:angles] .= wc.params[:angles][si]
+    wc.params[:indsmap] = nothing
+
+    scale = find_weight_scale(words, weights, params[:groundoccupied], border=params[:border], initialscale=0, 
+    fillingrate=params[:fillingrate], maxiter=5, error=0.03, font=params[:font], minfontsize=params[:minfontsize])
     println("set fillingrate to $(params[:fillingrate]), with scale=$scale")
-    imgs, mimgs, qtrees = prepareforeground(words, weights*scale, wc.params[:colors], wc.params[:angles], groundsize, 
-    bgcolor=(0,0,0,0), border=get!(params, :border, 1), font=get!(params, :font, ""), minfontsize=minfontsize);
-    params[:mimgs] = mimgs
-    wc.imgs = imgs
-    wc.qtrees = qtrees
-    wc.maskqtree = maskqtree
-    params[:state] = nameof(init!)
+    params[:scale] = scale
+    initword!.(Ref(wc), 1:length(words))
+    params[:state] = nameof(initword!)
     wc
 end
 
 function QTree.placement!(wc::wordcloud)
     if getstate(wc) == nameof(wordcloud)
-        init!(wc)
+        initword!(wc)
     end
     placement!(deepcopy(wc.maskqtree), wc.qtrees)
     wc.params[:state] = nameof(placement!)
+    wc
+end
+
+function rescale!(wc::wordcloud, scale::Real)
+    qts = wc.qtrees
+    centers = QTree.center.(qts)
+    wc.params[:scale] = scale
+    initword!.(Ref(wc), 1:length(wc.words))
+    QTree.setcenter!.(wc.qtrees, centers)
     wc
 end
 
@@ -267,7 +287,7 @@ function generate!(wc::wordcloud, args...; retry=3, krags...)
         end
     end
     @show ep, nc
-    if nc == 0
+    if false#nc == 0
         wc.params[:state] = nameof(generate!)
     else #check
         colllist = first.(listcollision(wc.qtrees, wc.maskqtree))
@@ -299,7 +319,7 @@ end
 
 function ignore(fun, wc::wordcloud, mask::AbstractArray{Bool})
     mem = [wc.words, wc.weights, wc.imgs, wc.qtrees, 
-            wc.params[:colors], wc.params[:angles], wc.params[:mimgs], wc.params[:indsmap]]
+            wc.params[:colors], wc.params[:angles], wc.params[:indsmap]]
     mask = .!mask
     wc.words = @view wc.words[mask]
     wc.weights = @view wc.weights[mask]
@@ -307,7 +327,6 @@ function ignore(fun, wc::wordcloud, mask::AbstractArray{Bool})
     wc.qtrees = @view wc.qtrees[mask]
     wc.params[:colors] = @view wc.params[:colors][mask]
     wc.params[:angles] = @view wc.params[:angles][mask]
-    wc.params[:mimgs] = @view wc.params[:mimgs][mask]
     wc.params[:indsmap] = nothing
     r = nothing
     try
@@ -319,8 +338,7 @@ function ignore(fun, wc::wordcloud, mask::AbstractArray{Bool})
         wc.qtrees = mem[4]
         wc.params[:colors] = mem[5]
         wc.params[:angles] = mem[6]
-        wc.params[:mimgs] = mem[7] 
-        wc.params[:indsmap] = mem[8]
+        wc.params[:indsmap] = mem[7]
     end
     r
 end
@@ -328,17 +346,21 @@ end
 function pin(fun, wc::wordcloud, mask::AbstractArray{Bool})
     maskqtree = wc.maskqtree
     wcmask = wc.mask
+    groundoccupied = wc.params[:groundoccupied]
+    
     maskqtree2 = deepcopy(maskqtree)
     QTree.overlap!.(Ref(maskqtree2), wc.qtrees[mask])
     wc.maskqtree = maskqtree2
     resultpic = convert.(ARGB32, wc.mask)
-    wc.mask = overlay!(resultpic, wc.imgs[mask], getposition(wc)[mask])
+    wc.mask = overlay!(resultpic, wc.imgs[mask], getposition(wc, mask))
+    wc.params[:groundoccupied] = occupied(QTree.kernel(wc.maskqtree[1]), QTree.FULL)
     r = nothing
     try
         r = ignore(fun, wc, mask)
     finally
         wc.maskqtree = maskqtree
         wc.mask = wcmask
+        wc.params[:groundoccupied] = groundoccupied
     end
     r
 end
@@ -368,8 +390,10 @@ function pin(fun, wc, ws::AbstractArray{<:AbstractString})
 end
 
 runexample(example=:alice) = evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
+showexample(example=:alice) = read(pkgdir(WordCloud)*"/examples/$(example).jl", String)|>print
 examples = join([":"*e[1:end-3] for e in basename.(readdir(pkgdir(WordCloud)*"/examples")) if endswith(e, ".jl")], ", ")
 @doc "optional value: [" * examples * "]" runexample
+@doc "optional value: [" * examples * "]" showexample
 
 Base.show(io::IO, m::MIME"image/png", wc::wordcloud) = Base.show(io, m, paint(wc::wordcloud))
 Base.show(io::IO, m::MIME"text/plain", wc::wordcloud) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")
