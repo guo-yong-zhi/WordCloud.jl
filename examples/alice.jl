@@ -6,3 +6,4 @@ wc = wordcloud(
     angles = (0, 90),
     fillingrate = 0.7) |> generate!
 paint(wc, "alice.png", background=outline(wc.mask, color="purple", linewidth=1))
+wc
