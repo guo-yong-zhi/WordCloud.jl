@@ -64,3 +64,4 @@ gif = WordCloud.GIF("address_compare")
 record(wca, "Obama", gif)
 record(wcb, "Trump", gif)
 WordCloud.Render.generate(gif, framerate=1)
+wca, wcb
