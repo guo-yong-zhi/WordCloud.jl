@@ -1,5 +1,8 @@
 .ipynb_checkpoints
 .vscode
+*.cov
 res/*/*
 address_compare
 guxiang_animation
+/*.png
+test/*.jpg

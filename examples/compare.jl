@@ -1,6 +1,7 @@
 using WordCloud
 
 stwords = ["us", "will"];
+
 println("==Obama's==")
 cs = WordCloud.randomscheme()
 as = WordCloud.randomangles()
@@ -10,42 +11,42 @@ wca = wordcloud(
     colors = cs,
     angles = as,
     fillingrate = fr) |> generate!
+
 println("==Trump's==")
-tb, wb = process(open(pkgdir(WordCloud)*"/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords)
-samemask = tb .∈ Ref(wca.words)
-println(sum(samemask), " same words")
-csb = Iterators.take(WordCloud.iter_expand(cs), length(tb)) |> collect
-asb = Iterators.take(WordCloud.iter_expand(as), length(tb)) |> collect
-wainds = Dict(zip(wca.words, Iterators.countfrom(1)))
-for i in 1:length(tb)
-    if samemask[i]
-        ii = wainds[tb[i]]
-        csb[i] = wca.params[:colors][ii]
-        asb[i] = wca.params[:angles][ii]
-    end
-end
 wcb = wordcloud(
-    (tb,wb), 
-    mask = wca.mask,
-    colors = csb,
-    angles = asb,
-    fillingrate = fr)
-for i in 1:length(tb)
-    if samemask[i]
-        ii = wainds[tb[i]]
-        cxy = WordCloud.QTree.center(wca.qtrees[ii])
-        WordCloud.QTree.setcenter!(wcb.qtrees[i], cxy)
-    end
+    process(open(pkgdir(WordCloud)*"/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords),
+    mask = getmask(wca),
+    colors = cs,
+    angles = as,
+    fillingrate = fr,
+    run = x->nothing, #turn off the useless initword! and placement! in advance
+)
+
+samewords = getword(wca) ∩ getword(wcb)
+println(length(samewords), " same words")
+
+for w in samewords
+    setcolor!(wcb, w, getcolor(wca, w))
+    setangle!(wcb, w, getangle(wca, w))
 end
+#Follow these steps to generate result: initword! -> placement! -> generate!
+initword!(wcb)
+
 println("=ignore defferent words=")
-ignore(wcb, .!samemask) do
+ignore(wcb, getword(wcb) .∉ Ref(samewords)) do
+    @assert Set(wcb.words) == Set(samewords)
+    centers = getposition.(wca, samewords, type=getcenter)
+    setposition!.(wcb, samewords, centers, type=setcenter!) #manually initialize the position,
+    setstate!(wcb, :placement!) #and set the state flag
     generate!(wcb, 1000, patient=-1, retry=1) #patient=-1 means no teleport; retry=1 means no rescale
 end
+
 println("=pin same words=")
-pin(wcb, samemask) do
+pin(wcb, samewords) do
     placement!(wcb)
     generate!(wcb, 1000, retry=1) #allow teleport but don‘t allow rescale
 end
+
 if getstate(wcb) != :generate!
     println("=overall tuning=")
     generate!(wcb, 1000, patient=-1, retry=2) #allow rescale but don‘t allow teleport
@@ -54,10 +55,9 @@ end
 ma = paint(wca)
 mb = paint(wcb)
 h,w = size(ma)
-space = loadmask(shape(box, w÷20, h))
-space .= WordCloud.ARGB(0,0,0,0)
+space = fill(mb[1], (h, w÷20))
 try mkdir("address_compare") catch end
-
+println("save results to address_compare")
 WordCloud.ImageMagick.save("address_compare/compare.png", [ma space mb])
 
 gif = WordCloud.GIF("address_compare")

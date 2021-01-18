@@ -15,7 +15,7 @@ function countwords(words::AbstractVector{<:AbstractString}; counter=Dict{String
 end
 
 countwords(text::AbstractString; regexp=r"\w[\w']+", kargs...) = countwords(splitwords(text, regexp); kargs...)
-        
+"count words in text. And use `regexp` to split."        
 function countwords(textfile::IO; counter=Dict{String,Int}(), kargs...)
     for l in eachline(textfile)
         countwords(l;counter=counter, kargs...)
@@ -29,13 +29,25 @@ end
 #     end
 #     counter
 # end
-
-function process(counter::Dict{String,<:Number}; 
+"""
+Process the text, filter the words, and adjust the weights. return processed words vector and weights vector.
+## Positional Arguments
+* text: string, a vector of words, or a opend file(IO)
+* Or, a counter::Dict{<:AbstractString, <:Number}
+## Optional Keyword Arguments
+* stopwords: a words Set
+* minlength, maxlength: min and max length of a word to be included
+* minfrequency: minimum frequency of a word to be included
+* maxnum: maximum number of words
+* minweight, maxweight: within 0 ~ 1, set to adjust extreme weight
+"""
+function process(counter::Dict{<:AbstractString, <:Number}; 
     stopwords=stopwords_en,
     minlength=2, maxlength=30,
     minfrequency=0,
     maxnum=500,
     minweight=1/maxnum, maxweight=minweight*20)
+    stopwords = Set(stopwords)
     for (w, c) in counter
         if (c < minfrequency || length(w) < minlength || length(w) > maxlength || lowercase(w) in stopwords) 
             delete!(counter, w)

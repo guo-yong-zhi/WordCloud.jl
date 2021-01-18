@@ -20,7 +20,7 @@ end
     wc = wordcloud(words, weights, fillingrate=0.6)
     paint(wc)
     generate!(wc)
-    paint(wc::wordcloud, "test.jpg")
+    paint(wc::wordcloud, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2))
     @test isempty(WordCloud.outofbounds(wc.maskqtree, wc.qtrees))
 
     clq = WordCloud.QTree.listcollision_qtree(wc.qtrees, wc.maskqtree)
@@ -32,10 +32,17 @@ end
             maskimg=shape(box, 20, 15, 0, color=0.15), fillingrate=0.5, transparentcolor=(1,1,1,0)) #String & small mask
     placement!(wc)
     wc = wordcloud(
-            process(open("../res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
+            process(open("../res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxnum=300), 
             mask = loadmask("../res/alice_mask.png", color="#faeef8", backgroundcolor=0.97),
             colors = (WordCloud.colorschemes[:Set1_5].colors..., ),
             angles = (0, 90),
             fillingrate = 0.6);
+    rescale!(wc, 1.23)
+    pin(wc, ["little", "know"]) do 
+        @test length(wc.words)==298
+        setposition!(wc, "time", (0,0), type=setcenter!)
+    end
+    @test WordCloud.QTree.kernelsize(wc.qtrees[WordCloud.index(wc, "time")]) == size(getimage(wc, "time"))
+    @test .-reverse(size(getimage(wc, "time"))) .÷ 2 == getposition(wc, "time")
 end
 

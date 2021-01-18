@@ -7,7 +7,7 @@ texts = df[!, "Column2"]
 weights = df[!, "Column3"]
 
 wc = wordcloud(texts, weights, fillingrate=0.8)
-
-gifdirectory = "gg/guxiang_animation"
+println("save results to guxiang_animation")
+gifdirectory = "guxiang_animation"
 generate_animation!(wc, 100, outputdir=gifdirectory)
 wc
