@@ -5,10 +5,12 @@ wordcloud in Julia
 * **Exact**  Words with the same weight have the exact same size. The algorithm will never scale the word to fit the blank.
 
 ---
-
+# Installation
+```julia
+import Pkg; Pkg.add("WordCloud")
+```
 # Basic Usage 
 ```julia
-]add WordCloud
 using WordCloud
 words = "天地玄黄宇宙洪荒日月盈昃辰宿列张寒来暑往秋收冬藏闰余成岁律吕调阳云腾致雨露结为霜金生丽水玉出昆冈剑号巨阙珠称夜光果珍李柰菜重芥姜海咸河淡鳞潜羽翔龙师火帝鸟官人皇始制文字乃服衣裳推位让国有虞陶唐吊民伐罪周发殷汤坐朝问道垂拱平章"
 words = [string(c) for c in words]
@@ -17,27 +19,34 @@ wc = wordcloud(words, weights)
 generate!(wc)
 paint(wc, "qianziwen.png")
 ```
-*Run the command `runexample(:qianziwen)` to get the result.*  
+*Run the command `runexample(:qianziwen)` or `showexample(:qianziwen)` to get the result.*  
 # More Complex Usage
 ```julia
+using WordCloud
 wc = wordcloud(
     process(open(pkgdir(WordCloud)*"/res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
     mask = loadmask(pkgdir(WordCloud)*"/res/alice_mask.png", color="#faeef8"),
-    colors = (WordCloud.colorschemes[:Set1_5].colors..., ),
+    colors = :Set1_5,
     angles = (0, 90),
     fillingrate = 0.7) |> generate!
-paint(wc, "alice.png", ratio=0.5)
+paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", linewidth=1))
 ```
-*Run the command `runexample(:alice)` to get the result.*  
+*Run the command `runexample(:alice)` or `showexample(:alice)` to get the result.*  
 ![alice](res/alice.png)
 
-# More
+# More Examples
+## Training animation
 ![animation](res/animation.gif)  
-[Training Animation](./examples/animation.jl)  
-*Run the command `runexample(:animation)` to get the result.*  
+[Training animation](./examples/animation.jl)  
+*Run the command `runexample(:animation)` or `showexample(:animation)` to get the result.* 
+## Specifies the style of a particular word
+![specifystyle](res/specifystyle.png)  
+[Specifies the style of a particular word](./examples/specifystyle.jl)  
+*Run the command `runexample(:specifystyle)` or `showexample(:specifystyle)` to get the result.* 
+## Comparison
 ![compare](res/compare.png)  
 [Comparison of Obama's and Trump's inaugural address](./examples/compare.jl)  
-*Run the command `runexample(:compare)` to get the result.*  
+*Run the command `runexample(:compare)` or `showexample(:compare)` to get the result.*  
 
 ***
 * [x] 排序 & 预放置
