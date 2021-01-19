@@ -124,6 +124,10 @@ function listcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree
    indpairs = combinations(inds, 2) |> collect |> shuffle!
    listcollision_native(qtrees, mask, indpairs, collist=collist, at=at)
 end
+function listcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree, 
+    inds::AbstractSet; kargs...)
+   listcollision_native(qtrees, mask, inds|>collect; kargs...)
+end
 
 function findroom(ground, q=[(levelnum(ground), 1, 1)])
     if isempty(q)
