@@ -2,7 +2,7 @@
 .vscode
 *.cov
 res/*/*
-address_compare
-guxiang_animation
+address_compare*
+guxiang_animation*
 /*.png
 test/*.jpg

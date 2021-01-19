@@ -40,9 +40,9 @@ paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", li
 [Training animation](./examples/animation.jl)  
 *Run the command `runexample(:animation)` or `showexample(:animation)` to get the result.* 
 ## Specifies the style of a particular word
-![specifystyle](res/specifystyle.png)  
-[Specifies the style of a particular word](./examples/specifystyle.jl)  
-*Run the command `runexample(:specifystyle)` or `showexample(:specifystyle)` to get the result.* 
+![specifiedstyle](res/specifiedstyle.png)  
+[Specifies the style of a particular word](./examples/specifiedstyle.jl)  
+*Run the command `runexample(:specifiedstyle)` or `showexample(:specifiedstyle)` to get the result.* 
 ## Comparison
 ![compare](res/compare.png)  
 [Comparison of Obama's and Trump's inaugural address](./examples/compare.jl)  

@@ -48,8 +48,12 @@ function process(counter::Dict{<:AbstractString, <:Number};
     maxnum=500,
     minweight=1/maxnum, maxweight=minweight*20)
     stopwords = Set(stopwords)
+    println("$(sum(values(counter))) words")
+    println("$(length(counter)) different words")
     for (w, c) in counter
-        if (c < minfrequency || length(w) < minlength || length(w) > maxlength || lowercase(w) in stopwords) 
+        if (c < minfrequency 
+            || length(w) < minlength || length(w) > maxlength 
+            || lowercase(w) in stopwords || w in stopwords)
             delete!(counter, w)
         end
     end

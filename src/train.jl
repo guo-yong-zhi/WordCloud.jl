@@ -355,7 +355,8 @@ function teleport!(ts, maskqt, collpool, args...; kargs...)
 end
 
 function train!(ts, maskqt, nepoch::Number=-1, args...; 
-        trainer=trainepoch_EM2!, patient::Number=trainer(:patient), callbackstep=0, callbackfun=x->x, kargs...)
+        trainer=trainepoch_EM2!, patient::Number=trainer(:patient), optimiser=Momentum(η=1/4, ρ=0.5), 
+        callbackstep=0, callbackfun=x->x, kargs...)
     ep = 0
     nc = 0
     count = 0
@@ -373,7 +374,7 @@ function train!(ts, maskqt, nepoch::Number=-1, args...;
     @show nepoch, patient
     while ep < nepoch
 #         @show "##", ep, nc, length(collpool), (count,nc_min)
-        nc = trainer(ts, maskqt, args...; resource..., kargs...)
+        nc = trainer(ts, maskqt, args...; resource..., optimiser=optimiser, kargs...)
         ep += 1
         count += 1
         if nc < nc_min

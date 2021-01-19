@@ -5,6 +5,6 @@ wc = wordcloud(
     colors = :Set1_5,
     angles = (0, 90),
     fillingrate = 0.7) |> generate!
-println("save results to alice.png")
+println("results are saved to alice.png")
 paint(wc, "alice.png", background=outline(wc.mask, color="purple", linewidth=1))
 wc
