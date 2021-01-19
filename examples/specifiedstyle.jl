@@ -18,6 +18,6 @@ pin(wc, "Alice in Wonderland") do
     generate!(wc)
 end
 
-println("save results to specifystyle.png")
-paint(wc, "specifystyle.png")
+println("results are saved to specifiedstyle.png")
+paint(wc, "specifiedstyle.png")
 wc

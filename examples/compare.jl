@@ -57,7 +57,7 @@ mb = paint(wcb)
 h,w = size(ma)
 space = fill(mb[1], (h, w÷20))
 try mkdir("address_compare") catch end
-println("save results to address_compare")
+println("results are saved in address_compare")
 WordCloud.ImageMagick.save("address_compare/compare.png", [ma space mb])
 
 gif = WordCloud.GIF("address_compare")

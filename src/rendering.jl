@@ -192,6 +192,7 @@ function try_gif_gen(gifdirectory; framerate=4)
             -i $(gifdirectory)/result-palette.png -lavfi paletteuse -y $(gifdirectory)/result.gif`,
             stdout=devnull, stderr=devnull) |> run
     catch e
+        @warn "You need to have FFmpeg manually installed to use this function."
         @warn e
     end
 end
