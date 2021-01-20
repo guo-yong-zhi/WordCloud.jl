@@ -7,14 +7,14 @@ cs = WordCloud.randomscheme()
 as = WordCloud.randomangles()
 fr = 0.65 #not too high
 wca = wordcloud(
-    process(open(pkgdir(WordCloud)*"/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords), 
+    processtext(open(pkgdir(WordCloud)*"/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords), 
     colors = cs,
     angles = as,
     fillingrate = fr) |> generate!
 
 println("==Trump's==")
 wcb = wordcloud(
-    process(open(pkgdir(WordCloud)*"/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords),
+    processtext(open(pkgdir(WordCloud)*"/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords),
     mask = getmask(wca),
     colors = cs,
     angles = as,
@@ -30,7 +30,7 @@ for w in samewords
     setangle!(wcb, w, getangle(wca, w))
 end
 #Follow these steps to generate result: initword! -> placement! -> generate!
-initword!(wcb)
+initwords!(wcb)
 
 println("=ignore defferent words=")
 ignore(wcb, getword(wcb) .∉ Ref(samewords)) do

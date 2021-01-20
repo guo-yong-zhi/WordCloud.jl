@@ -24,7 +24,7 @@ paint(wc, "qianziwen.png")
 ```julia
 using WordCloud
 wc = wordcloud(
-    process(open(pkgdir(WordCloud)*"/res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
+    processtext(open(pkgdir(WordCloud)*"/res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
     mask = loadmask(pkgdir(WordCloud)*"/res/alice_mask.png", color="#faeef8"),
     colors = :Set1_5,
     angles = (0, 90),

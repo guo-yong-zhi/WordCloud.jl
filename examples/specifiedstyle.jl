@@ -1,6 +1,6 @@
 using WordCloud
 wc = wordcloud(
-    process(open("res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxweight=1, maxnum=300), 
+    processtext(open("res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxweight=1, maxnum=300), 
     mask = padding(shape(ellipse, 600, 500, color=(0.98, 0.97, 0.99), bgcolor=0.97), 0.1),
     colors = :seaborn_dark,
     angles = -90:90,
@@ -14,7 +14,7 @@ initword!(wc, "Alice in Wonderland", 2size(wc.mask, 2)/length("Alice in Wonderla
 setposition!(wc, 1, reverse(size(wc.mask)) .÷ 2, type=setcenter!) # center it
 
 pin(wc, "Alice in Wonderland") do
-    initword!(wc) #init inside `pin` to reset the size of other words
+    initwords!(wc) #init inside `pin` to reset the size of other words
     generate!(wc)
 end
 

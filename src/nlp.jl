@@ -1,5 +1,5 @@
 module NLP
-export countwords, filtcount, process, stopwords_en
+export countwords, filtcount, processtext, stopwords_en
 dir = @__DIR__
 stopwords_en = Set(readlines(dir * "/../res/stopwords_en.txt"))
 function splitwords(text::AbstractString, regexp=r"\w[\w']+")
@@ -30,7 +30,7 @@ end
 #     counter
 # end
 """
-Process the text, filter the words, and adjust the weights. return processed words vector and weights vector.
+processtext the text, filter the words, and adjust the weights. return processtexted words vector and weights vector.
 ## Positional Arguments
 * text: string, a vector of words, or a opend file(IO)
 * Or, a counter::Dict{<:AbstractString, <:Number}
@@ -41,7 +41,7 @@ Process the text, filter the words, and adjust the weights. return processed wor
 * maxnum: maximum number of words
 * minweight, maxweight: within 0 ~ 1, set to adjust extreme weight
 """
-function process(counter::Dict{<:AbstractString, <:Number}; 
+function processtext(counter::Dict{<:AbstractString, <:Number}; 
     stopwords=stopwords_en,
     minlength=2, maxlength=30,
     minfrequency=0,
@@ -81,7 +81,7 @@ function process(counter::Dict{<:AbstractString, <:Number};
     println("$(sum(m)) huge words")
     words, weights
 end
-function process(text; regexp=r"\w[\w']+", counter=Dict{String,Int}(), kargs...)
-    process(countwords(text, regexp=regexp, counter=counter); kargs...)
+function processtext(text; regexp=r"\w[\w']+", counter=Dict{String,Int}(), kargs...)
+    processtext(countwords(text, regexp=regexp, counter=counter); kargs...)
 end
 end

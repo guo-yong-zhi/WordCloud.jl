@@ -36,6 +36,7 @@ Base.setindex!(t::AbstractStackedQtree, v, inds::Tuple{Int,Int,Int}) = t[inds...
 function levelnum(t::AbstractStackedQtree) end
 Base.lastindex(t::AbstractStackedQtree) = levelnum(t)
 Base.size(t::AbstractStackedQtree) = levelnum(t) > 0 ? size(t[1]) : (0,)
+Base.broadcastable(t::AbstractStackedQtree) = Ref(t)
 
 ################ StackedQtree
 struct StackedQtree{T <: AbstractVector{<:AbstractMatrix{UInt8}}} <: AbstractStackedQtree
