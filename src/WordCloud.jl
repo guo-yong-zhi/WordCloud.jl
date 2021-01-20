@@ -1,5 +1,5 @@
 module WordCloud
-export wordcloud, shape, ellipse, box, paint, loadmask, processtext, outline, padding,
+export wordcloud, shape, ellipse, box, loadmask, processtext, outline, padding, paint, paintsvg,
     train!, Momentum, generate!, generate_animation!
 export getshift, getcenter, setshift!, setcenter!
 export record, parsecolor, placement!, rescale!, imageof, bitor, take, ignore, pin, runexample, showexample
