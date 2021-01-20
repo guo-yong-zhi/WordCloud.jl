@@ -182,7 +182,7 @@ end
 function index(wc::wordcloud, w::AbstractString)
     getindsmap(wc)[w]
 end
-index(wc::wordcloud, w::AbstractVector{<:AbstractString}) = index.(wc, w)
+index(wc::wordcloud, w::AbstractVector) = index.(wc, w)
 index(wc::wordcloud, i) = i
 getdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index and ignored to return all."
 setdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index, the 3rd arg is the value to assign."
