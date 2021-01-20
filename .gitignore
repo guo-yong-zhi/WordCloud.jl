@@ -5,4 +5,6 @@ res/*/*
 address_compare*
 guxiang_animation*
 /*.png
+/*.svg
+/*.ipynb
 test/*.jpg

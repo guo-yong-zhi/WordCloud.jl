@@ -49,8 +49,8 @@ end
 Base.iterate(it::IterGen, state=0) = it.generator(state),state+1
 Base.length(it::IterGen) = typemax(Int)
 
-function prepareword(word, weight, color, angle, groundsize; bgcolor=(0,0,0,0), font="", border=0, minfontsize=0)
-    img, mimg = rendertext(string(word), max(minfontsize, weight), color=color, bgcolor=bgcolor,
+function prepareword(word, weight, color, angle, groundsize; bgcolor=(0,0,0,0), font="", border=0)
+    img, mimg = rendertext(string(word), weight, color=color, bgcolor=bgcolor,
         angle=angle, border=border, font=font, returnmask=true)
     t = ShiftedQtree(mimg, groundsize) |> buildqtree!
     img, mimg, t

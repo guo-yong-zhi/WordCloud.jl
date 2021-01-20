@@ -99,11 +99,11 @@ Positional arguments are used to specify words and weights, and can be in differ
 The keyword argument `run` is a function. It will be called after the `wordcloud` object constructed.
 * run = placement! #default setting, will initialize word's position
 * run = generate! #get result directly
-* run = initword! #only initialize resources, such as rendering word images
+* run = initwords! #only initialize resources, such as rendering word images
 * run = x->nothing #do nothing
 ---
-* After getting the `wordcloud` object, these steps are needed to get the result picture: initword! -> placement! -> generate! -> paint
-* You can skip `placement!` and/or `initword!`, and the default action will be performed
+* After getting the `wordcloud` object, these steps are needed to get the result picture: initwords! -> placement! -> generate! -> paint
+* You can skip `placement!` and/or `initwords!`, and the default action will be performed
 """
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter)|>collect, values(counter)|>collect; kargs...)
@@ -182,41 +182,41 @@ end
 function index(wc::wordcloud, w::AbstractString)
     getindsmap(wc)[w]
 end
+index(wc::wordcloud, w::AbstractVector{<:AbstractString}) = index.(wc, w)
 index(wc::wordcloud, i) = i
-getdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string, a index number or a BitArray mask and ignored to return all."
-setdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string or a index number, the 3rd arg is the value to assign."
-@doc getdoc getcolor(wc::wordcloud, w=:) = wc.params[:colors][index(wc, w)]
-@doc getdoc getangle(wc::wordcloud, w=:) = wc.params[:angles][index(wc, w)]
-@doc getdoc getword(wc::wordcloud, w=:) = wc.words[index(wc, w)]
-@doc getdoc getweight(wc::wordcloud, w=:) = wc.weights[index(wc, w)]
-@doc setdoc setcolor!(wc::wordcloud, w, c) = wc.params[:colors][index(wc, w)] = parsecolor(c)
-@doc setdoc setangle!(wc::wordcloud, w, a::Number) = wc.params[:angles][index(wc, w)] = a
+getdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index and ignored to return all."
+setdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index, the 3rd arg is the value to assign."
+@doc getdoc getcolors(wc::wordcloud, w=:) = wc.params[:colors][index(wc, w)]
+@doc getdoc getangles(wc::wordcloud, w=:) = wc.params[:angles][index(wc, w)]
+@doc getdoc getwords(wc::wordcloud, w=:) = wc.words[index(wc, w)]
+@doc getdoc getweights(wc::wordcloud, w=:) = wc.weights[index(wc, w)]
+@doc setdoc setcolors!(wc::wordcloud, w, c) = @view(wc.params[:colors][index(wc, w)]) .= parsecolor(c)
+@doc setdoc setangles!(wc::wordcloud, w, a::Union{Number, AbstractVector{<:Number}}) = @view(wc.params[:angles][index(wc, w)]) .= a
 @doc setdoc 
-function setword!(wc::wordcloud, w, v::AbstractString)
+function setwords!(wc::wordcloud, w, v::Union{AbstractString, AbstractVector{<:AbstractString}})
     m = getindsmap(wc)
-    @assert !(v in keys(m))
-    wc.words[index(wc, w)] = v
-    m[v] = pop!(m, w)
+    @assert !any(v .∈ Ref(keys(m)))
+    i = index(wc, w)
+    Broadcast.broadcast((old,new)->m[new]=pop!(m,old), wc.words[i], v)
+    @view(wc.words[i]) .= v
     v
 end
-@doc setdoc setweight!(wc::wordcloud, w, v::Number) = wc.weights[index(wc, w)] = v
-@doc getdoc getimage(wc::wordcloud, w=:) = wc.imgs[index(wc, w)]
+@doc setdoc setweights!(wc::wordcloud, w, v::Union{Number, AbstractVector{<:Number}}) = @view(wc.weights[index(wc, w)]) .= v
+@doc getdoc getimages(wc::wordcloud, w=:) = wc.imgs[index(wc, w)]
+@doc getdoc getfontsizes(wc::wordcloud, w=:) = max.(wc.params[:minfontsize], wc.weights[index(wc, w)] * wc.params[:scale])
+
 getmask(wc::wordcloud) = wc.mask
 
 @doc getdoc * " Keyword argment `type` can be `getshift` or `getcenter`."
-function getposition(wc::wordcloud, mask=:; type=getshift)
+function getpositions(wc::wordcloud, w=:; type=getshift)
     msy, msx = getshift(wc.maskqtree)
-    pos = type.(wc.qtrees[mask])
-    map(p->(p[2]-msx+1, p[1]-msy+1), pos)
-end
-function getposition(wc::wordcloud, w::Union{Number, AbstractString}; type=getshift)
-    msy, msx = getshift(wc.maskqtree)
-    y, x = type(wc.qtrees[index(wc, w)])
-    x-msx+1, y-msy+1
+    pos = type.(wc.qtrees[index(wc, w)])
+    pos = eltype(pos) <: Number ? Ref(pos) : pos
+    Broadcast.broadcast(p->(p[2]-msx+1, p[1]-msy+1), pos)
 end
 
 @doc setdoc * " Keyword argment `type` can be `setshift!` or `setcenter!`."
-function setposition!(wc::wordcloud, w, x_y; type=setshift!)
+function setpositions!(wc::wordcloud, w, x_y; type=setshift!)
     x, y = x_y
     msy, msx = getshift(wc.maskqtree)
     type(wc.qtrees[index(wc, w)], (y-1+msy, x-1+msx))
@@ -228,8 +228,8 @@ function initword!(wc, w, sz=wc.weights[index(wc, w)]*wc.params[:scale];
         bgcolor=(0,0,0,0), border=wc.params[:border], font=wc.params[:font], minfontsize=wc.params[:minfontsize])
     i = index(wc, w)
     params = wc.params
-    img, mimg, tree = prepareword(wc.words[i], sz, params[:colors][i], params[:angles][i], params[:groundsize], 
-    bgcolor=bgcolor, border=border, font=font, minfontsize=minfontsize)
+    img, mimg, tree = prepareword(wc.words[i], max(sz, minfontsize), params[:colors][i], params[:angles][i], params[:groundsize], 
+    bgcolor=bgcolor, border=border, font=font)
     wc.imgs[i] = img
     wc.qtrees[i] = tree
     nothing
@@ -254,13 +254,14 @@ function initword!(wc::wordcloud)
     println("set fillingrate to $(params[:fillingrate]), with scale=$scale")
     params[:scale] = scale
     initword!.(wc, 1:length(words))
-    params[:state] = nameof(initword!)
+    params[:state] = nameof(initwords!)
     wc
 end
+initwords!(wc::wordcloud) = initword!(wc)
 
 function QTree.placement!(wc::wordcloud)
     if getstate(wc) == nameof(wordcloud)
-        initword!(wc)
+        initwords!(wc)
     end
     placement!(deepcopy(wc.maskqtree), wc.qtrees)
     wc.params[:state] = nameof(placement!)
@@ -279,7 +280,7 @@ end
 
 function paint(wc::wordcloud, args...; background=wc.mask, kargs...)
     resultpic = convert.(ARGB32, background)#.|>ARGB32
-    overlay!(resultpic, wc.imgs, getposition(wc))
+    overlay!(resultpic, wc.imgs, getpositions(wc))
     if !(isempty(args) && isempty(kargs))
         resultpic = convert.(ARGB{Colors.N0f8}, resultpic)
         resultpic = imresize(resultpic, args...; kargs...)
@@ -406,7 +407,7 @@ function pin(fun, wc::wordcloud, mask::AbstractArray{Bool})
     QTree.overlap!.(Ref(maskqtree2), wc.qtrees[mask])
     wc.maskqtree = maskqtree2
     resultpic = convert.(ARGB32, wc.mask)
-    wc.mask = overlay!(resultpic, wc.imgs[mask], getposition(wc, mask))
+    wc.mask = overlay!(resultpic, wc.imgs[mask], getpositions(wc, mask))
     wc.params[:groundoccupied] = occupied(QTree.kernel(wc.maskqtree[1]), QTree.FULL)
     r = nothing
     try
