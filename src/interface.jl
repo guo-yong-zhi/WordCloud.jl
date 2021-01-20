@@ -278,7 +278,41 @@ function rescale!(wc::wordcloud, ratio::Real)
     wc
 end
 
-function paint(wc::wordcloud, args...; background=wc.mask, kargs...)
+"like `paint` but export svg"
+function paintsvg(wc::wordcloud; background=true)
+    if background == false || background === nothing
+        sz = size(wc.mask)
+    else
+        error("not implement yet, please use `background=false` instead")
+        if background == true
+            nothing
+        end
+        nothing
+    end
+    drawtextsvg(getwords(wc), getfontsizes(wc), getpositions(wc, type=getcenter), getangles(wc), getcolors(wc), wc.params[:font],
+                background=background, size=sz)        
+end
+function paintsvg(wc::wordcloud, file, args...; kargs...)
+    img = paintsvg(wc, args...; kargs...)
+    save(file, img)
+    img
+end
+
+"""
+# examples
+* paint(wc::wordcloud)
+* paint(wc::wordcloud, background=false) #no background
+* paint(wc::wordcloud, background=outline(wc.mask)) #use a new background
+* paint(wc::wordcloud, ratio=0.5) #resize the result
+* paint(wc::wordcloud, "result.png", ratio=0.5) #save as png file, other bitmap formats may also work
+* paint(wc::wordcloud, "result.svg") #save as svg file
+"""
+function paint(wc::wordcloud, args...; background=true, kargs...)
+    if background == true
+        background = wc.mask
+    elseif background == false || background === nothing
+        background = fill(ARGB32(1,1,1,0), size(wc.mask))
+    end
     resultpic = convert.(ARGB32, background)#.|>ARGB32
     overlay!(resultpic, wc.imgs, getpositions(wc))
     if !(isempty(args) && isempty(kargs))
@@ -289,11 +323,15 @@ function paint(wc::wordcloud, args...; background=wc.mask, kargs...)
 end
 
 function paint(wc::wordcloud, file, args...; kargs...)
-    img = paint(wc, args...; kargs...)
-    ImageMagick.save(file, img)
+    if endswith(file, r".svg|.SVG")
+        img = paintsvg(wc, args...; kargs...)
+    else
+        img = paint(wc, args...; kargs...)
+    end
+    save(file, img)
     img
 end
-
+        
 function record(wc::wordcloud, label::AbstractString, gif_callback=x->x)
 #     @show size(n1)
     resultpic = overlay!(paint(wc), 

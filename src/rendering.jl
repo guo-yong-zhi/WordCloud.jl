@@ -1,11 +1,13 @@
 module Render
-export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
-    colorschemes, schemes, outline, padding
+export drawtext, drawtextsvg, rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
+    colorschemes, schemes, outline, padding, save
 
 using Luxor
 using Colors
 using ColorSchemes
 using ImageMagick
+
+save = Luxor.FileIO.save
 
 parsecolor(c) = parse(Colorant, c)
 parsecolor(tp::Tuple) = ARGB32(tp...)
@@ -36,7 +38,24 @@ function backgroundclip(p::AbstractMatrix, bgcolor; border=0)
     return p[:, c:d]
 end
 
-function rendertext(str::AbstractString, size::Real; color="black", bgcolor=(0,0,0,0), angle=0, font="", border=0, returnmask=false)
+function drawtext(t, size, pos, angle=0, color="black", font="")
+    setcolor(parsecolor(color))
+    setfont(font, size)
+    settext(t, Point(pos...), halign="center", valign="center"; angle=angle)
+end
+
+function drawtextsvg(words, fontsizes, poss, angles, colors, fonts; background=false, size=size(background))
+    d = Drawing(size..., :svg)
+    bgcolor = Luxor.background(ARGB32(1,1,1,0))
+    if !(background == false || background === nothing)
+        error("not implement yet, please use `background=false` instead")
+    end
+    drawtext.(words, fontsizes, poss, angles, colors, fonts)
+    finish()
+    d
+end
+function rendertext(str::AbstractString, size::Real; 
+        pos=(0,0), color="black", bgcolor=(0,0,0,0), angle=0, font="", border=0, returnmask=false)
     l = length(str) + 1
     l = ceil(Int, size*l + 2border + 2)
     Drawing(l, l, :image)
@@ -44,9 +63,7 @@ function rendertext(str::AbstractString, size::Real; color="black", bgcolor=(0,0
     bgcolor = parsecolor(bgcolor)
     bgcolor = background(bgcolor)
     bgcolor = Luxor.ARGB32(bgcolor...)
-    setcolor(parsecolor(color))
-    setfont(font, size)
-    settext(str, halign="center", valign="center"; angle=angle)
+    drawtext(str, size, pos, angle, color, font)
     mat = image_as_matrix()
     finish()
     mat = backgroundclip(mat, mat[1], border=border)
