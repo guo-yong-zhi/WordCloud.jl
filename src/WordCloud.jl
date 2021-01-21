@@ -1,5 +1,5 @@
 module WordCloud
-export wordcloud, shape, ellipse, box, loadmask, processtext, outline, padding, paint, paintsvg,
+export wordcloud, processtext, html2text, countwords, filtcount, filtcount, shape, ellipse, box, loadmask, outline, padding, paint, paintsvg,
     train!, Momentum, generate!, generate_animation!
 export getshift, getcenter, setshift!, setcenter!
 export record, parsecolor, placement!, rescale!, imageof, bitor, take, ignore, pin, runexample, showexample
@@ -8,10 +8,10 @@ export getstate, setstate!, getcolors, getangles, getwords, getweights, setcolor
 
 include("qtree.jl")
 include("rendering.jl")
-include("nlp.jl")
+include("textprocessing.jl")
 using .Render
 using .QTree
-using .NLP
+using .TextProcessing
 include("train.jl")
 include("interface.jl")
 include("strategy.jl") 
