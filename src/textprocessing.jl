@@ -1,5 +1,5 @@
-module NLP
-export countwords, filtcount, processtext, stopwords_en
+module TextProcessing
+export countwords, processtext, html2text, stopwords_en
 dir = @__DIR__
 stopwords_en = Set(readlines(dir * "/../res/stopwords_en.txt"))
 function splitwords(text::AbstractString, regexp=r"\w[\w']+")
@@ -15,7 +15,12 @@ function countwords(words::AbstractVector{<:AbstractString}; counter=Dict{String
 end
 
 countwords(text::AbstractString; regexp=r"\w[\w']+", kargs...) = countwords(splitwords(text, regexp); kargs...)
-"count words in text. And use `regexp` to split."        
+
+raw"""
+countwords(text; regexp=r"\w[\w']+", counter=Dict{String,Int}(), kargs...)
+Count words in text. And use `regexp` to split. And save results in `counter`. 
+`text` can be a String, a Vector of String, or a opend file(IO)
+"""
 function countwords(textfile::IO; counter=Dict{String,Int}(), kargs...)
     for l in eachline(textfile)
         countwords(l;counter=counter, kargs...)
@@ -84,4 +89,24 @@ end
 function processtext(text; regexp=r"\w[\w']+", counter=Dict{String,Int}(), kargs...)
     processtext(countwords(text, regexp=regexp, counter=counter); kargs...)
 end
+processtext(fun::Function; kargs...) = processtext(fun(); kargs...)
+
+function html2text(content::AbstractString)
+    patterns = [
+        r"<[\s]*?script[^>]*?>[\s\S]*?<[\s]*?/[\s]*?script[\s]*?>"=>" ",
+        r"<[\s]*?style[^>]*?>[\s\S]*?<[\s]*?/[\s]*?style[\s]*?>"=>" ",
+        "<br>"=>"\n",
+        r"<[^>]+>"=>" ",
+        "&quot;"=>"\"",
+        "&amp;"=>"&",
+        "&lt;"=>"<",
+        "&gt;"=>">",
+        r"&#?\w{1,6};"=>" ",
+    ]
+    for p in patterns
+        content = replace(content, p)
+    end
+    content
 end
+html2text(file::IO) = html2text(read(file, String))
+end 

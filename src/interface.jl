@@ -290,7 +290,7 @@ function paintsvg(wc::wordcloud; background=true)
         nothing
     end
     drawtextsvg(getwords(wc), getfontsizes(wc), getpositions(wc, type=getcenter), getangles(wc), getcolors(wc), wc.params[:font],
-                background=background, size=sz)        
+                background=background, size=reverse(sz))  
 end
 function paintsvg(wc::wordcloud, file, args...; kargs...)
     img = paintsvg(wc, args...; kargs...)
