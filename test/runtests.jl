@@ -4,17 +4,16 @@ using Random
 
 include("test_qtree.jl")
 include("test_lru.jl")
-@testset "nlp.jl" begin
+@testset "textprocessing.jl" begin
     text = "So dim, so dark, So dense, so dull, So damp, so dank, So dead! The weather, now warm, now cold, Makes it harder Than ever to forget!"
-    c = WordCloud.NLP.countwords(text)
+    c = WordCloud.TextProcessing.countwords(text)
     @test c["so"] == 3
-    words,weights = WordCloud.NLP.processtext(c)
+    words,weights = WordCloud.TextProcessing.processtext(c)
     @test !("So" in words)
 end
 
 @testset "WordCloud.jl" begin
     # @show pwd()
-    img, img_m = WordCloud.rendertext("test", 88.3, color="blue", angle = 20, border=1, returnmask=true)
     words = [Random.randstring(rand(1:8)) for i in 1:rand(100:1000)]
     weights = randexp(length(words)) .* 1000 .+ randexp(length(words)) .* 200 .+ rand(20:100, length(words));
     wc = wordcloud(words, weights, fillingrate=0.6)
