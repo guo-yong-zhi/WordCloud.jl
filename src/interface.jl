@@ -162,6 +162,8 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:state] = nameof(wordcloud)
     params[:epoch] = 0
     params[:indsmap] = nothing
+    params[:custom] = Dict(:fontsize=>Dict(), :font=>Dict())
+
     l = length(words)
     wc = wordcloud(words, float.(weights), Vector(undef, l), mask, Vector(undef, l), maskqtree, params)
     run(wc)
@@ -203,8 +205,31 @@ function setwords!(wc::wordcloud, w, v::Union{AbstractString, AbstractVector{<:A
 end
 @doc setdoc setweights!(wc::wordcloud, w, v::Union{Number, AbstractVector{<:Number}}) = @view(wc.weights[index(wc, w)]) .= v
 @doc getdoc getimages(wc::wordcloud, w=:) = wc.imgs[index(wc, w)]
-@doc getdoc getfontsizes(wc::wordcloud, w=:) = max.(wc.params[:minfontsize], wc.weights[index(wc, w)] * wc.params[:scale])
-
+@doc getdoc
+function getfontsizes(wc::wordcloud, w=:)
+    words = getwords(wc, w)
+    Broadcast.broadcast(words) do word
+        cf = wc.params[:custom][:fontsize]
+        if word in keys(cf)
+            return cf[word]
+        else
+            return max(wc.params[:minfontsize], getweights(wc, word)*wc.params[:scale])
+        end
+    end
+end
+@doc setdoc
+function setfontsizes!(wc::wordcloud, w, v::Union{Number, AbstractVector{<:Number}})
+    push!.(Ref(wc.params[:custom][:fontsize]), w .=> v)
+end
+@doc getdoc
+function getfonts(wc::wordcloud, w=:)
+    words = getwords(wc, w)
+    get.(Ref(wc.params[:custom][:font]), words, wc.params[:font])
+end
+@doc setdoc
+function setfonts!(wc::wordcloud, w, v::Union{AbstractString, AbstractVector{<:AbstractString}})
+    push!.(Ref(wc.params[:custom][:font]), w .=> v)
+end
 getmask(wc::wordcloud) = wc.mask
 
 @doc getdoc * " Keyword argment `type` can be `getshift` or `getcenter`."
@@ -224,17 +249,15 @@ function setpositions!(wc::wordcloud, w, x_y; type=setshift!)
 end
             
 "Initialize word's images and other resources with specified style"
-function initword!(wc, w, sz=wc.weights[index(wc, w)]*wc.params[:scale]; 
-        bgcolor=(0,0,0,0), border=wc.params[:border], font=wc.params[:font], minfontsize=wc.params[:minfontsize])
+function initword!(wc, w; bgcolor=(0,0,0,0), border=wc.params[:border])
     i = index(wc, w)
     params = wc.params
-    img, mimg, tree = prepareword(wc.words[i], max(sz, minfontsize), params[:colors][i], params[:angles][i], params[:groundsize], 
-    bgcolor=bgcolor, border=border, font=font)
+    img, mimg, tree = prepareword(wc.words[i], getfontsizes(wc, w), params[:colors][i], params[:angles][i], params[:groundsize], 
+                                    font=getfonts(wc, w), bgcolor=bgcolor, border=border)
     wc.imgs[i] = img
     wc.qtrees[i] = tree
     nothing
 end
-
 function initword!(wc::wordcloud)
     params = wc.params
     mask = wc.mask
@@ -257,8 +280,8 @@ function initword!(wc::wordcloud)
     params[:state] = nameof(initwords!)
     wc
 end
-initwords!(wc::wordcloud) = initword!(wc)
-
+initwords! = initword!
+        
 function QTree.placement!(wc::wordcloud)
     if getstate(wc) == nameof(wordcloud)
         initwords!(wc)

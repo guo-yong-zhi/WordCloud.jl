@@ -11,7 +11,7 @@ counter = Dict{String,Int}()
 words_weights = processtext(maxnum=1000, maxweight=1) do
     for doc in docs
         content = html2text(open(doc))
-	countwords(content, counter=counter)
+        countwords(content, counter=counter)
     end
     counter
 end
