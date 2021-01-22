@@ -1,5 +1,4 @@
 using Colors
-using ImageMagick
 
 function randomscheme()
     scheme = rand(Render.schemes)
@@ -58,7 +57,7 @@ function loadmask(img::AbstractMatrix, args...; color=:original, backgroundcolor
     img
 end
 function loadmask(path, args...; kargs...)
-    loadmask(ImageMagick.load(path),  args...; kargs...)
+    loadmask(Render.load(path),  args...; kargs...)
 end
 
 mutable struct wordcloud
@@ -317,7 +316,7 @@ function paintsvg(wc::wordcloud; background=true)
 end
 function paintsvg(wc::wordcloud, file, args...; kargs...)
     img = paintsvg(wc, args...; kargs...)
-    save(file, img)
+    Render.save(file, img)
     img
 end
 
@@ -351,7 +350,7 @@ function paint(wc::wordcloud, file, args...; kargs...)
     else
         img = paint(wc, args...; kargs...)
     end
-    save(file, img)
+    Render.save(file, img)
     img
 end
         
