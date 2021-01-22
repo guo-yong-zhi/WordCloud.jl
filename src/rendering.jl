@@ -1,7 +1,7 @@
 module Render
 export drawtext, rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
     colorschemes, schemes, outline, padding
-export issvg, save, load, svg2bitmap
+export issvg, save, load, svg2bitmap, SVGImageType
 using Luxor
 using Colors
 using ColorSchemes
@@ -14,7 +14,7 @@ parsecolor(tp::Tuple) = ARGB32(tp...)
 parsecolor(gray::Real) = Gray(gray)
 
 issvg(d) = d isa Drawing && d.surfacetype==:svg
-
+const SVGImageType = Drawing
 function loadsvg(fn)
     p = readsvg(fn)
     d = Drawing(p.width, p.height, :svg)
@@ -64,14 +64,14 @@ function boundbox(p::AbstractMatrix, bgcolor; border=0)
     return a, b, c, d
 end
 
-"a, b, c, d all inclusive"
+"a, b, c, d are all inclusive"
 function clipsvg(m, a, b, c, d)
     m2 = Drawing(d-c+1, b-a+1, :svg)
     placeimage(m, Point(-c+1, -a+1))
     finish()
     m2
 end
-"a, b, c, d all inclusive"
+"a, b, c, d are all inclusive"
 clipbitmap(m, a, b, c, d) = m[a:b, c:d]
 
 function drawtext(t, size, pos, angle=0, color="black", font="")
@@ -80,16 +80,6 @@ function drawtext(t, size, pos, angle=0, color="black", font="")
     settext(t, Point(pos...), halign="center", valign="center"; angle=angle)
 end
 
-function drawtextsvg(words, fontsizes, poss, angles, colors, fonts; background=false, size=size(background))
-    d = Drawing(size..., :svg)
-    bgcolor = Luxor.background(ARGB32(1,1,1,0))
-    if !(background == false || background === nothing)
-        error("not implement yet, please use `background=false` instead")
-    end
-    drawtext.(words, fontsizes, poss, angles, colors, fonts)
-    finish()
-    d
-end
 function rendertext(str::AbstractString, size::Real; 
         pos=(0,0), color="black", bgcolor=(0,0,0,0), angle=0, font="", border=0, returnmask=false)
     l = length(str) + 1
@@ -98,14 +88,20 @@ function rendertext(str::AbstractString, size::Real;
     origin()
     bgcolor = parsecolor(bgcolor)
     bgcolor = background(bgcolor)
-    bgcolor = Luxor.ARGB32(bgcolor...)
+
     drawtext(str, size, pos, angle, color, font)
     finish()
     mat = svg2bitmap(svg)
-    box = boundbox(mat, mat[1], border=border)
+    #     bgcolor = Luxor.ARGB32(bgcolor...) #https://github.com/JuliaGraphics/Luxor.jl/issues/107
+    bgcolor = mat[1]
+    box = boundbox(mat, bgcolor, border=border)
     svg = clipsvg(svg, box...)
     mat = clipbitmap(mat, box...)
-    return svg, mat
+    if returnmask
+        return svg, mat, textmask(mat, bgcolor, radius=border)
+    else
+        return svg, mat
+    end
 end
 
 function rendertextoutlines(str::AbstractString, size::Real; color="black", bgcolor=(0,0,0,0), 
@@ -198,6 +194,17 @@ function overlay!(img::AbstractMatrix, imgs, pos)
         overlay!(img, i, p...)
     end
     img
+end
+
+function overlay(imgs::AbstractVector{Drawing}, poss; background=false, size=size(background))
+    d = Drawing(size..., :svg)
+    bgcolor = Luxor.background(ARGB32(1,1,1,0))
+    if !(background == false || background === nothing)
+        error("not implement yet, please use `background=false` instead")
+    end
+    placeimage.(imgs, Point.(poss))
+    finish()
+    d
 end
 
 schemes_colorbrewer = filter(s -> occursin("colorbrewer", colorschemes[s].category), collect(keys(colorschemes)))

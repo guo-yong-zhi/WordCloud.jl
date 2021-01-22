@@ -23,7 +23,7 @@ function text_occupied(words, weights, scale; font="", border=0, minfontsize=0)
     imgs = []
     for (c, sz) in zip(words, weights)
 #         print(c)
-        img, mimg = Render.rendertext(string(c), max(minfontsize, sz * scale), font=font, border=border, returnmask=true)
+        _, img, mimg = Render.rendertext(string(c), max(minfontsize, sz * scale), font=font, border=border, returnmask=true)
         push!(imgs, mimg)
     end
     feelingoccupied(imgs)
@@ -50,10 +50,10 @@ Base.iterate(it::IterGen, state=0) = it.generator(state),state+1
 Base.length(it::IterGen) = typemax(Int)
 
 function prepareword(word, fontsize, color, angle, groundsize; bgcolor=(0,0,0,0), font="", border=0)
-    img, mimg = rendertext(string(word), fontsize, color=color, bgcolor=bgcolor,
+    svg, img, mimg = rendertext(string(word), fontsize, color=color, bgcolor=bgcolor,
         angle=angle, border=border, font=font, returnmask=true)
     t = ShiftedQtree(mimg, groundsize) |> buildqtree!
-    img, mimg, t
+    svg, img, mimg, t
 end
 
 ## weight_scale

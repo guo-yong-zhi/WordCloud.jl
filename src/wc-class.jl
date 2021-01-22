@@ -1,0 +1,193 @@
+mutable struct wordcloud
+    words
+    weights
+    imgs
+    svgs
+    mask
+    qtrees
+    maskqtree
+    params::Dict{Symbol,Any}
+end
+
+"""
+## Positional Arguments
+Positional arguments are used to specify words and weights, and can be in different forms, such as Tuple or Dict, etc.
+* words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}
+* words_weights::Tuple
+* counter::AbstractDict
+* counter::AbstractVector{<:Pair}
+## Optional Keyword Arguments
+### style keyword arguments
+* colors = "black" #all same color  
+* colors = ("black", (0.5,0.5,0.7), "yellow", "#ff0000", 0.2) #choose entries randomly  
+* colors = ["black", (0.5,0.5,0.7), "yellow", "red", (0.5,0.5,0.7), 0.2, ......] #use entries sequentially in cycle  
+* colors = :seaborn_dark #using a preset scheme. see `WordCloud.colorschemes` for all supported Symbol
+* angles = 0 #all same angle  
+* angles = (0, 90, 45) #choose entries randomly  
+* angles = 0:180 #choose entries randomly  
+* angles = [0, 22, 4, 1, 100, 10, ......] #use entries sequentially in cycle  
+* fillingrate = 0.5 #default 0.65  
+* border = 1  
+### mask keyword arguments
+* mask = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
+* mask = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
+* mask = shape(ellipse, 800, 600, color="white", bgcolor=(0,0,0,0)) #see doc of `shape`  
+* transparentcolor = ARGB32(0,0,0,0) #set the transparent color in mask  
+### other keyword arguments
+The keyword argument `run` is a function. It will be called after the `wordcloud` object constructed.
+* run = placement! #default setting, will initialize word's position
+* run = generate! #get result directly
+* run = initwords! #only initialize resources, such as rendering word images
+* run = x->nothing #do nothing
+---
+* After getting the `wordcloud` object, these steps are needed to get the result picture: initwords! -> placement! -> generate! -> paint
+* You can skip `placement!` and/or `initwords!`, and the default action will be performed
+"""
+wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
+wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter)|>collect, values(counter)|>collect; kargs...)
+wordcloud(counter::AbstractVector{<:Pair}; kargs...) = wordcloud(first.(counter), last.(counter); kargs...)
+
+function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
+                colors=randomscheme(), angles=randomangles(), run=placement!, kargs...)
+    
+    @assert length(words) == length(weights) > 0
+    params = Dict{Symbol, Any}(kargs...)
+#     @show params
+    colors = colors isa Symbol ? (colorschemes[:seaborn_dark].colors..., ) : colors
+    colors_o = colors
+    colors = Iterators.take(iter_expand(colors), length(words)) |> collect
+    params[:colors] = colors
+
+    angles = Iterators.take(iter_expand(angles), length(words)) |> collect
+    params[:angles] = angles
+    
+    if !haskey(params, :mask)
+        maskcolor = "white"
+        try
+#             maskcolor = RGB(1,1,1) - RGB(sum(colors_o)/length(colors_o)) #补色
+            if sum(Gray.(parsecolor.(colors_o)))/length(colors_o)<0.7 #黑白
+                maskcolor = rand((1.0, (rand(0.9:0.01:1.0), rand(0.9:0.01:1.0), rand(0.9:0.01:1.0))))
+            else
+                maskcolor = rand((0.0, (rand(0.0:0.01:0.1), rand(0.0:0.01:0.1), rand(0.0:0.01:0.1))))
+            end
+#             @show sum(colors_o)/length(colors_o)
+        catch
+            @show "colors sum failed",colors_o
+            maskcolor = "black"
+        end
+        @show maskcolor
+        mask = randommask(maskcolor)
+        transparentcolor = get(params, :transparentcolor, ARGB(1, 1, 1, 0)) |> parsecolor
+    else
+        mask = params[:mask]
+    end
+    transparentcolor = get(params, :transparentcolor, mask[1]) |> parsecolor
+    mask, maskqtree, groundsize, groundoccupied = preparebackground(mask, transparentcolor)
+    params[:groundsize] = groundsize
+    params[:groundoccupied] = groundoccupied
+    @assert groundoccupied > 0
+    minfontsize = get(params, :minfontsize, :auto)
+    if minfontsize==:auto
+        minfontsize = min(8, sqrt(groundoccupied/length(words)/8))
+        println("set minfontsize to $minfontsize")
+        @show groundoccupied length(words)
+        params[:minfontsize] = minfontsize
+    end
+    get!(params, :border, 1)
+    get!(params, :fillingrate, 0.65)
+    get!(params, :font, "")
+    
+    params[:state] = nameof(wordcloud)
+    params[:epoch] = 0
+    params[:indsmap] = nothing
+    params[:custom] = Dict(:fontsize=>Dict(), :font=>Dict())
+
+    l = length(words)
+    wc = wordcloud(words, float.(weights), Vector(undef, l), Vector{SVGImageType}(undef, l), 
+    mask, Vector(undef, l), maskqtree, params)
+    run(wc)
+    wc
+end
+
+Base.getindex(wc::wordcloud, inds...) = wc.words[inds...]=>wc.weights[inds...]
+Base.lastindex(wc::wordcloud) = lastindex(wc.words)
+Base.broadcastable(wc::wordcloud) = Ref(wc)
+getstate(wc::wordcloud) = wc.params[:state]
+setstate!(wc::wordcloud, st::Symbol) = wc.params[:state] = st
+function getindsmap(wc::wordcloud)
+    if wc.params[:indsmap] === nothing
+        wc.params[:indsmap] = Dict(zip(wc.words, Iterators.countfrom(1)))
+    end
+    wc.params[:indsmap]
+end
+function index(wc::wordcloud, w::AbstractString)
+    getindsmap(wc)[w]
+end
+index(wc::wordcloud, w::AbstractVector) = index.(wc, w)
+index(wc::wordcloud, i) = i
+getdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index and ignored to return all."
+setdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index, the 3rd arg is the value to assign."
+@doc getdoc getcolors(wc::wordcloud, w=:) = wc.params[:colors][index(wc, w)]
+@doc getdoc getangles(wc::wordcloud, w=:) = wc.params[:angles][index(wc, w)]
+@doc getdoc getwords(wc::wordcloud, w=:) = wc.words[index(wc, w)]
+@doc getdoc getweights(wc::wordcloud, w=:) = wc.weights[index(wc, w)]
+@doc setdoc setcolors!(wc::wordcloud, w, c) = @view(wc.params[:colors][index(wc, w)]) .= parsecolor(c)
+@doc setdoc setangles!(wc::wordcloud, w, a::Union{Number, AbstractVector{<:Number}}) = @view(wc.params[:angles][index(wc, w)]) .= a
+@doc setdoc 
+function setwords!(wc::wordcloud, w, v::Union{AbstractString, AbstractVector{<:AbstractString}})
+    m = getindsmap(wc)
+    @assert !any(v .∈ Ref(keys(m)))
+    i = index(wc, w)
+    Broadcast.broadcast((old,new)->m[new]=pop!(m,old), wc.words[i], v)
+    @view(wc.words[i]) .= v
+    v
+end
+@doc setdoc setweights!(wc::wordcloud, w, v::Union{Number, AbstractVector{<:Number}}) = @view(wc.weights[index(wc, w)]) .= v
+@doc getdoc getimages(wc::wordcloud, w=:) = wc.imgs[index(wc, w)]
+@doc getdoc getsvgimages(wc::wordcloud, w=:) = wc.svgs[index(wc, w)]
+@doc getdoc
+function getfontsizes(wc::wordcloud, w=:)
+    words = getwords(wc, w)
+    Broadcast.broadcast(words) do word
+        cf = wc.params[:custom][:fontsize]
+        if word in keys(cf)
+            return cf[word]
+        else
+            return max(wc.params[:minfontsize], getweights(wc, word)*wc.params[:scale])
+        end
+    end
+end
+@doc setdoc
+function setfontsizes!(wc::wordcloud, w, v::Union{Number, AbstractVector{<:Number}})
+    push!.(Ref(wc.params[:custom][:fontsize]), w .=> v)
+end
+@doc getdoc
+function getfonts(wc::wordcloud, w=:)
+    words = getwords(wc, w)
+    get.(Ref(wc.params[:custom][:font]), words, wc.params[:font])
+end
+@doc setdoc
+function setfonts!(wc::wordcloud, w, v::Union{AbstractString, AbstractVector{<:AbstractString}})
+    push!.(Ref(wc.params[:custom][:font]), w .=> v)
+end
+getmask(wc::wordcloud) = wc.mask
+
+@doc getdoc * " Keyword argment `type` can be `getshift` or `getcenter`."
+function getpositions(wc::wordcloud, w=:; type=getshift)
+    msy, msx = getshift(wc.maskqtree)
+    pos = type.(wc.qtrees[index(wc, w)])
+    pos = eltype(pos) <: Number ? Ref(pos) : pos
+    Broadcast.broadcast(p->(p[2]-msx+1, p[1]-msy+1), pos)
+end
+
+@doc setdoc * " Keyword argment `type` can be `setshift!` or `setcenter!`."
+function setpositions!(wc::wordcloud, w, x_y; type=setshift!)
+    x, y = x_y
+    msy, msx = getshift(wc.maskqtree)
+    type(wc.qtrees[index(wc, w)], (y-1+msy, x-1+msx))
+    x_y
+end
+
+Base.show(io::IO, m::MIME"image/png", wc::wordcloud) = Base.show(io, m, paint(wc::wordcloud))
+Base.show(io::IO, m::MIME"text/plain", wc::wordcloud) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")
+# Base.show(io::IO, wc::wordcloud) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")
