@@ -4,11 +4,11 @@ using Random
 
 include("test_qtree.jl")
 include("test_lru.jl")
-@testset "nlp.jl" begin
+@testset "textprocessing.jl" begin
     text = "So dim, so dark, So dense, so dull, So damp, so dank, So dead! The weather, now warm, now cold, Makes it harder Than ever to forget!"
-    c = WordCloud.NLP.countwords(text)
+    c = WordCloud.TextProcessing.countwords(text)
     @test c["so"] == 3
-    words,weights = WordCloud.NLP.processtext(c)
+    words,weights = WordCloud.TextProcessing.processtext(c)
     @test !("So" in words)
 end
 
