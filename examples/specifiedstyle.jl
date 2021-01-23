@@ -1,7 +1,7 @@
 using WordCloud
 wc = wordcloud(
     processtext(open("res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxweight=1, maxnum=300), 
-    mask = padding(shape(ellipse, 600, 500, color=(0.98, 0.97, 0.99), bgcolor=0.97), 0.1),
+    mask = padding(WordCloud.svg2bitmap(shape(ellipse, 600, 500, color=(0.98, 0.97, 0.99), bgcolor=0.97)), 0.1),
     colors = :seaborn_dark,
     angles = -90:90,
     run=x->x, #turn off the useless initword! and placement! in advance
