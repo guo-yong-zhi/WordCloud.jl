@@ -8,7 +8,7 @@ mutable struct Momentum
     rho::Float64
     velocity::IdDict
 end
-  
+
 Momentum(η, ρ = 0.9) = Momentum(η, ρ, IdDict())
 Momentum(;η = 0.01, ρ = 0.9) = Momentum(η, ρ, IdDict())
 
@@ -45,17 +45,27 @@ const DECODETABLE = [0, 2, 1]
 decode2(c) = DECODETABLE[c.&0x03]
 whitesum(m::AbstractMatrix) = sum(DIRECTKERNEL .* m)
 whitesum(t::ShiftedQtree, l, a, b) = whitesum(decode2(near(t[l],a,b)))
-intlog2(x::Number)=Int[0,1,1,2,2,2,2,3,3,3,3,3,3,3][x]
+# function intlog2(x::Float64) #not safe
+#     #Float64 符号位(S)，编号63；阶码位，编号62 ~52
+#     b8 = reinterpret(UInt64, x)
+#     m = UInt64(0x01)<<63 #符号位mask
+#     Int(1-((b8&m)>>62)), Int((b8&(~m)) >> 52 - 1023) #符号位:1-2S (1->-1、0->1)，指数位 - 1023
+# end
+function intlog2(x::Float64) #not safe, x>0
+    #Float64 符号位(S)，编号63；阶码位，编号62 ~52
+    b8 = reinterpret(Int64, x)
+    (b8 >> 52 - 1023) #符号位:1-2S (1->-1、0->1)，指数位 - 1023
+end
 
 function move!(qt, ws)
     if (-1<ws[1]<1 && -1<ws[2]<1) || rand()<0.1 #避免静止及破坏周期运动
-        ws .+= [rand((1,-1)), rand((1,-1))]
+        ws = [rand((1.,-1.)), rand((1.,-1.))]
     end
     wm = max(abs.(ws)...)
-    if wm >= 1
-        u = floor(Int, log2(wm))
-        shift!(qt, 1+u, (trunc.(Int, ws) .÷ 2^u)...) #舍尾，保留最高二进制位
-    end
+    @assert wm >= 1
+    u = intlog2(wm)
+    # @assert u == floor(Int, log2(wm))
+    shift!(qt, 1+u, (trunc.(Int, ws) .÷ 2^u)...) #舍尾，保留最高二进制位
 end
 
 function step!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimiser=(t, Δ)->Δ./4)
@@ -67,7 +77,7 @@ function step!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimis
     ll = 2 ^ (l-1)
     ws1 = ll .* whitesum(t1, collisionpoint...)
     ws2 = ll .* whitesum(t2, collisionpoint...)
-#     @show ws1,collisionpoint,whitesum(t1, collisionpoint...)
+    #     @show ws1,collisionpoint,whitesum(t1, collisionpoint...)
     ws1 = optimiser(t1, ws1)
 #     @show ws1
     ws2 = optimiser(t2, ws2)
