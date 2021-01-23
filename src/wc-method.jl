@@ -9,7 +9,7 @@ function initword!(wc, w; bgcolor=(0,0,0,0), border=wc.params[:border])
     wc.qtrees[i] = tree
     nothing
 end
-function initword!(wc::wordcloud)
+function initword!(wc::WC)
     params = wc.params
     mask = wc.mask
     
@@ -33,7 +33,7 @@ function initword!(wc::wordcloud)
 end
 initwords! = initword!
         
-function QTree.placement!(wc::wordcloud)
+function QTree.placement!(wc::WC)
     if getstate(wc) == nameof(wordcloud)
         initwords!(wc)
     end
@@ -42,8 +42,8 @@ function QTree.placement!(wc::wordcloud)
     wc
 end
 
-"rescale!(wc::wordcloud, ratio::Real)\nRescale all words's size. set `ratio`<1 to shrink, set `ratio`>1 to expand."
-function rescale!(wc::wordcloud, ratio::Real)
+"rescale!(wc::WC, ratio::Real)\nRescale all words's size. set `ratio`<1 to shrink, set `ratio`>1 to expand."
+function rescale!(wc::WC, ratio::Real)
     qts = wc.qtrees
     centers = getcenter.(qts)
     wc.params[:scale] *= ratio
@@ -61,7 +61,7 @@ end
 * patient: number of epochs before teleporting
 * trainer: appoint a training engine
 """
-function generate!(wc::wordcloud, args...; retry=3, krags...)
+function generate!(wc::WC, args...; retry=3, krags...)
     if getstate(wc) != nameof(placement!) && getstate(wc) != nameof(generate!)
         placement!(wc)
     end
@@ -97,7 +97,7 @@ function generate!(wc::wordcloud, args...; retry=3, krags...)
     wc
 end
 
-function generate_animation!(wc::wordcloud, args...; outputdir="gifresult", overwrite=false, callbackstep=1, kargs...)
+function generate_animation!(wc::WC, args...; outputdir="gifresult", overwrite=false, callbackstep=1, kargs...)
     if overwrite
         try rm(outputdir, force=true, recursive=true) catch end
     end
@@ -114,9 +114,9 @@ ignore some words as if they don't exist, then execute the function.
 * ignore(fun, wc, ws::String) #ignore a word
 * ignore(fun, wc, ws::Set{String}) #ignore all words in ws
 * ignore(fun, wc, ws::Array{String}) #ignore all words in ws
-* ignore(fun, wc::wordcloud, mask::AbstractArray{Bool}) #ignore words. length(mask)==length(wc.words)
+* ignore(fun, wc::WC, mask::AbstractArray{Bool}) #ignore words. length(mask)==length(wc.words)
 """
-function ignore(fun, wc::wordcloud, mask::AbstractArray{Bool})
+function ignore(fun, wc::WC, mask::AbstractArray{Bool})
     mem = [wc.words, wc.weights, wc.imgs, wc.svgs, wc.qtrees, 
             wc.params[:colors], wc.params[:angles], wc.params[:indsmap]]
     mask = .!mask
@@ -149,9 +149,9 @@ pin some words as if they were part of the background, then execute the function
 * pin(fun, wc, ws::String) #pin a word
 * pin(fun, wc, ws::Set{String}) #pin all words in ws
 * pin(fun, wc, ws::Array{String}) #pin all words in ws
-* pin(fun, wc::wordcloud, mask::AbstractArray{Bool}) #pin words. length(mask)==length(wc.words)
+* pin(fun, wc::WC, mask::AbstractArray{Bool}) #pin words. length(mask)==length(wc.words)
 """           
-function pin(fun, wc::wordcloud, mask::AbstractArray{Bool})
+function pin(fun, wc::WC, mask::AbstractArray{Bool})
     maskqtree = wc.maskqtree
     wcmask = wc.mask
     groundoccupied = wc.params[:groundoccupied]

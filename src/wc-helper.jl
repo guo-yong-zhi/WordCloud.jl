@@ -67,19 +67,22 @@ function loadmask(path, args...; kargs...)
 end
 
 "like `paint` but export svg"
-function paintsvg(wc::wordcloud; background=true)
+function paintsvg(wc::WC; background=true)
     if background == false || background === nothing
         sz = size(wc.mask)
     else
-        error("not implement yet, please use `background=false` instead")
         if background == true
-            nothing
+            background = getsvgmask(wc)
+            if background === nothing
+                background = getmask(wc)
+            end
         end
+        sz = size(wc.mask)
         nothing
     end
-    Render.overlay(getsvgimages(wc), getpositions(wc), size=reverse(sz))
+    Render.overlay(getsvgimages(wc), getpositions(wc), background=background, size=reverse(sz))
 end
-function paintsvg(wc::wordcloud, file, args...; kargs...)
+function paintsvg(wc::WC, file, args...; kargs...)
     img = paintsvg(wc, args...; kargs...)
     Render.save(file, img)
     img
@@ -87,14 +90,14 @@ end
 
 """
 # examples
-* paint(wc::wordcloud)
-* paint(wc::wordcloud, background=false) #no background
-* paint(wc::wordcloud, background=outline(wc.mask)) #use a new background
-* paint(wc::wordcloud, ratio=0.5) #resize the result
-* paint(wc::wordcloud, "result.png", ratio=0.5) #save as png file, other bitmap formats may also work
-* paint(wc::wordcloud, "result.svg") #save as svg file
+* paint(wc::WC)
+* paint(wc::WC, background=false) #no background
+* paint(wc::WC, background=outline(wc.mask)) #use a new background
+* paint(wc::WC, ratio=0.5) #resize the result
+* paint(wc::WC, "result.png", ratio=0.5) #save as png file, other bitmap formats may also work
+* paint(wc::WC, "result.svg") #save as svg file
 """
-function paint(wc::wordcloud, args...; background=true, kargs...)
+function paint(wc::WC, args...; background=true, kargs...)
     if background == true
         background = wc.mask
     elseif background == false || background === nothing
@@ -109,7 +112,7 @@ function paint(wc::wordcloud, args...; background=true, kargs...)
     resultpic
 end
 
-function paint(wc::wordcloud, file, args...; kargs...)
+function paint(wc::WC, file, args...; kargs...)
     if endswith(file, r".svg|.SVG")
         img = paintsvg(wc, args...; kargs...)
     else
@@ -119,7 +122,7 @@ function paint(wc::wordcloud, file, args...; kargs...)
     img
 end
         
-function record(wc::wordcloud, label::AbstractString, gif_callback=x->x)
+function record(wc::WC, label::AbstractString, gif_callback=x->x)
 #     @show size(n1)
     resultpic = overlay!(paint(wc), 
         rendertextoutlines(label, 32, color="black", linecolor="white", linewidth=1), 20, 20)

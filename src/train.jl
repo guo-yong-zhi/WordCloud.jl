@@ -62,7 +62,7 @@ function move!(qt, ws)
         ws = [rand((1.,-1.)), rand((1.,-1.))]
     end
     wm = max(abs.(ws)...)
-    @assert wm >= 1
+    # @assert wm >= 1
     u = intlog2(wm)
     # @assert u == floor(Int, log2(wm))
     shift!(qt, 1+u, (trunc.(Int, ws) .÷ 2^u)...) #舍尾，保留最高二进制位

@@ -1,9 +1,10 @@
-mutable struct wordcloud
+mutable struct WC
     words
     weights
     imgs
     svgs
     mask
+    svgmask
     qtrees
     maskqtree
     params::Dict{Symbol,Any}
@@ -81,6 +82,11 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     else
         mask = params[:mask]
     end
+    svgmask = nothing
+    if issvg(mask)
+        svgmask = mask
+        mask = svg2bitmap(mask)
+    end
     transparentcolor = get(params, :transparentcolor, mask[1]) |> parsecolor
     mask, maskqtree, groundsize, groundoccupied = preparebackground(mask, transparentcolor)
     params[:groundsize] = groundsize
@@ -103,38 +109,38 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:custom] = Dict(:fontsize=>Dict(), :font=>Dict())
 
     l = length(words)
-    wc = wordcloud(words, float.(weights), Vector(undef, l), Vector{SVGImageType}(undef, l), 
-    mask, Vector(undef, l), maskqtree, params)
+    wc = WC(words, float.(weights), Vector(undef, l), Vector{SVGImageType}(undef, l), 
+    mask, svgmask, Vector(undef, l), maskqtree, params)
     run(wc)
     wc
 end
 
-Base.getindex(wc::wordcloud, inds...) = wc.words[inds...]=>wc.weights[inds...]
-Base.lastindex(wc::wordcloud) = lastindex(wc.words)
-Base.broadcastable(wc::wordcloud) = Ref(wc)
-getstate(wc::wordcloud) = wc.params[:state]
-setstate!(wc::wordcloud, st::Symbol) = wc.params[:state] = st
-function getindsmap(wc::wordcloud)
+Base.getindex(wc::WC, inds...) = wc.words[inds...]=>wc.weights[inds...]
+Base.lastindex(wc::WC) = lastindex(wc.words)
+Base.broadcastable(wc::WC) = Ref(wc)
+getstate(wc::WC) = wc.params[:state]
+setstate!(wc::WC, st::Symbol) = wc.params[:state] = st
+function getindsmap(wc::WC)
     if wc.params[:indsmap] === nothing
         wc.params[:indsmap] = Dict(zip(wc.words, Iterators.countfrom(1)))
     end
     wc.params[:indsmap]
 end
-function index(wc::wordcloud, w::AbstractString)
+function index(wc::WC, w::AbstractString)
     getindsmap(wc)[w]
 end
-index(wc::wordcloud, w::AbstractVector) = index.(wc, w)
-index(wc::wordcloud, i) = i
+index(wc::WC, w::AbstractVector) = index.(wc, w)
+index(wc::WC, i) = i
 getdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index and ignored to return all."
 setdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index, the 3rd arg is the value to assign."
-@doc getdoc getcolors(wc::wordcloud, w=:) = wc.params[:colors][index(wc, w)]
-@doc getdoc getangles(wc::wordcloud, w=:) = wc.params[:angles][index(wc, w)]
-@doc getdoc getwords(wc::wordcloud, w=:) = wc.words[index(wc, w)]
-@doc getdoc getweights(wc::wordcloud, w=:) = wc.weights[index(wc, w)]
-@doc setdoc setcolors!(wc::wordcloud, w, c) = @view(wc.params[:colors][index(wc, w)]) .= parsecolor(c)
-@doc setdoc setangles!(wc::wordcloud, w, a::Union{Number, AbstractVector{<:Number}}) = @view(wc.params[:angles][index(wc, w)]) .= a
+@doc getdoc getcolors(wc::WC, w=:) = wc.params[:colors][index(wc, w)]
+@doc getdoc getangles(wc::WC, w=:) = wc.params[:angles][index(wc, w)]
+@doc getdoc getwords(wc::WC, w=:) = wc.words[index(wc, w)]
+@doc getdoc getweights(wc::WC, w=:) = wc.weights[index(wc, w)]
+@doc setdoc setcolors!(wc::WC, w, c) = @view(wc.params[:colors][index(wc, w)]) .= parsecolor(c)
+@doc setdoc setangles!(wc::WC, w, a::Union{Number, AbstractVector{<:Number}}) = @view(wc.params[:angles][index(wc, w)]) .= a
 @doc setdoc 
-function setwords!(wc::wordcloud, w, v::Union{AbstractString, AbstractVector{<:AbstractString}})
+function setwords!(wc::WC, w, v::Union{AbstractString, AbstractVector{<:AbstractString}})
     m = getindsmap(wc)
     @assert !any(v .∈ Ref(keys(m)))
     i = index(wc, w)
@@ -142,11 +148,11 @@ function setwords!(wc::wordcloud, w, v::Union{AbstractString, AbstractVector{<:A
     @view(wc.words[i]) .= v
     v
 end
-@doc setdoc setweights!(wc::wordcloud, w, v::Union{Number, AbstractVector{<:Number}}) = @view(wc.weights[index(wc, w)]) .= v
-@doc getdoc getimages(wc::wordcloud, w=:) = wc.imgs[index(wc, w)]
-@doc getdoc getsvgimages(wc::wordcloud, w=:) = wc.svgs[index(wc, w)]
+@doc setdoc setweights!(wc::WC, w, v::Union{Number, AbstractVector{<:Number}}) = @view(wc.weights[index(wc, w)]) .= v
+@doc getdoc getimages(wc::WC, w=:) = wc.imgs[index(wc, w)]
+@doc getdoc getsvgimages(wc::WC, w=:) = wc.svgs[index(wc, w)]
 @doc getdoc
-function getfontsizes(wc::wordcloud, w=:)
+function getfontsizes(wc::WC, w=:)
     words = getwords(wc, w)
     Broadcast.broadcast(words) do word
         cf = wc.params[:custom][:fontsize]
@@ -158,36 +164,37 @@ function getfontsizes(wc::wordcloud, w=:)
     end
 end
 @doc setdoc
-function setfontsizes!(wc::wordcloud, w, v::Union{Number, AbstractVector{<:Number}})
+function setfontsizes!(wc::WC, w, v::Union{Number, AbstractVector{<:Number}})
     push!.(Ref(wc.params[:custom][:fontsize]), w .=> v)
 end
 @doc getdoc
-function getfonts(wc::wordcloud, w=:)
+function getfonts(wc::WC, w=:)
     words = getwords(wc, w)
     get.(Ref(wc.params[:custom][:font]), words, wc.params[:font])
 end
 @doc setdoc
-function setfonts!(wc::wordcloud, w, v::Union{AbstractString, AbstractVector{<:AbstractString}})
+function setfonts!(wc::WC, w, v::Union{AbstractString, AbstractVector{<:AbstractString}})
     push!.(Ref(wc.params[:custom][:font]), w .=> v)
 end
-getmask(wc::wordcloud) = wc.mask
+getmask(wc::WC) = wc.mask
+getsvgmask(wc::WC) = wc.svgmask
 
 @doc getdoc * " Keyword argment `type` can be `getshift` or `getcenter`."
-function getpositions(wc::wordcloud, w=:; type=getshift)
+function getpositions(wc::WC, w=:; type=getshift)
     msy, msx = getshift(wc.maskqtree)
     pos = type.(wc.qtrees[index(wc, w)])
     pos = eltype(pos) <: Number ? Ref(pos) : pos
-    Broadcast.broadcast(p->(p[2]-msx+1, p[1]-msy+1), pos)
+    Broadcast.broadcast(p->(p[2]-msx+1, p[1]-msy+1), pos) #左上角重合时返回(1,1)
 end
 
 @doc setdoc * " Keyword argment `type` can be `setshift!` or `setcenter!`."
-function setpositions!(wc::wordcloud, w, x_y; type=setshift!)
+function setpositions!(wc::WC, w, x_y; type=setshift!)
     x, y = x_y
     msy, msx = getshift(wc.maskqtree)
     type(wc.qtrees[index(wc, w)], (y-1+msy, x-1+msx))
     x_y
 end
 
-Base.show(io::IO, m::MIME"image/png", wc::wordcloud) = Base.show(io, m, paint(wc::wordcloud))
-Base.show(io::IO, m::MIME"text/plain", wc::wordcloud) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")
-# Base.show(io::IO, wc::wordcloud) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")
+Base.show(io::IO, m::MIME"image/png", wc::WC) = Base.show(io, m, paint(wc::WC))
+Base.show(io::IO, m::MIME"text/plain", wc::WC) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")
+# Base.show(io::IO, wc::WC) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")

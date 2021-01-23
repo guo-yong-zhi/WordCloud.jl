@@ -179,7 +179,7 @@ function overlay(color1::T, color2::T) where {T}
     T(min.(1, c)..., min(1, a))
 end
 "put img2 on img1 at (x, y)"
-function overlay!(img1::AbstractMatrix, img2::AbstractMatrix, x=1, y=1)
+function overlay!(img1::AbstractMatrix, img2::AbstractMatrix, x=1, y=1)#左上角重合时(x=1,y=1)
     h1, w1 = size(img1)
     h2, w2 = size(img2)
     img1v = @view img1[max(1,y):min(h1,y+h2-1), max(1,x):min(w1,x+w2-1)]
@@ -200,9 +200,12 @@ function overlay(imgs::AbstractVector{Drawing}, poss; background=false, size=siz
     d = Drawing(size..., :svg)
     bgcolor = Luxor.background(ARGB32(1,1,1,0))
     if !(background == false || background === nothing)
-        error("not implement yet, please use `background=false` instead")
+        if !issvg(background)
+            @warn "embed bitmap in svg"
+        end
+        placeimage(background)
     end
-    placeimage.(imgs, Point.(poss))
+    placeimage.(imgs, [Point(x-1,y-1) for (x,y) in poss])#左上角重合时Point(1,1)
     finish()
     d
 end
@@ -226,15 +229,14 @@ get box or ellipse image
 * shape(ellipse, 80, 50, color="red") #80*50 red ellipse
 """
 function shape(shape_, width, height, args...; color="white", bgcolor=(0,0,0,0))
-    Drawing(width, height, :image)
+    d = Drawing(width, height, :svg)
     origin()
     bgcolor = parsecolor(bgcolor)
     background(bgcolor)
     setcolor(parsecolor(color))
     shape_(Point(0,0), width, height, args..., :fill)
-    mat = image_as_matrix()
     finish()
-    mat
+    d
 end
 
 using Printf
