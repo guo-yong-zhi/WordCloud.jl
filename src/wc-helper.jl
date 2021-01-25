@@ -23,7 +23,7 @@ function randomangles()
     a
 end
 
-import ImageTransformations.imresize
+
 """
 load a img as mask, recolor, or resize, etc
 ## examples
