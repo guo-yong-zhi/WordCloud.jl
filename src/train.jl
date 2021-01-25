@@ -456,7 +456,7 @@ function train!(ts, maskqt, nepoch::Number=-1, args...;
         if nc == 0
             return ep, nc
         end
-        if teleport_count >= 5
+        if teleport_count >= 10
             println("The teleport strategy failed after $ep epochs")
             return ep, nc
         end

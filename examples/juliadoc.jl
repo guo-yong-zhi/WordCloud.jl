@@ -13,15 +13,19 @@ end
 wc = wordcloud(
     words_weights, 
     fillingrate=0.8,
-    mask = shape(box, 600, 200, 10, color=0.95, bgcolor=(0,0,0,0)),
-    colors = ((0.796,0.235,0.20),(0.251,0.388,0.874), (0.584,0.345,0.698), (0.22,0.596,0.149)),
+    mask = shape(box, 900, 300, 0, color=0.95, bgcolor=(0,0,0,0)),
+    colors = ((0.796,0.235,0.20), (0.584,0.345,0.698), (0.22,0.596,0.149)),
     angles = (0, -45, 45),
+    # font = "Georgia",
+    transparentcolor=(0,0,0,0)
 )
 setangles!(wc, "julia", 0)
 setcolors!(wc, "julia", (0.796,0.235,0.20))
+# setfonts!(wc, "julia", "forte")
 initword!(wc, "julia")
 setpositions!(wc, "julia", reverse(size(wc.mask)) .÷ 2, type=setcenter!)
-pin(()->generate!(wc), wc, "julia")
+pin(()->generate!(wc, 2000), wc, "julia")
 println("results are saved to juliadoc.svg")
-paint(wc, "juliadoc.svg", background=false)
+paint(wc, "juliadoc.png")
+paint(wc, "juliadoc.svg")
 wc

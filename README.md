@@ -1,10 +1,11 @@
 # WordCloud
-word cloud in Julia  
+![juliadoc](res/juliadoc.png)  
 * **Flexible** Any mask, any color, any angle, adjustable filling rate. You can specify the initial position of some words. Or you can pin some words and adjust others, etc.
 * **Fast**  100% in Julia and efficient implementation based on Quadtree & gradient optimization. The advantage is more obvious when generating large images.
-* **Exact**  Words with the same weight have the exact same size. The algorithm will never scale the word to fit the blank.
+* **Exact**  Words with the same weight have the exact same size. The algorithm will never scale the word to fit the blank.  
 
----
+ *run `showexample(:juliadoc)` to see how to generate the banner*
+***
 # Installation
 ```julia
 import Pkg; Pkg.add("WordCloud")
