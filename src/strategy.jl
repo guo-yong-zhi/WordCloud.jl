@@ -15,15 +15,16 @@ function box_occupied(imgs::AbstractVector)
     return sum(box_occupied, imgs)
 end
 function feelingoccupied(imgs)
+    imgs = sort(imgs, by=prod∘size, rev=true)
     m = length(imgs) ÷ 100
     occupied(imgs[1:m])/4 + 3box_occupied(imgs[1:m])/4 + box_occupied(imgs[m+1:end]) #兼顾大字的内隙和小字的占据
 end
 
-function text_occupied(words, weights, scale; font="", border=0, minfontsize=0)
+function text_occupied(words, fontsizes; font="", border=0)
     imgs = []
-    for (c, sz) in zip(words, weights)
+    for (c, sz) in zip(words, fontsizes)
 #         print(c)
-        _, img, mimg = Render.rendertext(string(c), max(minfontsize, sz * scale), font=font, border=border, returnmask=true)
+        _, img, mimg = Render.rendertext(string(c), sz, font=font, border=border, returnmask=true)
         push!(imgs, mimg)
     end
     feelingoccupied(imgs)
@@ -57,18 +58,20 @@ function prepareword(word, fontsize, color, angle, groundsize; bgcolor=(0,0,0,0)
 end
 
 ## weight_scale
-function cal_weight_scale(words, weights, target; border=0, initialscale=64, kargs...)
+function cal_weight_scale(words, fontsizes, target, initialscale; border=0, kargs...)
     input = initialscale
-    output = text_occupied(words, weights, input; border=border, kargs...)
+    output = text_occupied(words, fontsizes; border=border, kargs...)
 #     @show input,output
     return output, sqrt(target/output) * (input+2border) - 2border# 假设output=k*(input+2border)^2
 end
 
-function find_weight_scale(words, weights, ground_size; initialscale=0, fillingrate=0.3, maxiter=5, error=0.05, kargs...)
+function find_weight_scale!(wc::WC; initialscale=0, fillingrate=0.3, maxiter=5, error=0.05, kargs...)
+    ground_size = wc.params[:groundoccupied]
+    words = wc.words
     if initialscale <= 0
         initialscale = √(ground_size/length(words))
     end
-    @assert sum(weights.^2 .* length.(words)) / length(weights) ≈ 1.0
+    @assert sum(wc.weights.^2 .* length.(words)) / length(wc.weights) ≈ 1.0
     target_lower = (fillingrate - error) * ground_size
     target_upper = (fillingrate + error) * ground_size
     step = 0
@@ -79,7 +82,8 @@ function find_weight_scale(words, weights, ground_size; initialscale=0, fillingr
             @warn "find_weight_scale reach maxiter. This may be caused by too small background image or too many words or too big `minfontsize`."
             break
         end
-        tg, sc = cal_weight_scale(words, weights, fillingrate * ground_size, initialscale=sc; kargs...)
+        wc.params[:scale] = sc
+        tg, sc = cal_weight_scale(words, getfontsizes(wc, words), fillingrate*ground_size, sc; kargs...)
         @show sc, tg, tg/ground_size
         if target_lower <= tg <= target_upper
             break
@@ -87,6 +91,7 @@ function find_weight_scale(words, weights, ground_size; initialscale=0, fillingr
         
     end
 #     @show text_occupied(words, weights, sc, radius=border)
+    wc.params[:scale] = sc
     return sc
 end
 

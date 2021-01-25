@@ -20,6 +20,7 @@ end
     paint(wc)
     generate!(wc)
     paint(wc, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2))
+    paint(wc, "test.svg")
     @test isempty(WordCloud.outofbounds(wc.maskqtree, wc.qtrees))
 
     clq = WordCloud.QTree.listcollision_qtree(wc.qtrees, wc.maskqtree)

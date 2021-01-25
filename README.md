@@ -1,5 +1,5 @@
 # WordCloud
-wordcloud in Julia  
+word cloud in Julia  
 * **Flexible** Any mask, any color, any angle, adjustable filling rate. You can specify the initial position of some words. Or you can pin some words and adjust others, etc.
 * **Fast**  100% in Julia and efficient implementation based on Quadtree & gradient optimization. The advantage is more obvious when generating large images.
 * **Exact**  Words with the same weight have the exact same size. The algorithm will never scale the word to fit the blank.
@@ -17,7 +17,7 @@ words = [string(c) for c in words]
 weights = rand(length(words)) .^ 2 .* 100 .+ 30
 wc = wordcloud(words, weights)
 generate!(wc)
-paint(wc, "qianziwen.png")
+paint(wc, "qianziwen.svg")
 ```
 *Run the command `runexample(:qianziwen)` or `showexample(:qianziwen)` to get the result.*  
 # More Complex Usage

@@ -1,11 +1,12 @@
 module Render
-export drawtext, rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
-    colorschemes, schemes, outline, padding
+export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
+    colorschemes, schemes, outline, padding, imresize
 export issvg, save, load, svg2bitmap, SVGImageType
 using Luxor
 using Colors
 using ColorSchemes
 using ImageMagick
+import ImageTransformations.imresize
 
 save = Luxor.FileIO.save
 
