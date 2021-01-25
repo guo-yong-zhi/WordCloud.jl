@@ -23,8 +23,7 @@ function initword!(wc::WC)
     wc.params[:angles] .= wc.params[:angles][si]
     wc.params[:indsmap] = nothing
 
-    scale = find_weight_scale!(wc, border=params[:border], 
-    fillingrate=params[:fillingrate], maxiter=5, error=0.03, font=params[:font])
+    scale = find_weight_scale!(wc, border=params[:border], fillingrate=params[:fillingrate], maxiter=5, error=0.03)
     println("set fillingrate to $(params[:fillingrate]), with scale=$scale")
     initword!.(wc, 1:length(words))
     params[:state] = nameof(initwords!)

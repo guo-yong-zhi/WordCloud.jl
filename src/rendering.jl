@@ -124,7 +124,7 @@ function rendertextoutlines(str::AbstractString, size::Real; color="black", bgco
     strokepath()
     mat = image_as_matrix()
     finish()
-    mat = backgroundclip(mat, mat[1])
+    mat = clipbitmap(mat, boundbox(mat, mat[1])...)
 end
 
 function dilate(mat, r)
