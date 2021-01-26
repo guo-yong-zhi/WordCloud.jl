@@ -1,7 +1,7 @@
 using WordCloud
 using Random
 
-println("This test may take several minutes")
+println("This test will take several minutes")
 
 words = [Random.randstring(rand(1:8)) for i in 1:200]
 weights = randexp(length(words)) .* 2000 .+ rand(20:100, length(words));

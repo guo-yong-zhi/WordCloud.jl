@@ -40,8 +40,12 @@ end
     rescale!(wc, 1.23)
     pin(wc, ["little", "know"]) do 
         @test length(wc.words)==298
+        setpositions!(wc, 1, (2,2))
+        setpositions!(wc, [1, "Alice", "one"], (-1, -2))
+        setpositions!(wc, [1, "Alice", "one"], [(10,10),(10,20),(21,2)])
         setpositions!(wc, "time", (0,0), type=setcenter!)
     end
+    @test getpositions(wc, [1, "Alice", "one"])[3] == (21,2)
     @test WordCloud.QTree.kernelsize(wc.qtrees[WordCloud.index(wc, "time")]) == size(getimages(wc, "time"))
     @test .-reverse(size(getimages(wc, "time"))) .÷ 2 == getpositions(wc, ["time", getwords(wc, 9)])[1]
     w = getweights(wc, getwords(wc, [1,2]))

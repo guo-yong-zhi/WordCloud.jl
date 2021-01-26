@@ -35,8 +35,8 @@ initwords!(wcb)
 println("=ignore defferent words=")
 ignore(wcb, getwords(wcb) .∉ Ref(samewords)) do
     @assert Set(wcb.words) == Set(samewords)
-    centers = getpositions.(wca, samewords, type=getcenter)
-    setpositions!.(wcb, samewords, centers, type=setcenter!) #manually initialize the position,
+    centers = getpositions(wca, samewords, type=getcenter)
+    setpositions!(wcb, samewords, centers, type=setcenter!) #manually initialize the position,
     setstate!(wcb, :placement!) #and set the state flag
     generate!(wcb, 1000, patient=-1, retry=1) #patient=-1 means no teleport; retry=1 means no rescale
 end

@@ -26,6 +26,6 @@ initword!(wc, "julia")
 setpositions!(wc, "julia", reverse(size(wc.mask)) .÷ 2, type=setcenter!)
 pin(()->generate!(wc, 2000), wc, "julia")
 println("results are saved to juliadoc.svg")
-paint(wc, "juliadoc.png")
+# paint(wc, "juliadoc.png")
 paint(wc, "juliadoc.svg")
 wc

@@ -23,7 +23,6 @@ function randomangles()
     a
 end
 
-
 """
 load a img as mask, recolor, or resize, etc
 ## examples
@@ -132,6 +131,13 @@ end
 
 runexample(example=:alice) = evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
 showexample(example=:alice) = read(pkgdir(WordCloud)*"/examples/$(example).jl", String)|>print
-examples = join([":"*e[1:end-3] for e in basename.(readdir(pkgdir(WordCloud)*"/examples")) if endswith(e, ".jl")], ", ")
-@doc "optional value: [" * examples * "]" runexample
-@doc "optional value: [" * examples * "]" showexample
+examples = [e[1:end-3] for e in basename.(readdir(pkgdir(WordCloud)*"/examples")) if endswith(e, ".jl")]
+@doc "optional value: [" * join(":".*examples, ", ") * "]" runexample
+@doc "optional value: [" * join(":".*examples, ", ") * "]" showexample
+function runallexamples()
+    println("examples: ", examples)
+    for (i,e) in enumerate(examples)
+        println("="^20, "\n# ",i,"/",length(examples), "\t", e, "\n", "="^20)
+        @time runexample(e)
+    end
+end

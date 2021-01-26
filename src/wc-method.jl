@@ -79,6 +79,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
     @show ep, nc
     if nc == 0
         wc.params[:state] = nameof(generate!)
+        @assert isempty(outofbounds(wc.maskqtree, wc.qtrees))
     else #check
         colllist = first.(listcollision(wc.qtrees, wc.maskqtree))
         get_text(i) = i>0 ? wc.words[i] : "#MASK#"

@@ -189,9 +189,11 @@ end
 
 @doc setdoc * " Keyword argment `type` can be `setshift!` or `setcenter!`."
 function setpositions!(wc::WC, w, x_y; type=setshift!)
-    x, y = x_y
     msy, msx = getshift(wc.maskqtree)
-    type(wc.qtrees[index(wc, w)], (y-1+msy, x-1+msx))
+    x_y = eltype(x_y) <: Number ? Ref(x_y) : x_y
+    Broadcast.broadcast(wc.qtrees[index(wc, w)], x_y) do qt, p
+        type(qt, (p[2]-1+msy, p[1]-1+msx))
+    end
     x_y
 end
 
