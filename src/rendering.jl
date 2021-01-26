@@ -206,7 +206,7 @@ function overlay(imgs::AbstractVector{Drawing}, poss; background=false, size=siz
         end
         placeimage(background)
     end
-    placeimage.(imgs, [Point(x-1,y-1) for (x,y) in poss])#左上角重合时Point(1,1)
+    placeimage.(imgs, [Point(x-1,y-1) for (x,y) in poss])#(x,y)=(1,1)时左上角重合，此时Point(0,0)
     finish()
     d
 end
