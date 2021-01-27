@@ -132,8 +132,8 @@ end
 runexample(example=:alice) = evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
 showexample(example=:alice) = read(pkgdir(WordCloud)*"/examples/$(example).jl", String)|>print
 examples = [e[1:end-3] for e in basename.(readdir(pkgdir(WordCloud)*"/examples")) if endswith(e, ".jl")]
-@doc "optional value: [" * join(":".*examples, ", ") * "]" runexample
-@doc "optional value: [" * join(":".*examples, ", ") * "]" showexample
+@doc "Available values: [" * join(":".*examples, ", ") * "]" runexample
+@doc "Available values: [" * join(":".*examples, ", ") * "]" showexample
 function runallexamples()
     println("examples: ", examples)
     for (i,e) in enumerate(examples)

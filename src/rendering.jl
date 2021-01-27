@@ -82,27 +82,35 @@ function drawtext(t, size, pos, angle=0, color="black", font="")
 end
 
 function rendertext(str::AbstractString, size::Real; 
-        pos=(0,0), color="black", bgcolor=(0,0,0,0), angle=0, font="", border=0, returnmask=false)
+        pos=(0,0), color="black", bgcolor=(0,0,0,0), angle=0, font="", border=0, returnmask=false, returnsvg=false)
     l = length(str) + 1
     l = ceil(Int, size*l + 2border + 2)
-    svg = Drawing(l, l, :svg)
+    if returnsvg
+        svg = Drawing(l, l, :svg) #svg is slow
+    else
+        Drawing(l, l, :image)
+    end
     origin()
     bgcolor = parsecolor(bgcolor)
     bgcolor = background(bgcolor)
 
     drawtext(str, size, pos, angle, color, font)
+    if !returnsvg mat=image_as_matrix() end
     finish()
-    mat = svg2bitmap(svg)
+    if returnsvg mat = svg2bitmap(svg) end
     #     bgcolor = Luxor.ARGB32(bgcolor...) #https://github.com/JuliaGraphics/Luxor.jl/issues/107
     bgcolor = mat[1]
     box = boundbox(mat, bgcolor, border=border)
-    svg = clipsvg(svg, box...)
     mat = clipbitmap(mat, box...)
+    r = (mat,)
     if returnmask
-        return svg, mat, textmask(mat, bgcolor, radius=border)
-    else
-        return svg, mat
+        r = (r..., textmask(mat, bgcolor, radius=border))
     end
+    if returnsvg
+        svg = clipsvg(svg, box...)
+        r = (r..., svg)
+    end
+    r
 end
 
 function rendertextoutlines(str::AbstractString, size::Real; color="black", bgcolor=(0,0,0,0), 

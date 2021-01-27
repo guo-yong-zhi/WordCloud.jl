@@ -342,7 +342,7 @@ function trainepoch_P2!(qtrees, mask; optimiser=(t, Δ)->Δ./4,
         # @show nsp, nsp1
         # @show "####", length(nearpool2), length(nearpool2)/length(nearpool1)
 
-        # @time 
+        # @time
         for ni2 in 1 : length(nearpool1)÷length(nearpool2) #the loop cost should not exceed length(indpairs)
             nsp2 = filttrain!(qtrees, mask, nearpool2, empty!(collpool), 0, optimiser=optimiser, queue=queue)
             # @show nsp2# length(collpool)/length(nearpool2)
@@ -366,11 +366,11 @@ function levelpools(qtrees, levels=[-levelnum(qtrees[1]):2:-3..., -1])
     end
     pools
 end
-"pairwise trainer(general level)"
-trainepoch_level!(tr_ma) = Dict(:levelpools=>levelpools(tr_ma[1]),
+"pairwise trainer(general levels)"
+trainepoch_Px!(tr_ma) = Dict(:levelpools=>levelpools(tr_ma[1]),
                             :queue=>Vector{Tuple{Int, Int, Int}}())
-trainepoch_level!(s::Symbol) = get(Dict(:patient=>1, :nepoch=>10), s, nothing)
-function trainepoch_level!(qtrees, mask; 
+trainepoch_Px!(s::Symbol) = get(Dict(:patient=>1, :nepoch=>10), s, nothing)
+function trainepoch_Px!(qtrees, mask; 
     levelpools::AbstractVector{<:Pair{Int, <:AbstractVector{Tuple{Int, Int}}}} = levelpools(qtrees),
     optimiser=(t, Δ)->Δ./4, queue=Vector{Tuple{Int, Int, Int}}())
     last_nc = typemax(Int)
@@ -390,7 +390,7 @@ function trainepoch_level!(qtrees, mask;
 #         if (nc < last_nc) last_nc = nc else break end
         if (niter > nc) break end
         if length(levelpools) >= 2
-            trainepoch_level!(qtrees, mask, levelpools=levelpools[2:end], optimiser=optimiser, queue=queue)
+            trainepoch_Px!(qtrees, mask, levelpools=levelpools[2:end], optimiser=optimiser, queue=queue)
         end
     end
     nc
