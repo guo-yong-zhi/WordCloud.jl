@@ -17,7 +17,7 @@ wc3 = wordcloud(words, weights, mask=shape(box, 2000, 2000, 100, color=0.15), an
 
 wcs = [wc1, wc1, wc2, wc3] #repeat wc1 to trigger compiling
 ts = [WordCloud.trainepoch_E!,WordCloud.trainepoch_EM!,WordCloud.trainepoch_EM2!,WordCloud.trainepoch_EM3!,
-        WordCloud.trainepoch_P!,WordCloud.trainepoch_P2!,WordCloud.trainepoch_level!]
+        WordCloud.trainepoch_P!,WordCloud.trainepoch_P2!,WordCloud.trainepoch_Px!]
 for (i,wc) in enumerate(wcs)
     println("\n\n", "*"^10, "wordcloud - $(length(wc.words)) words on mask$(size(wc.mask))", "*"^10)
     for (j,t) in enumerate(ts)
