@@ -32,7 +32,7 @@ Positional arguments are used to specify words and weights, and can be in differ
 ### mask keyword arguments
 * mask = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
 * mask = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
-* mask = shape(ellipse, 800, 600, color="white", bgcolor=(0,0,0,0)) #see doc of `shape`  
+* mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #see doc of `shape`  
 * transparentcolor = ARGB32(0,0,0,0) #set the transparent color in mask  
 ### other keyword arguments
 The keyword argument `run` is a function. It will be called after the `wordcloud` object constructed.

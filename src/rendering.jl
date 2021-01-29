@@ -1,7 +1,7 @@
 module Render
 export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
     colorschemes, schemes, outline, padding, imresize
-export issvg, save, load, svg2bitmap, SVGImageType
+export issvg, save, load, svg2bitmap, SVGImageType, svgstring
 using Luxor
 using Colors
 using ColorSchemes
@@ -16,6 +16,8 @@ parsecolor(gray::Real) = Gray(gray)
 
 issvg(d) = d isa Drawing && d.surfacetype==:svg
 const SVGImageType = Drawing
+svgstring(d) = String(copy(d.bufferdata))
+
 function loadsvg(fn)
     p = readsvg(fn)
     d = Drawing(p.width, p.height, :svg)
@@ -236,11 +238,12 @@ get box or ellipse image
 * shape(box, 80, 50) #80*50 box
 * shape(box, 80, 50, 4) #box with cornerradius=4
 * shape(ellipse, 80, 50, color="red") #80*50 red ellipse
+* shape(box, 80, 50, backgroundcolor=(0,1,0), backgroundsize=(100, 100)) #80*50 box on 100*100 green background
 """
-function shape(shape_, width, height, args...; color="white", bgcolor=(0,0,0,0))
-    d = Drawing(width, height, :svg)
+function shape(shape_, width, height, args...; color="white", backgroundcolor=(0,0,0,0), backgroundsize=(width, height))
+    d = Drawing(backgroundsize..., :svg)
     origin()
-    bgcolor = parsecolor(bgcolor)
+    bgcolor = parsecolor(backgroundcolor)
     background(bgcolor)
     setcolor(parsecolor(color))
     shape_(Point(0,0), width, height, args..., :fill)
