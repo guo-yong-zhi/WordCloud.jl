@@ -86,7 +86,7 @@ function find_weight_scale!(wc::WC; initialscale=0, fillingrate=0.3, maxiter=5, 
         wc.params[:scale] = sc
         tg, sc = cal_weight_scale(words, getfontsizes(wc, words), fonts, 
         fillingrate*ground_size, sc; kargs...)
-        @show sc, tg, tg/ground_size
+        println("scale=$sc, fillingrate=$(tg/ground_size)")
         if target_lower <= tg <= target_upper
             break
         end

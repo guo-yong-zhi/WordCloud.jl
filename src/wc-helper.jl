@@ -12,9 +12,9 @@ function randommask(color, sz=800)
     h = round(Int, sqrt(s*ratio))
     w = round(Int, h/ratio)
     if rand() > 0.5
-        return shape(box, w, h, round(Int, h*(0.05+rand()/5)), color=color, bgcolor=ARGB(1, 1, 1, 0))
+        return shape(box, w, h, round(Int, h*(0.05+rand()/5)), color=color, backgroundcolor=ARGB(1, 1, 1, 0))
     else
-        return shape(ellipse, w, h, color=color, bgcolor=ARGB(1, 1, 1, 0))
+        return shape(ellipse, w, h, color=color, backgroundcolor=ARGB(1, 1, 1, 0))
     end
 end
 function randomangles()
