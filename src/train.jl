@@ -45,21 +45,24 @@ const DECODETABLE = [0, 2, 1]
 decode2(c) = DECODETABLE[c.&0x03]
 whitesum(m::AbstractMatrix) = sum(DIRECTKERNEL .* m)
 whitesum(t::ShiftedQtree, l, a, b) = whitesum(decode2(near(t[l],a,b)))
-# function intlog2(x::Float64) #not safe
+# function intlog2(x::Float64) #not safe, x can't be nan or inf
 #     #Float64 符号位(S)，编号63；阶码位，编号62 ~52
 #     b8 = reinterpret(UInt64, x)
 #     m = UInt64(0x01)<<63 #符号位mask
 #     Int(1-((b8&m)>>62)), Int((b8&(~m)) >> 52 - 1023) #符号位:1-2S (1->-1、0->1)，指数位 - 1023
 # end
-function intlog2(x::Float64) #not safe, x>0
+function intlog2(x::Float64) #not safe, x>0 and x can't be nan or inf
     #Float64 符号位(S)，编号63；阶码位，编号62 ~52
     b8 = reinterpret(Int64, x)
     (b8 >> 52 - 1023) #符号位:1-2S (1->-1、0->1)，指数位 - 1023
 end
 
 function move!(qt, ws)
-    if (-1<ws[1]<1 && -1<ws[2]<1) || rand()<0.1 #避免静止及破坏周期运动
-        ws = [rand((1.,-1.)), rand((1.,-1.))]
+    if rand()<0.1 #破坏周期运动
+        ws .+= rand(((1.,-1.), (-1.,1.), (-1.,-1.), (1.,1.)))
+    end
+    if (-1<ws[1]<1 && -1<ws[2]<1) #避免静止
+        ws = rand(((1.,-1.), (-1.,1.), (-1.,-1.), (1.,1.)))
     end
     wm = max(abs.(ws)...)
     # @assert wm >= 1

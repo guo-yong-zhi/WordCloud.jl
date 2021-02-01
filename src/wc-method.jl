@@ -86,7 +86,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
         collwords = [(get_text(i), get_text(j)) for (i,j) in colllist]
         if length(colllist) > 0
             wc.params[:completed] = false
-            println("have $(length(colllist)) collision.",
+            println("have $(length(colllist)) collisions.",
             " try setting a larger `nepoch` and `retry`, or lower `fillingrate` in `wordcloud` to fix that")
             println("$collwords")
         else
