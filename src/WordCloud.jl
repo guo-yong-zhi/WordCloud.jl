@@ -1,10 +1,12 @@
 module WordCloud
-export wordcloud, processtext, html2text, countwords, filtcount, filtcount, shape, ellipse, box, loadmask, outline, padding, paint, paintsvg,
-    train!, Momentum, generate!, generate_animation!
+export wordcloud, processtext, html2text, countwords, filtcount
+export shape, ellipse, box, loadmask, outline, padding, paint, paintsvg, svgstring
+export train!, Momentum, generate!, generate_animation!
 export getshift, getcenter, setshift!, setcenter!
 export record, parsecolor, placement!, rescale!, imageof, bitor, take, ignore, pin, runexample, showexample
-export getstate, setstate!, getcolors, getangles, getwords, getweights, setcolors!, setangles!, setweights!, setwords!,
-    getpositions, setpositions!, getimages, getmask, getfontsizes, setfontsizes!, getfonts, setfonts!, initword!, initwords!
+export getcolors, getangles, getwords, getweights, setcolors!, setangles!, setwords!, setweights!,
+    getpositions, setpositions!, getimages, getsvgimages, getmask, getsvgmask, getfontsizes, setfontsizes!, 
+    getfonts, setfonts!, getstate, setstate!, initword!, initwords!
 
 include("qtree.jl")
 include("rendering.jl")
@@ -13,8 +15,9 @@ using .Render
 using .QTree
 using .TextProcessing
 include("train.jl")
-include("interface.jl")
+include("wc-class.jl")
+include("wc-method.jl")
+include("wc-helper.jl")
 include("strategy.jl") 
 include("utils.jl")
-
 end

@@ -22,21 +22,21 @@ wcb = wordcloud(
     run = x->nothing, #turn off the useless initword! and placement! in advance
 )
 
-samewords = getword(wca) ∩ getword(wcb)
+samewords = getwords(wca) ∩ getwords(wcb)
 println(length(samewords), " same words")
 
 for w in samewords
-    setcolor!(wcb, w, getcolor(wca, w))
-    setangle!(wcb, w, getangle(wca, w))
+    setcolors!(wcb, w, getcolors(wca, w))
+    setangles!(wcb, w, getangles(wca, w))
 end
 #Follow these steps to generate result: initword! -> placement! -> generate!
 initwords!(wcb)
 
 println("=ignore defferent words=")
-ignore(wcb, getword(wcb) .∉ Ref(samewords)) do
+ignore(wcb, getwords(wcb) .∉ Ref(samewords)) do
     @assert Set(wcb.words) == Set(samewords)
-    centers = getposition.(wca, samewords, type=getcenter)
-    setposition!.(wcb, samewords, centers, type=setcenter!) #manually initialize the position,
+    centers = getpositions(wca, samewords, type=getcenter)
+    setpositions!(wcb, samewords, centers, type=setcenter!) #manually initialize the position,
     setstate!(wcb, :placement!) #and set the state flag
     generate!(wcb, 1000, patient=-1, retry=1) #patient=-1 means no teleport; retry=1 means no rescale
 end
@@ -58,7 +58,7 @@ h,w = size(ma)
 space = fill(mb[1], (h, w÷20))
 try mkdir("address_compare") catch end
 println("results are saved in address_compare")
-WordCloud.ImageMagick.save("address_compare/compare.png", [ma space mb])
+WordCloud.save("address_compare/compare.png", [ma space mb])
 
 gif = WordCloud.GIF("address_compare")
 record(wca, "Obama", gif)

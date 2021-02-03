@@ -2,6 +2,8 @@ testqtree = WordCloud.testqtree
 
 @testset "qtree.jl" begin
     # Write your tests here.
+    x =rand(Float64, 1000)*1000;
+    @test sum(floor.(Int, log2.(x))) == sum(WordCloud.intlog2.(x))
     qt = WordCloud.ShiftedQtree(rand((0,0,1), rand(50:300), rand(50:300)))|>WordCloud.buildqtree!
     @test qt[1][-10,-15] == WordCloud.EMPTY
     @test_throws BoundsError qt[1][-10,-15] = WordCloud.EMPTY

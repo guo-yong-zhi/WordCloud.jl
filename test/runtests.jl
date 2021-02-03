@@ -14,13 +14,13 @@ end
 
 @testset "WordCloud.jl" begin
     # @show pwd()
-    img, img_m = WordCloud.rendertext("test", 88.3, color="blue", angle = 20, border=1, returnmask=true)
     words = [Random.randstring(rand(1:8)) for i in 1:rand(100:1000)]
     weights = randexp(length(words)) .* 1000 .+ randexp(length(words)) .* 200 .+ rand(20:100, length(words));
     wc = wordcloud(words, weights, fillingrate=0.6)
     paint(wc)
     generate!(wc)
-    paint(wc::wordcloud, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2))
+    paint(wc, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2))
+    paint(wc, "test.svg")
     @test isempty(WordCloud.outofbounds(wc.maskqtree, wc.qtrees))
 
     clq = WordCloud.QTree.listcollision_qtree(wc.qtrees, wc.maskqtree)
@@ -40,8 +40,12 @@ end
     rescale!(wc, 1.23)
     pin(wc, ["little", "know"]) do 
         @test length(wc.words)==298
+        setpositions!(wc, 1, (2,2))
+        setpositions!(wc, [1, "Alice", "one"], (-1, -2))
+        setpositions!(wc, [1, "Alice", "one"], [(10,10),(10,20),(21,2)])
         setpositions!(wc, "time", (0,0), type=setcenter!)
     end
+    @test getpositions(wc, [1, "Alice", "one"])[3] == (21,2)
     @test WordCloud.QTree.kernelsize(wc.qtrees[WordCloud.index(wc, "time")]) == size(getimages(wc, "time"))
     @test .-reverse(size(getimages(wc, "time"))) .÷ 2 == getpositions(wc, ["time", getwords(wc, 9)])[1]
     w = getweights(wc, getwords(wc, [1,2]))

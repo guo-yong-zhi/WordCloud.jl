@@ -1,11 +1,12 @@
 module Render
-export drawtext, drawtextsvg, rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
-    colorschemes, schemes, outline, padding, save
-
+export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
+    colorschemes, schemes, outline, padding, imresize
+export issvg, save, load, svg2bitmap, SVGImageType, svgstring
 using Luxor
 using Colors
 using ColorSchemes
 using ImageMagick
+import ImageTransformations.imresize
 
 save = Luxor.FileIO.save
 
@@ -13,7 +14,35 @@ parsecolor(c) = parse(Colorant, c)
 parsecolor(tp::Tuple) = ARGB32(tp...)
 parsecolor(gray::Real) = Gray(gray)
 
-function backgroundclip(p::AbstractMatrix, bgcolor; border=0)
+issvg(d) = d isa Drawing && d.surfacetype==:svg
+const SVGImageType = Drawing
+svgstring(d) = String(copy(d.bufferdata))
+
+function loadsvg(fn)
+    p = readsvg(fn)
+    d = Drawing(p.width, p.height, :svg)
+    placeimage(p)
+    finish()
+    d
+end
+
+function load(fn)
+    if endswith(fn, ".svg")
+        loadsvg(fn)
+    else
+        ImageMagick.load(fn)
+    end
+end
+
+function svg2bitmap(svg::Drawing)
+    d = Drawing(svg.width, svg.height, :image)
+    placeimage(svg)
+    m=image_as_matrix()
+    finish()
+    m
+end
+
+function boundbox(p::AbstractMatrix, bgcolor; border=0)
     a = c = 1
     b = d = 0
     while a < size(p, 1) && all(p[a,:] .== bgcolor)
@@ -24,7 +53,7 @@ function backgroundclip(p::AbstractMatrix, bgcolor; border=0)
     end
     a = max(1, a-border)
     b = min(size(p, 1), max(size(p, 1)-b+border, a))
-    p = p[a:b, :]
+    p = @view p[a:b, :]
     while c < size(p, 2) && all(p[:,c] .== bgcolor)
         c += 1
     end
@@ -35,8 +64,18 @@ function backgroundclip(p::AbstractMatrix, bgcolor; border=0)
     # @show c, d, p
     c = max(1, c-border)
     d = min(size(p, 2), max(size(p, 2)-d+border, c))
-    return p[:, c:d]
+    return a, b, c, d
 end
+
+"a, b, c, d are all inclusive"
+function clipsvg(m, a, b, c, d)
+    m2 = Drawing(d-c+1, b-a+1, :svg)
+    placeimage(m, Point(-c+1, -a+1))
+    finish()
+    m2
+end
+"a, b, c, d are all inclusive"
+clipbitmap(m, a, b, c, d) = m[a:b, c:d]
 
 function drawtext(t, size, pos, angle=0, color="black", font="")
     setcolor(parsecolor(color))
@@ -44,34 +83,36 @@ function drawtext(t, size, pos, angle=0, color="black", font="")
     settext(t, Point(pos...), halign="center", valign="center"; angle=angle)
 end
 
-function drawtextsvg(words, fontsizes, poss, angles, colors, fonts; background=false, size=size(background))
-    d = Drawing(size..., :svg)
-    bgcolor = Luxor.background(ARGB32(1,1,1,0))
-    if !(background == false || background === nothing)
-        error("not implement yet, please use `background=false` instead")
-    end
-    drawtext.(words, fontsizes, poss, angles, colors, fonts)
-    finish()
-    d
-end
 function rendertext(str::AbstractString, size::Real; 
-        pos=(0,0), color="black", bgcolor=(0,0,0,0), angle=0, font="", border=0, returnmask=false)
+        pos=(0,0), color="black", bgcolor=(0,0,0,0), angle=0, font="", border=0, returnmask=false, returnsvg=false)
     l = length(str) + 1
     l = ceil(Int, size*l + 2border + 2)
-    Drawing(l, l, :image)
+    if returnsvg
+        svg = Drawing(l, l, :svg) #svg is slow
+    else
+        Drawing(l, l, :image)
+    end
     origin()
     bgcolor = parsecolor(bgcolor)
     bgcolor = background(bgcolor)
-    bgcolor = Luxor.ARGB32(bgcolor...)
+
     drawtext(str, size, pos, angle, color, font)
-    mat = image_as_matrix()
+    if !returnsvg mat=image_as_matrix() end
     finish()
-    mat = backgroundclip(mat, mat[1], border=border)
+    if returnsvg mat = svg2bitmap(svg) end
+    #     bgcolor = Luxor.ARGB32(bgcolor...) #https://github.com/JuliaGraphics/Luxor.jl/issues/107
+    bgcolor = mat[1]
+    box = boundbox(mat, bgcolor, border=border)
+    mat = clipbitmap(mat, box...)
+    r = (mat,)
     if returnmask
-        return mat, textmask(mat, mat[1], radius=border)
-    else
-        return mat
+        r = (r..., textmask(mat, bgcolor, radius=border))
     end
+    if returnsvg
+        svg = clipsvg(svg, box...)
+        r = (r..., svg)
+    end
+    r
 end
 
 function rendertextoutlines(str::AbstractString, size::Real; color="black", bgcolor=(0,0,0,0), 
@@ -93,7 +134,7 @@ function rendertextoutlines(str::AbstractString, size::Real; color="black", bgco
     strokepath()
     mat = image_as_matrix()
     finish()
-    mat = backgroundclip(mat, mat[1])
+    mat = clipbitmap(mat, boundbox(mat, mat[1])...)
 end
 
 function dilate(mat, r)
@@ -149,7 +190,7 @@ function overlay(color1::T, color2::T) where {T}
     T(min.(1, c)..., min(1, a))
 end
 "put img2 on img1 at (x, y)"
-function overlay!(img1::AbstractMatrix, img2::AbstractMatrix, x=1, y=1)
+function overlay!(img1::AbstractMatrix, img2::AbstractMatrix, x=1, y=1)#左上角重合时(x=1,y=1)
     h1, w1 = size(img1)
     h2, w2 = size(img2)
     img1v = @view img1[max(1,y):min(h1,y+h2-1), max(1,x):min(w1,x+w2-1)]
@@ -164,6 +205,20 @@ function overlay!(img::AbstractMatrix, imgs, pos)
         overlay!(img, i, p...)
     end
     img
+end
+
+function overlay(imgs::AbstractVector{Drawing}, poss; background=false, size=size(background))
+    d = Drawing(size..., :svg)
+    bgcolor = Luxor.background(ARGB32(1,1,1,0))
+    if !(background == false || background === nothing)
+        if !issvg(background)
+            @warn "embed bitmap in svg"
+        end
+        placeimage(background)
+    end
+    placeimage.(imgs, [Point(x-1,y-1) for (x,y) in poss])#(x,y)=(1,1)时左上角重合，此时Point(0,0)
+    finish()
+    d
 end
 
 schemes_colorbrewer = filter(s -> occursin("colorbrewer", colorschemes[s].category), collect(keys(colorschemes)))
@@ -183,17 +238,17 @@ get box or ellipse image
 * shape(box, 80, 50) #80*50 box
 * shape(box, 80, 50, 4) #box with cornerradius=4
 * shape(ellipse, 80, 50, color="red") #80*50 red ellipse
+* shape(box, 80, 50, backgroundcolor=(0,1,0), backgroundsize=(100, 100)) #80*50 box on 100*100 green background
 """
-function shape(shape_, width, height, args...; color="white", bgcolor=(0,0,0,0))
-    Drawing(width, height, :image)
+function shape(shape_, width, height, args...; color="white", backgroundcolor=(0,0,0,0), backgroundsize=(width, height))
+    d = Drawing(backgroundsize..., :svg)
     origin()
-    bgcolor = parsecolor(bgcolor)
+    bgcolor = parsecolor(backgroundcolor)
     background(bgcolor)
     setcolor(parsecolor(color))
     shape_(Point(0,0), width, height, args..., :fill)
-    mat = image_as_matrix()
     finish()
-    mat
+    d
 end
 
 using Printf

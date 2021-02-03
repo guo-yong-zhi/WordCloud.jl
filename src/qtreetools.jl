@@ -107,16 +107,16 @@ end
 function listcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree, 
     indpairs::Vector{Tuple{Tuple{Int,Int},Tuple{Int,Int,Int}}}; collist=Vector{ColItemType}(),
     queue=Vector{Tuple{Int,Int,Int}}())
-getqtree(i) = i==0 ? mask : qtrees[i]
-for ((i1, i2), at) in indpairs
-    empty!(queue)
-    push!(queue, at)
-    cp = collision_bfs_rand(getqtree(i1), getqtree(i2), queue)
-    if cp[1] >= 0
-        push!(collist, (i1, i2)=>cp)
+    getqtree(i) = i==0 ? mask : qtrees[i]
+    for ((i1, i2), at) in indpairs
+        empty!(queue)
+        push!(queue, at)
+        cp = collision_bfs_rand(getqtree(i1), getqtree(i2), queue)
+        if cp[1] >= 0
+            push!(collist, (i1, i2)=>cp)
+        end
     end
-end
-collist
+    collist
 end
 function listcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree, 
     inds=0:length(qtrees); collist=Vector{ColItemType}(), 
@@ -159,6 +159,18 @@ function findroom(ground, q=[(levelnum(ground), 1, 1)])
         end
     end
     return nothing
+end
+
+function treeset!(tree::ShiftedQtree, ind::Tuple{Int,Int,Int}, value::UInt8) #unused
+    l, m1, n1 = ind
+    m2, n2 = m1, n1
+    for ll in l:-1:1
+        tree[ll][m1:m2, n1:n2] .= value #goes wrong when out of kernel bounds
+        m1 = 2m1 - 1
+        m2 = 2m2
+        n1 = 2n1 - 1
+        n2 = 2n2
+    end
 end
 
 function overlap(p1::UInt8, p2::UInt8)
