@@ -6,5 +6,7 @@ address_compare*
 guxiang_animation*
 /*.png
 /*.svg
+/*.gif
 /*.ipynb
 test/*.jpg
+test/*.svg

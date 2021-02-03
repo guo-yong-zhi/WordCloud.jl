@@ -1,10 +1,12 @@
 # WordCloud
-wordcloud in Julia  
+![juliadoc](res/juliadoc.png)  
+ Word cloud (tag cloud or wordle) is a novelty visual representation of text data. The importance of each word is shown with font size or color. Our generator has the following highlights:
 * **Flexible** Any mask, any color, any angle, adjustable filling rate. You can specify the initial position of some words. Or you can pin some words and adjust others, etc.
 * **Fast**  100% in Julia and efficient implementation based on Quadtree & gradient optimization. The advantage is more obvious when generating large images.
-* **Exact**  Words with the same weight have the exact same size. The algorithm will never scale the word to fit the blank.
+* **Exact**  Words with the same weight have the exact same size. The algorithm will never scale the word to fit the blank.  
 
----
+ *run `showexample(:juliadoc)` to see how to generate the banner*
+***
 # Installation
 ```julia
 import Pkg; Pkg.add("WordCloud")
@@ -17,7 +19,7 @@ words = [string(c) for c in words]
 weights = rand(length(words)) .^ 2 .* 100 .+ 30
 wc = wordcloud(words, weights)
 generate!(wc)
-paint(wc, "qianziwen.png")
+paint(wc, "qianziwen.svg")
 ```
 *Run the command `runexample(:qianziwen)` or `showexample(:qianziwen)` to get the result.*  
 # More Complex Usage
@@ -47,7 +49,7 @@ paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", li
 ![compare](res/compare.png)  
 [Comparison of Obama's and Trump's inaugural address](./examples/compare.jl)  
 *Run the command `runexample(:compare)` or `showexample(:compare)` to get the result.*  
-
+*The variable `WordCloud.examples` holds all available examples.*  
 ***
 * [x] 排序 & 预放置
 * [x] 基于四叉树碰撞检测

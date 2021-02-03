@@ -8,7 +8,7 @@ mutable struct Momentum
     rho::Float64
     velocity::IdDict
 end
-  
+
 Momentum(η, ρ = 0.9) = Momentum(η, ρ, IdDict())
 Momentum(;η = 0.01, ρ = 0.9) = Momentum(η, ρ, IdDict())
 
@@ -45,17 +45,30 @@ const DECODETABLE = [0, 2, 1]
 decode2(c) = DECODETABLE[c.&0x03]
 whitesum(m::AbstractMatrix) = sum(DIRECTKERNEL .* m)
 whitesum(t::ShiftedQtree, l, a, b) = whitesum(decode2(near(t[l],a,b)))
-intlog2(x::Number)=Int[0,1,1,2,2,2,2,3,3,3,3,3,3,3][x]
+# function intlog2(x::Float64) #not safe, x can't be nan or inf
+#     #Float64 符号位(S)，编号63；阶码位，编号62 ~52
+#     b8 = reinterpret(UInt64, x)
+#     m = UInt64(0x01)<<63 #符号位mask
+#     Int(1-((b8&m)>>62)), Int((b8&(~m)) >> 52 - 1023) #符号位:1-2S (1->-1、0->1)，指数位 - 1023
+# end
+function intlog2(x::Float64) #not safe, x>0 and x can't be nan or inf
+    #Float64 符号位(S)，编号63；阶码位，编号62 ~52
+    b8 = reinterpret(Int64, x)
+    (b8 >> 52 - 1023) #符号位:1-2S (1->-1、0->1)，指数位 - 1023
+end
 
 function move!(qt, ws)
-    if (-1<ws[1]<1 && -1<ws[2]<1) || rand()<0.1 #避免静止及破坏周期运动
-        ws .+= [rand((1,-1)), rand((1,-1))]
+    if rand()<0.1 #破坏周期运动
+        ws .+= rand(((1.,-1.), (-1.,1.), (-1.,-1.), (1.,1.)))
+    end
+    if (-1<ws[1]<1 && -1<ws[2]<1) #避免静止
+        ws = rand(((1.,-1.), (-1.,1.), (-1.,-1.), (1.,1.)))
     end
     wm = max(abs.(ws)...)
-    if wm >= 1
-        u = floor(Int, log2(wm))
-        shift!(qt, 1+u, (trunc.(Int, ws) .÷ 2^u)...) #舍尾，保留最高二进制位
-    end
+    # @assert wm >= 1
+    u = intlog2(wm)
+    # @assert u == floor(Int, log2(wm))
+    shift!(qt, 1+u, (trunc.(Int, ws) .÷ 2^u)...) #舍尾，保留最高二进制位
 end
 
 function step!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimiser=(t, Δ)->Δ./4)
@@ -67,7 +80,7 @@ function step!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimis
     ll = 2 ^ (l-1)
     ws1 = ll .* whitesum(t1, collisionpoint...)
     ws2 = ll .* whitesum(t2, collisionpoint...)
-#     @show ws1,collisionpoint,whitesum(t1, collisionpoint...)
+    #     @show ws1,collisionpoint,whitesum(t1, collisionpoint...)
     ws1 = optimiser(t1, ws1)
 #     @show ws1
     ws2 = optimiser(t2, ws2)
@@ -127,7 +140,6 @@ function trainepoch_E!(qtrees, mask; optimiser=(t, Δ)->Δ./4,
     step_inds!(mask, qtrees, collpool, optimiser)
     inds = first.(collpool)|>Iterators.flatten|>Set
     pop!(inds,0, 0)
-    inds = inds|>collect
 #     @show length(qtrees),length(inds)
     for ni in 1:length(qtrees)÷length(inds)
         listcollision(qtrees, mask, inds, queue=queue, collist=empty!(collpool))
@@ -168,7 +180,6 @@ function trainepoch_EM!(qtrees, mask; memory, optimiser=(t, Δ)->Δ./4,
     end
     nc
 end
-
 "element-wise trainer with LRU(more levels)"
 trainepoch_EM2!(tr_ma) = trainepoch_EM!(tr_ma)
 trainepoch_EM2!(s::Symbol) = trainepoch_EM!(s)
@@ -202,6 +213,54 @@ function trainepoch_EM2!(qtrees, mask; memory, optimiser=(t, Δ)->Δ./4,
                 listcollision(qtrees, mask, inds3, queue=queue, collist=empty!(collpool))
                 step_inds!(mask, qtrees, collpool, optimiser)
                 if ni3 > 8length(collpool) break end
+            end
+        end
+    end
+    nc
+end
+
+"element-wise trainer with LRU(more-more levels)"
+trainepoch_EM3!(tr_ma) = trainepoch_EM!(tr_ma)
+trainepoch_EM3!(s::Symbol) = trainepoch_EM!(s)
+function trainepoch_EM3!(qtrees, mask; memory, optimiser=(t, Δ)->Δ./4, 
+    queue=Vector{Tuple{Int, Int, Int}}(), collpool=Vector{QTree.ColItemType}())
+    listcollision(qtrees, mask, queue=queue, collist=empty!(collpool))
+    nc = length(collpool)
+    if nc == 0 return nc end
+    step_inds!(mask, qtrees, collpool, optimiser)
+    inds = first.(collpool)|>Iterators.flatten|>Set
+#     @show length(inds)
+    pop!(inds,0, 0)
+    push!.(memory, inds)
+    inds = take(memory, length(inds)*8)
+    for ni in 1:length(qtrees)÷length(inds)
+        listcollision(qtrees, mask, inds, queue=queue, collist=empty!(collpool))
+        step_inds!(mask, qtrees, collpool, optimiser)
+        if ni > 4length(collpool) break end
+        inds2 = first.(collpool)|>Iterators.flatten|>Set
+        pop!(inds2,0, 0)
+        push!.(memory, inds2)
+        inds2 = take(memory, length(inds2)*4)
+        for ni2 in 1:length(inds)÷length(inds2)
+            listcollision(qtrees, mask, inds2, queue=queue, collist=empty!(collpool))
+            step_inds!(mask, qtrees, collpool, optimiser)
+            if ni2 > 4length(collpool) break end
+            inds3 = first.(collpool)|>Iterators.flatten|>Set
+            pop!(inds3,0, 0)
+            push!.(memory, inds3)
+            inds3 = take(memory, length(inds3)*2)
+            for ni3 in 1:length(inds2)÷length(inds3)
+                listcollision(qtrees, mask, inds3, queue=queue, collist=empty!(collpool))
+                step_inds!(mask, qtrees, collpool, optimiser)
+                if ni3 > 4length(collpool) break end
+                inds4 = first.(collpool)|>Iterators.flatten|>Set
+                pop!(inds4,0, 0)
+#             @show length(qtrees),length(inds),length(inds2),length(inds3)
+                for ni4 in 1:length(inds3)÷length(inds4)
+                    listcollision(qtrees, mask, inds4, queue=queue, collist=empty!(collpool))
+                    step_inds!(mask, qtrees, collpool, optimiser)
+                    if ni4 > 8length(collpool) break end
+                end
             end
         end
     end
@@ -286,7 +345,7 @@ function trainepoch_P2!(qtrees, mask; optimiser=(t, Δ)->Δ./4,
         # @show nsp, nsp1
         # @show "####", length(nearpool2), length(nearpool2)/length(nearpool1)
 
-        # @time 
+        # @time
         for ni2 in 1 : length(nearpool1)÷length(nearpool2) #the loop cost should not exceed length(indpairs)
             nsp2 = filttrain!(qtrees, mask, nearpool2, empty!(collpool), 0, optimiser=optimiser, queue=queue)
             # @show nsp2# length(collpool)/length(nearpool2)
@@ -302,7 +361,7 @@ function trainepoch_P2!(qtrees, mask; optimiser=(t, Δ)->Δ./4,
     nsp
 end
 
-function levelpools(qtrees, levels=-levelnum(qtrees[1]):-1)
+function levelpools(qtrees, levels=[-levelnum(qtrees[1]):2:-3..., -1])
     pools = [i=>Vector{Tuple{Int, Int}}() for i in levels]
 #     @show typeof(pools)
     for (i1, i2) in combinations(0:length(qtrees), 2)
@@ -310,11 +369,11 @@ function levelpools(qtrees, levels=-levelnum(qtrees[1]):-1)
     end
     pools
 end
-"pairwise trainer(general level)"
-trainepoch_level!(tr_ma) = Dict(:levelpools=>levelpools(tr_ma[1]),
+"pairwise trainer(general levels)"
+trainepoch_Px!(tr_ma) = Dict(:levelpools=>levelpools(tr_ma[1]),
                             :queue=>Vector{Tuple{Int, Int, Int}}())
-trainepoch_level!(s::Symbol) = get(Dict(:patient=>1, :nepoch=>10), s, nothing)
-function trainepoch_level!(qtrees, mask; 
+trainepoch_Px!(s::Symbol) = get(Dict(:patient=>1, :nepoch=>10), s, nothing)
+function trainepoch_Px!(qtrees, mask; 
     levelpools::AbstractVector{<:Pair{Int, <:AbstractVector{Tuple{Int, Int}}}} = levelpools(qtrees),
     optimiser=(t, Δ)->Δ./4, queue=Vector{Tuple{Int, Int, Int}}())
     last_nc = typemax(Int)
@@ -334,7 +393,7 @@ function trainepoch_level!(qtrees, mask;
 #         if (nc < last_nc) last_nc = nc else break end
         if (niter > nc) break end
         if length(levelpools) >= 2
-            trainepoch_level!(qtrees, mask, levelpools=levelpools[2:end], optimiser=optimiser, queue=queue)
+            trainepoch_Px!(qtrees, mask, levelpools=levelpools[2:end], optimiser=optimiser, queue=queue)
         end
     end
     nc
@@ -400,7 +459,7 @@ function train!(ts, maskqt, nepoch::Number=-1, args...;
         if nc == 0
             return ep, nc
         end
-        if teleport_count >= 5
+        if teleport_count >= 10
             println("The teleport strategy failed after $ep epochs")
             return ep, nc
         end
