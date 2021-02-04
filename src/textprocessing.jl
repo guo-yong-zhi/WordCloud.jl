@@ -1,15 +1,21 @@
 module TextProcessing
-export countwords, processtext, html2text, stopwords_en
+export countwords, processtext, html2text, stopwords_en, stopwords_cn, stopwords
 dir = @__DIR__
 stopwords_en = Set(readlines(dir * "/../res/stopwords_en.txt"))
+stopwords_cn = Set(readlines(dir * "/../res/stopwords_cn.txt"))
+stopwords = stopwords_en ∪ stopwords_cn
 function splitwords(text::AbstractString, regexp=r"\w[\w']+")
     words = findall(regexp, text)
     words = [endswith(text[i], "'s") ? text[i][1:end - 2] : text[i] for i in words]
 end
 
-function countwords(words::AbstractVector{<:AbstractString}; counter=Dict{String,Int}())
+function countwords(words::AbstractVector{<:AbstractString}; regexp=r"\w[\w']+", counter=Dict{String,Int}())
     for w in words
-        counter[w] = get!(counter, w, 0) + 1
+        m = match(regexp, w)
+        if m !== nothing
+            mm = m.match
+            counter[mm] = get!(counter, mm, 0) + 1
+        end
     end
     counter
 end
@@ -47,7 +53,7 @@ processtext the text, filter the words, and adjust the weights. return processte
 * minweight, maxweight: within 0 ~ 1, set to adjust extreme weight
 """
 function processtext(counter::Dict{<:AbstractString, <:Number}; 
-    stopwords=stopwords_en,
+    stopwords=stopwords,
     minlength=2, maxlength=30,
     minfrequency=0,
     maxnum=500,
@@ -86,6 +92,7 @@ function processtext(counter::Dict{<:AbstractString, <:Number};
     println("$(sum(m)) huge words")
     words, weights
 end
+
 function processtext(text; regexp=r"\w[\w']+", counter=Dict{String,Int}(), kargs...)
     processtext(countwords(text, regexp=regexp, counter=counter); kargs...)
 end
