@@ -73,6 +73,7 @@ function paintsvg(wc::WC; background=true)
         if background == true
             background = getsvgmask(wc)
             if background === nothing
+                @warn "embed bitmap into SVG. You can set `background=false` to remove background."
                 background = getmask(wc)
             end
         end

@@ -211,9 +211,6 @@ function overlay(imgs::AbstractVector{Drawing}, poss; background=false, size=siz
     d = Drawing(size..., :svg)
     bgcolor = Luxor.background(ARGB32(1,1,1,0))
     if !(background == false || background === nothing)
-        if !issvg(background)
-            @warn "embed bitmap in svg"
-        end
         placeimage(background)
     end
     placeimage.(imgs, [Point(x-1,y-1) for (x,y) in poss])#(x,y)=(1,1)时左上角重合，此时Point(0,0)
