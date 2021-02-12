@@ -47,6 +47,6 @@ pin(wc, ["julia", "∴"]) do
     generate!(wc, 2000)
 end
 println("results are saved to juliadoc.svg")
-paint(wc, "juliadoc.png")
+# paint(wc, "juliadoc.png")
 paint(wc, "juliadoc.svg")
 wc
