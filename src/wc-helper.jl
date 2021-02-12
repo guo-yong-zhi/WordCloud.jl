@@ -104,7 +104,8 @@ function paint(wc::WC, args...; background=true, kargs...)
         background = fill(ARGB32(1,1,1,0), size(wc.mask))
     end
     resultpic = convert.(ARGB32, background)#.|>ARGB32
-    overlay!(resultpic, wc.imgs, getpositions(wc))
+    imgs = [convert.(ARGB32, i) for i in wc.imgs]
+    overlay!(resultpic, imgs, getpositions(wc))
     if !(isempty(args) && isempty(kargs))
         resultpic = convert.(ARGB{Colors.N0f8}, resultpic)
         resultpic = imresize(resultpic, args...; kargs...)

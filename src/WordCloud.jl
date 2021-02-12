@@ -5,8 +5,8 @@ export train!, Momentum, generate!, generate_animation!
 export getshift, getcenter, setshift!, setcenter!
 export record, parsecolor, placement!, rescale!, imageof, bitor, take, ignore, pin, runexample, showexample
 export getcolors, getangles, getwords, getweights, setcolors!, setangles!, setwords!, setweights!,
-    getpositions, setpositions!, getimages, getsvgimages, getmask, getsvgmask, getfontsizes, setfontsizes!, 
-    getfonts, setfonts!, getstate, setstate!, initword!, initwords!
+    getpositions, setpositions!, getimages, getsvgimages, setimages!, setsvgimages!, getmask, getsvgmask, 
+    getfontsizes, setfontsizes!, getfonts, setfonts!, getstate, setstate!, initword!, initwords!
 
 include("qtree.jl")
 include("rendering.jl")

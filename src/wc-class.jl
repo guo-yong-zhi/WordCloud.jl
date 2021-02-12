@@ -151,6 +151,24 @@ end
 @doc setdoc setweights!(wc::WC, w, v::Union{Number, AbstractVector{<:Number}}) = @view(wc.weights[index(wc, w)]) .= v
 @doc getdoc getimages(wc::WC, w=:) = wc.imgs[index(wc, w)]
 @doc getdoc getsvgimages(wc::WC, w=:) = wc.svgs[index(wc, w)]
+function getqtree(p, sz, pos; backgroundcolor=p[1], border=1)
+    t = ShiftedQtree(dilate(p.!=backgroundcolor, border), sz) |> buildqtree!
+    setcenter!(t, pos)
+    t
+end
+@doc setdoc 
+function setimages!(wc::WC, w, v::AbstractMatrix; backgroundcolor=v[1], border=wc.params[:border])
+    @view(wc.imgs[index(wc, w)]) .= Ref(v)
+    @view(wc.qtrees[index(wc, w)]) .= getqtree.(Ref(v), wc.params[:groundsize], getcenter.(wc.qtrees[index(wc, w)]), 
+        backgroundcolor=backgroundcolor)
+end
+@doc setdoc setimages!(wc::WC, w, v::AbstractVector) = setimages!.(wc, w, v)
+@doc setdoc
+function setsvgimages!(wc::WC, w, v)
+    @view(wc.svgs[index(wc, w)]) .= v
+    setimages!(wc::WC, w, svg2bitmap.(v))
+end
+
 @doc getdoc
 function getfontsizes(wc::WC, w=:)
     words = getwords(wc, w)

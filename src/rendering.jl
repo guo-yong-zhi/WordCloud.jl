@@ -1,6 +1,6 @@
 module Render
 export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
-    colorschemes, schemes, outline, padding, imresize
+    colorschemes, schemes, outline, padding, dilate, imresize
 export issvg, save, load, svg2bitmap, SVGImageType, svgstring
 using Luxor
 using Colors
@@ -16,6 +16,7 @@ parsecolor(gray::Real) = Gray(gray)
 
 issvg(d) = d isa Drawing && d.surfacetype==:svg
 const SVGImageType = Drawing
+Base.broadcastable(s::SVGImageType) = Ref(s)
 svgstring(d) = String(copy(d.bufferdata))
 
 function loadsvg(fn)

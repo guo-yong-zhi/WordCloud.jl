@@ -51,5 +51,10 @@ end
     w = getweights(wc, getwords(wc, [1,2]))
     setwords!(wc, [1,2], ["zz","yy"])
     @test getweights(wc, "zz") == w[1]
+    setimages!(wc, [1,2], wc.imgs[[4,5]])
+    setimages!(wc, 1, wc.imgs[[4,5]])
+    setimages!(wc, 1, wc.imgs[4])
+    setsvgimages!(wc, 1, wc.svgs[6])
+    @test wc.imgs[1] == wc.imgs[6]
 end
 
