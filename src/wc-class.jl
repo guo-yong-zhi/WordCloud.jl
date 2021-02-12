@@ -162,7 +162,7 @@ function setimages!(wc::WC, w, v::AbstractMatrix; backgroundcolor=v[1], border=w
     @view(wc.qtrees[index(wc, w)]) .= getqtree.(Ref(v), wc.params[:groundsize], getcenter.(wc.qtrees[index(wc, w)]), 
         backgroundcolor=backgroundcolor)
 end
-@doc setdoc setimages!(wc::WC, w, v::AbstractVector) = setimages!.(wc, w, v)
+setimages!(wc::WC, w, v::AbstractVector) = setimages!.(wc, w, v)
 @doc setdoc
 function setsvgimages!(wc::WC, w, v)
     @view(wc.svgs[index(wc, w)]) .= v
