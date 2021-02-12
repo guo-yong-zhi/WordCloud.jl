@@ -415,7 +415,7 @@ end
 
 function train!(ts, maskqt, nepoch::Number=-1, args...; 
         trainer=trainepoch_EM2!, patient::Number=trainer(:patient), optimiser=Momentum(η=1/4, ρ=0.5), 
-        callbackstep=0, callbackfun=x->x, kargs...)
+        callbackstep=1, callbackfun=x->x, kargs...)
     ep = 0
     nc = 0
     count = 0
@@ -453,7 +453,7 @@ function train!(ts, maskqt, nepoch::Number=-1, args...;
             end
             last_cinds = cinds_set
         end
-        if callbackstep>0 && ep%callbackstep==0
+        if ep%callbackstep==0
             callbackfun(ep)
         end
         if nc == 0
