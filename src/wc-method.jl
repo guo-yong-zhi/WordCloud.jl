@@ -1,15 +1,25 @@
+function initqtree!(wc, i::Integer; bgcolor=(0,0,0,0), border=wc.params[:border])
+    img = wc.imgs[i]
+    mimg = wordmask(img, bgcolor, border) 
+    t = ShiftedQtree(mimg, wc.params[:groundsize])
+    c = isassigned(wc.qtrees, i) ? getcenter(wc.qtrees[i]) : wc.params[:groundsize] .÷ 2
+    setcenter!(t, c)
+    t |> buildqtree!
+    wc.qtrees[i] = t
+end
+initqtree!(wc, i; kargs...) = initqtree!.(wc, index(wc, i); kargs...)
 "Initialize word's images and other resources with specified style"
-function initword!(wc, w; bgcolor=(0,0,0,0), border=wc.params[:border])
-    i = index(wc, w)
+function initimage!(wc, i::Integer; bgcolor=(0,0,0,0), border=wc.params[:border])
     params = wc.params
-    svg, img, mimg, tree = prepareword(wc.words[i], getfontsizes(wc, w), params[:colors][i], params[:angles][i],
-        params[:groundsize], font=getfonts(wc, w), bgcolor=bgcolor, border=border)
+    img, svg = prepareword(wc.words[i], getfontsizes(wc, i), params[:colors][i], params[:angles][i],
+        params[:groundsize], font=getfonts(wc, i), bgcolor=bgcolor, border=border)
     wc.imgs[i] = img
     wc.svgs[i] = svg
-    wc.qtrees[i] = tree
+    initqtree!(wc, i, bgcolor=bgcolor, border=border)
     nothing
 end
-function initword!(wc::WC)
+initimage!(wc, i; kargs...) = initimage!.(wc, index(wc, i); kargs...)
+function initimage!(wc::WC)
     params = wc.params
     mask = wc.mask
     
@@ -25,15 +35,15 @@ function initword!(wc::WC)
 
     scale = find_weight_scale!(wc, border=params[:border], fillingrate=params[:fillingrate], maxiter=5, error=0.03)
     println("fillingrate set to $(params[:fillingrate]), with scale=$scale")
-    initword!.(wc, 1:length(words))
-    params[:state] = nameof(initwords!)
+    initimage!.(wc, 1:length(words))
+    params[:state] = nameof(initimages!)
     wc
 end
-initwords! = initword!
+initimages! = initimage!
         
 function QTree.placement!(wc::WC)
     if getstate(wc) == nameof(wordcloud)
-        initwords!(wc)
+        initimages!(wc)
     end
     placement!(deepcopy(wc.maskqtree), wc.qtrees)
     wc.params[:state] = nameof(placement!)
@@ -45,7 +55,7 @@ function rescale!(wc::WC, ratio::Real)
     qts = wc.qtrees
     centers = getcenter.(qts)
     wc.params[:scale] *= ratio
-    initword!.(wc, 1:length(wc.words))
+    initimage!.(wc, 1:length(wc.words))
     setcenter!.(wc.qtrees, centers)
     wc
 end

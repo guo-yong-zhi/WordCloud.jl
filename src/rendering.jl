@@ -1,5 +1,5 @@
 module Render
-export rendertext, textmask, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
+export rendertext, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
     colorschemes, schemes, outline, padding, dilate, imresize
 export issvg, save, load, svg2bitmap, SVGImageType, svgstring
 using Luxor
@@ -85,7 +85,7 @@ function drawtext(t, size, pos, angle=0, color="black", font="")
 end
 
 function rendertext(str::AbstractString, size::Real; 
-        pos=(0,0), color="black", bgcolor=(0,0,0,0), angle=0, font="", border=0, returnmask=false, returnsvg=false)
+        pos=(0,0), color="black", bgcolor=(0,0,0,0), angle=0, font="", border=0, returnsvg=false)
     l = length(str) + 1
     l = ceil(Int, size*l + 2border + 2)
     if returnsvg
@@ -105,15 +105,12 @@ function rendertext(str::AbstractString, size::Real;
     bgcolor = mat[1]
     box = boundbox(mat, bgcolor, border=border)
     mat = clipbitmap(mat, box...)
-    r = (mat,)
-    if returnmask
-        r = (r..., textmask(mat, bgcolor, radius=border))
-    end
     if returnsvg
         svg = clipsvg(svg, box...)
-        r = (r..., svg)
+        return (mat, svg)
+    else
+        return mat
     end
-    r
 end
 
 function rendertextoutlines(str::AbstractString, size::Real; color="black", bgcolor=(0,0,0,0), 
@@ -170,11 +167,6 @@ function padding(img, r=0.1; color=img[1])
     p = round.(Int, size(img) .* r)
     r = fill(color, size(img) .+ 2 .* p)
     overlay!(r, img, reverse(p)...)
-end
-
-function textmask(pic, bgcolor; radius=0)
-    mask = pic .!= bgcolor
-    dilate(mask, radius)
 end
 
 function overlay(color1::T, color2::T) where {T}

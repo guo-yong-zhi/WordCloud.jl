@@ -38,11 +38,11 @@ Positional arguments are used to specify words and weights, and can be in differ
 The keyword argument `run` is a function. It will be called after the `wordcloud` object constructed.
 * run = placement! #default setting, will initialize word's position
 * run = generate! #get result directly
-* run = initwords! #only initialize resources, such as rendering word images
+* run = initimages! #only initialize resources, such as rendering word images
 * run = x->nothing #do nothing
 ---
-* After getting the `wordcloud` object, these steps are needed to get the result picture: initwords! -> placement! -> generate! -> paint
-* You can skip `placement!` and/or `initwords!`, and the default action will be performed
+* After getting the `wordcloud` object, these steps are needed to get the result picture: initimages! -> placement! -> generate! -> paint
+* You can skip `placement!` and/or `initimages!`, and the default action will be performed
 """
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter)|>collect, values(counter)|>collect; kargs...)
@@ -54,7 +54,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol, Any}(kargs...)
 #     @show params
-    colors = colors isa Symbol ? (colorschemes[:seaborn_dark].colors..., ) : colors
+    colors = colors isa Symbol ? (colorschemes[colors].colors..., ) : colors
     colors_o = colors
     colors = Iterators.take(iter_expand(colors), length(words)) |> collect
     params[:colors] = colors
@@ -63,19 +63,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:angles] = angles
     
     if !haskey(params, :mask)
-        maskcolor = "white"
-        try
-#             maskcolor = RGB(1,1,1) - RGB(sum(colors_o)/length(colors_o)) #补色
-            if sum(Gray.(parsecolor.(colors_o)))/length(colors_o)<0.7 #黑白
-                maskcolor = rand((1.0, (rand(0.9:0.01:1.0), rand(0.9:0.01:1.0), rand(0.9:0.01:1.0))))
-            else
-                maskcolor = rand((0.0, (rand(0.0:0.01:0.1), rand(0.0:0.01:0.1), rand(0.0:0.01:0.1))))
-            end
-#             @show sum(colors_o)/length(colors_o)
-        catch
-            @show "colors sum failed",colors_o
-            maskcolor = "black"
-        end
+        maskcolor = chooseabgcolor(colors_o)
         @show maskcolor
         mask = randommask(maskcolor)
         transparentcolor = get(params, :transparentcolor, ARGB(1, 1, 1, 0)) |> parsecolor
@@ -107,7 +95,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:epoch] = 0
     params[:indsmap] = nothing
     params[:custom] = Dict(:fontsize=>Dict(), :font=>Dict())
-
+    params[:scale] = -1
     l = length(words)
     wc = WC(words, float.(weights), Vector(undef, l), Vector{SVGImageType}(undef, l), 
     mask, svgmask, Vector(undef, l), maskqtree, params)
@@ -130,6 +118,7 @@ function index(wc::WC, w::AbstractString)
     getindsmap(wc)[w]
 end
 index(wc::WC, w::AbstractVector) = index.(wc, w)
+index(wc::WC, i::Colon) = eachindex(wc.words)
 index(wc::WC, i) = i
 getdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index and ignored to return all."
 setdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index, the 3rd arg is the value to assign."
@@ -151,18 +140,14 @@ end
 @doc setdoc setweights!(wc::WC, w, v::Union{Number, AbstractVector{<:Number}}) = @view(wc.weights[index(wc, w)]) .= v
 @doc getdoc getimages(wc::WC, w=:) = wc.imgs[index(wc, w)]
 @doc getdoc getsvgimages(wc::WC, w=:) = wc.svgs[index(wc, w)]
-function getqtree(p, sz, pos; backgroundcolor=p[1], border=1)
-    t = ShiftedQtree(dilate(p.!=backgroundcolor, border), sz) |> buildqtree!
-    setcenter!(t, pos)
-    t
-end
+
 @doc setdoc 
 function setimages!(wc::WC, w, v::AbstractMatrix; backgroundcolor=v[1], border=wc.params[:border])
     @view(wc.imgs[index(wc, w)]) .= Ref(v)
-    @view(wc.qtrees[index(wc, w)]) .= getqtree.(Ref(v), wc.params[:groundsize], getcenter.(wc.qtrees[index(wc, w)]), 
-        backgroundcolor=backgroundcolor)
+    initqtree!(wc, w)
+    v
 end
-setimages!(wc::WC, w, v::AbstractVector) = setimages!.(wc, w, v)
+setimages!(wc::WC, w, v::AbstractVector) = setimages!.(wc, index(wc,w), v)
 @doc setdoc
 function setsvgimages!(wc::WC, w, v)
     @view(wc.svgs[index(wc, w)]) .= v

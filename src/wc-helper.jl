@@ -22,7 +22,21 @@ function randomangles()
     println("angles = ", a)
     a
 end
-
+function chooseabgcolor(colors)
+    bgcolor = "white"
+    try
+        #RGB(1,1,1) - RGB(sum(colors)/length(colors)) #补色
+        if sum(Gray.(parsecolor.(colors)))/length(colors)<0.7 #黑白
+            bgcolor = rand((1.0, (rand(0.9:0.01:1.0), rand(0.9:0.01:1.0), rand(0.9:0.01:1.0))))
+        else
+            bgcolor = rand((0.0, (rand(0.0:0.01:0.1), rand(0.0:0.01:0.1), rand(0.0:0.01:0.1))))
+        end
+    catch
+        @show "colors sum failed",colors
+        bgcolor = "black"
+    end
+    bgcolor
+end
 """
 load a img as mask, recolor, or resize, etc
 ## examples
