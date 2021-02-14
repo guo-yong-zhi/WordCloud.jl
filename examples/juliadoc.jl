@@ -33,14 +33,15 @@ wc = wordcloud(
 setangles!(wc, "julia", 0)
 setcolors!(wc, "julia", (0.796,0.235,0.20))
 # setfonts!(wc, "julia", "forte")
-initword!(wc, "julia")
+initimage!(wc, "julia")
 juliacircles = drawjuliacircle(getfontsizes(wc, "∴")|>round)
 setsvgimages!(wc, "∴", juliacircles) #replace image
-sz1 = size(getimages(wc, "julia"))
-sz2 = size(getimages(wc, "∴"))
-p = (size(wc.mask) .- (sz2[1], sz1[2]+sz2[2])) .÷ 2
-setpositions!(wc, "∴", reverse(p))
-setpositions!(wc, "julia", getpositions(wc, "∴") .+ (size(getimages(wc, "∴"), 2), 0))
+sz1 = size(getimages(wc, "∴"))
+sz2 = size(getimages(wc, "julia"))
+y1, x1 = (size(wc.mask) .- (sz1[1], sz1[2]+sz2[2])) .÷ 2
+y2 = (size(wc.mask, 1) - sz2[1]) ÷ 2
+setpositions!(wc, "∴", (x1, y1))
+setpositions!(wc, "julia", (x1+sz1[2], y2))
 
 pin(wc, ["julia", "∴"]) do
     placement!(wc)

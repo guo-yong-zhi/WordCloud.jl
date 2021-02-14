@@ -19,7 +19,7 @@ wcb = wordcloud(
     colors = cs,
     angles = as,
     fillingrate = fr,
-    run = x->nothing, #turn off the useless initword! and placement! in advance
+    run = x->nothing, #turn off the useless initimage! and placement! in advance
 )
 
 samewords = getwords(wca) ∩ getwords(wcb)
@@ -29,8 +29,8 @@ for w in samewords
     setcolors!(wcb, w, getcolors(wca, w))
     setangles!(wcb, w, getangles(wca, w))
 end
-#Follow these steps to generate result: initword! -> placement! -> generate!
-initwords!(wcb)
+#Follow these steps to generate result: initimage! -> placement! -> generate!
+initimages!(wcb)
 
 println("=ignore defferent words=")
 ignore(wcb, getwords(wcb) .∉ Ref(samewords)) do

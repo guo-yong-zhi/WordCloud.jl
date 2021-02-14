@@ -24,8 +24,8 @@ function text_occupied(words, fontsizes, fonts; border=0)
     imgs = []
     for (c, sz, ft) in zip(words, fontsizes, fonts)
 #         print(c)
-        img, mimg = Render.rendertext(string(c), sz, font=ft, border=border, returnmask=true, returnsvg=false)
-        push!(imgs, mimg)
+        img = Render.rendertext(string(c), sz, bgcolor=(0,0,0,0),font=ft, border=border)
+        push!(imgs, wordmask(img, (0,0,0,0), border))
     end
     feelingoccupied(imgs)
 end
@@ -51,11 +51,12 @@ Base.iterate(it::IterGen, state=0) = it.generator(state),state+1
 Base.length(it::IterGen) = typemax(Int)
 
 function prepareword(word, fontsize, color, angle, groundsize; bgcolor=(0,0,0,0), font="", border=0)
-    img, mimg, svg= rendertext(string(word), fontsize, color=color, bgcolor=bgcolor,
-        angle=angle, border=border, font=font, returnmask=true, returnsvg=true)
-    t = ShiftedQtree(mimg, groundsize) |> buildqtree!
-    svg, img, mimg, t
+    rendertext(string(word), fontsize, color=color, bgcolor=bgcolor,
+        angle=angle, border=border, font=font, returnsvg=true)
 end
+
+wordmask(img, bgcolor, border) = dilate(img.!=img[1], border) 
+#https://github.com/JuliaGraphics/Luxor.jl/issues/107
 
 ## weight_scale
 function cal_weight_scale(words, fontsizes, fonts, target, initialscale; border=0, kargs...)
