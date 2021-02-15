@@ -24,7 +24,7 @@ function text_occupied(words, fontsizes, fonts; border=0)
     imgs = []
     for (c, sz, ft) in zip(words, fontsizes, fonts)
 #         print(c)
-        img = Render.rendertext(string(c), sz, bgcolor=(0,0,0,0),font=ft, border=border)
+        img = Render.rendertext(string(c), sz, backgroundcolor=(0,0,0,0),font=ft, border=border)
         push!(imgs, wordmask(img, (0,0,0,0), border))
     end
     feelingoccupied(imgs)
@@ -51,8 +51,8 @@ Base.iterate(it::IterGen, state=0) = it.generator(state),state+1
 Base.length(it::IterGen) = typemax(Int)
 
 function prepareword(word, fontsize, color, angle, groundsize; bgcolor=(0,0,0,0), font="", border=0)
-    rendertext(string(word), fontsize, color=color, bgcolor=bgcolor,
-        angle=angle, border=border, font=font, returnsvg=true)
+    rendertext(string(word), fontsize, color=color, backgroundcolor=bgcolor,
+        angle=angle, border=border, font=font, type=:both)
 end
 
 wordmask(img, bgcolor, border) = dilate(img.!=img[1], border) 

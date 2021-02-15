@@ -34,7 +34,7 @@ function initimage!(wc::WC)
     wc.params[:indsmap] = nothing
 
     scale = find_weight_scale!(wc, border=params[:border], fillingrate=params[:fillingrate], maxiter=5, error=0.03)
-    println("fillingrate set to $(params[:fillingrate]), with scale=$scale")
+    println("fillingrate set to $(params[:fillingrate]), with scale=$scale, font minimum is $(getfontsizes(wc, wc.words[end]))")
     initimage!.(wc, 1:length(words))
     params[:state] = nameof(initimages!)
     wc
