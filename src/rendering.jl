@@ -85,31 +85,33 @@ function drawtext(t, size, pos, angle=0, color="black", font="")
 end
 
 function rendertext(str::AbstractString, size::Real; 
-        pos=(0,0), color="black", bgcolor=(0,0,0,0), angle=0, font="", border=0, returnsvg=false)
+        pos=(0,0), color="black", backgroundcolor=(0,0,0,0), angle=0, font="", border=0, type=:bitmap)
+    @assert type in (:svg, :bitmap, :both)
     l = length(str) + 1
     l = ceil(Int, size*l + 2border + 2)
-    if returnsvg
-        svg = Drawing(l, l, :svg) #svg is slow
-    else
+    if type == :bitmap
         Drawing(l, l, :image)
+    else
+        svg = Drawing(l, l, :svg) #svg is slow
     end
     origin()
-    bgcolor = parsecolor(bgcolor)
+    bgcolor = parsecolor(backgroundcolor)
     bgcolor = background(bgcolor)
 
     drawtext(str, size, pos, angle, color, font)
-    if !returnsvg mat=image_as_matrix() end
+    if type == :bitmap mat=image_as_matrix() end
     finish()
-    if returnsvg mat = svg2bitmap(svg) end
+    if type != :bitmap mat = svg2bitmap(svg) end
     #     bgcolor = Luxor.ARGB32(bgcolor...) #https://github.com/JuliaGraphics/Luxor.jl/issues/107
     bgcolor = mat[1]
     box = boundbox(mat, bgcolor, border=border)
     mat = clipbitmap(mat, box...)
-    if returnsvg
-        svg = clipsvg(svg, box...)
-        return (mat, svg)
-    else
+    if type == :bitmap
         return mat
+    elseif type == :svg
+        return clipsvg(svg, box...)
+    else
+        return mat, clipsvg(svg, box...)
     end
 end
 

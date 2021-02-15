@@ -1,6 +1,6 @@
 module WordCloud
 export wordcloud, processtext, html2text, countwords, filtcount
-export shape, ellipse, box, loadmask, outline, padding, paint, paintsvg, svgstring
+export rendertext, shape, ellipse, box, loadmask, outline, padding, paint, paintsvg, svgstring
 export train!, Momentum, generate!, generate_animation!
 export getshift, getcenter, setshift!, setcenter!
 export record, parsecolor, placement!, rescale!, imageof, bitor, take, ignore, pin, runexample, showexample
