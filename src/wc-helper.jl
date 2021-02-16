@@ -43,8 +43,8 @@ load a img as mask, recolor, or resize, etc
 * loadmask("res/heart.jpg")  
 * loadmask("res/heart.jpg", 256, 256) #resize to 256*256  
 * loadmask("res/heart.jpg", ratio=0.3) #scale 0.3  
-* loadmask("res/heart.jpg", color="red", ratio=2) #set forecolor color  
-* loadmask("res/heart.jpg", color="red", transparentcolor=(1,1,1)) #set forecolor color with transparentcolor  
+* loadmask("res/heart.jpg", color="red", ratio=2) #set forecolor  
+* loadmask("res/heart.jpg", color="red", transparentcolor=(1,1,1)) #set forecolor and transparentcolor  
 """
 function loadmask(img::AbstractMatrix, args...; color=:original, backgroundcolor=:original, transparentcolor=:auto, kargs...)
     if color!=:original || backgroundcolor!=:original
