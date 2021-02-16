@@ -28,7 +28,7 @@ function loadsvg(fn)
 end
 
 function load(fn)
-    if endswith(fn, ".svg")
+    if endswith(fn, r".svg|.SVG")
         loadsvg(fn)
     else
         ImageMagick.load(fn)
