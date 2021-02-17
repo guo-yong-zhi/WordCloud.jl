@@ -49,7 +49,8 @@ paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", li
 ![compare](res/compare.png)  
 [Comparison of Obama's and Trump's inaugural address](./examples/compare.jl)  
 *Run the command `runexample(:compare)` or `showexample(:compare)` to get the result.*  
-*The variable `WordCloud.examples` holds all available examples.*  
+*The variable `WordCloud.examples` holds all available examples.* 
+[**See more examples**](https://github.com/guo-yong-zhi/WordCloud-Gallery)  
 ***
 * [x] 排序 & 预放置
 * [x] 基于四叉树碰撞检测

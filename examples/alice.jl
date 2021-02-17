@@ -8,3 +8,5 @@ wc = wordcloud(
 println("results are saved to alice.png")
 paint(wc, "alice.png", background=outline(wc.mask, color="purple", linewidth=1))
 wc
+#eval# runexample(:alice)
+#md# ![alice](alice.png)  

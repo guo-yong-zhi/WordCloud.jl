@@ -12,3 +12,5 @@ wc = wordcloud(
 println("results are saved to lettermask.svg")
 paint(wc, "lettermask.svg" , background=false)
 wc
+#eval# runexample(:lettermask)
+#md# ![](lettermask.svg)  

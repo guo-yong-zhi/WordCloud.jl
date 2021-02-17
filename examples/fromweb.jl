@@ -11,3 +11,5 @@ try
 catch e
     println(e)
 end
+#eval# runexample(:fromweb)
+#md# ![](fromweb.png)  

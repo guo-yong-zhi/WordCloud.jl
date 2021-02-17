@@ -1,7 +1,7 @@
+#md# ### First generate the wordcloud on the left  
 using WordCloud
 
 stwords = ["us", "will"];
-
 println("==Obama's==")
 cs = WordCloud.randomscheme()
 as = WordCloud.randomangles()
@@ -11,7 +11,7 @@ wca = wordcloud(
     colors = cs,
     angles = as,
     fillingrate = fr) |> generate!
-
+#md# ### Then generate the wordcloud on the right      
 println("==Trump's==")
 wcb = wordcloud(
     processtext(open(pkgdir(WordCloud)*"/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords),
@@ -59,9 +59,12 @@ space = fill(mb[1], (h, w÷20))
 try mkdir("address_compare") catch end
 println("results are saved in address_compare")
 WordCloud.save("address_compare/compare.png", [ma space mb])
-
+#eval# try rm("address_compare", force=true, recursive=true) catch end 
 gif = WordCloud.GIF("address_compare")
 record(wca, "Obama", gif)
 record(wcb, "Trump", gif)
 WordCloud.Render.generate(gif, framerate=1)
 wca, wcb
+#eval# runexample(:compare)
+#md# ![](address_compare/compare.png)  
+#md# ![](address_compare/result.gif)  

@@ -24,3 +24,5 @@ generate!(wc, retry=1) #turn off rescale attempts. manually set images can't be 
 println("results are saved to pattern.png")
 paint(wc, "pattern.png")
 wc
+#eval# runexample(:pattern)
+#md# ![](pattern.png)  
