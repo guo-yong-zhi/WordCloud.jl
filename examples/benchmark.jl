@@ -1,3 +1,4 @@
+#md# Test the performance of different trainers
 using WordCloud
 using Random
 

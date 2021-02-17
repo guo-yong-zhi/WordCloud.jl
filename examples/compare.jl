@@ -21,7 +21,7 @@ wcb = wordcloud(
     fillingrate = fr,
     run = x->nothing, #turn off the useless initimage! and placement! in advance
 )
-
+#md# Follow these steps to generate a wordcloud: initimage! -> placement! -> generate!
 samewords = getwords(wca) ∩ getwords(wcb)
 println(length(samewords), " same words")
 
@@ -29,7 +29,6 @@ for w in samewords
     setcolors!(wcb, w, getcolors(wca, w))
     setangles!(wcb, w, getangles(wca, w))
 end
-#Follow these steps to generate result: initimage! -> placement! -> generate!
 initimages!(wcb)
 
 println("=ignore defferent words=")
