@@ -24,3 +24,5 @@ wc = wordcloud(
 println("结果保存在 中文.svg")
 paint(wc, "中文.svg")
 wc
+#eval# runexample(:中文)
+#md# ![](中文.svg)  

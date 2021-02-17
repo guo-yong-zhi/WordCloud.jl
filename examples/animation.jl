@@ -8,6 +8,9 @@ weights = df[!, "Column3"]
 
 wc = wordcloud(words, weights, fillingrate=0.8)
 gifdirectory = "guxiang_animation"
+#eval# try rm("guxiang_animation", force=true, recursive=true) catch end 
 generate_animation!(wc, 100, outputdir=gifdirectory)
 println("results are saved in guxiang_animation")
 wc
+#eval# runexample(:animation)
+#md# ![](guxiang_animation/result.gif)  

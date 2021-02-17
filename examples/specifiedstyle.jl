@@ -23,3 +23,5 @@ end
 println("results are saved to specifiedstyle.svg")
 paint(wc, "specifiedstyle.svg")
 wc
+#eval# runexample(:specifiedstyle)
+#md# ![](specifiedstyle.svg)  

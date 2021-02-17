@@ -51,3 +51,5 @@ println("results are saved to juliadoc.svg")
 # paint(wc, "juliadoc.png")
 paint(wc, "juliadoc.svg")
 wc
+#eval# runexample(:juliadoc)
+#md# ![](juliadoc.svg)  
