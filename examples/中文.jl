@@ -1,12 +1,14 @@
-# 中文需要分词，须先配置python环境和安装结巴分词
-# ENV["PYTHON"] = ""
-# using Pkg
-# Pkg.build("PyCall") #build PyCall
-
-# using Conda
-# Conda.pip_interop(true)
-# Conda.pip("install","jieba") #安装python包：结巴分词
-
+#md# 中文需要分词，须先配置python环境和安装结巴分词  
+#md# ### 安装PyCall  
+#md# > `ENV["PYTHON"] = "" #使用内嵌的python`  
+#md# > `using Pkg`  
+#md# > `Pkg.build("PyCall")`  
+#md# ### 安装结巴分词  
+#md# > `using Conda`  
+#md# > `Conda.pip_interop(true)`  
+#md# > `Conda.pip("install","jieba")`  
+#md# 
+#md# 安装完成后运行以下示例  
 using WordCloud
 using PyCall
 
