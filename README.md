@@ -1,4 +1,4 @@
-# WordCloud
+# [WordCloud](https://github.com/guo-yong-zhi/WordCloud)
 ![juliadoc](res/juliadoc.png)  
  Word cloud (tag cloud or wordle) is a novelty visual representation of text data. The importance of each word is shown with font size or color. Our generator has the following highlights:
 * **Flexible** Any mask, any color, any angle, adjustable filling rate. You can specify the initial position of some words. Or you can pin some words and adjust others, etc.
@@ -48,7 +48,8 @@ paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", li
 ## Comparison
 ![compare](res/compare.png)  
 [Comparison of Obama's and Trump's inaugural address](./examples/compare.jl)  
-*Run the command `runexample(:compare)` or `showexample(:compare)` to get the result.*  
+*Run the command `runexample(:compare)` or `showexample(:compare)` to get the result.* 
+
 *The variable `WordCloud.examples` holds all available examples.* 
 [**See more examples**](https://github.com/guo-yong-zhi/WordCloud-Gallery)  
 ***
@@ -72,7 +73,7 @@ linux添加中文字体
 > add /path/to/ffmpeg-4.2.1/lib to ENV["LD_LIBRARY_PATH"]  
 > add /path/to/ffmpeg-4.2.1/bin to ENV["PATH"]  
 ***
-# other wordcloud 
+# other word cloud 
 > [word_cloud](https://github.com/amueller/word_cloud)  
 > [d3-cloud](https://github.com/jasondavies/d3-cloud)  
 > [wordcloud](https://github.com/timdream/wordcloud)  
