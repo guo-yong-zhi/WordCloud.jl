@@ -18,7 +18,7 @@ function randommask(color, sz=800)
     end
 end
 function randomangles()
-    a = rand((0, (0,90),(0,90,45),(0,-90),(0,-45,-90),-90:90))
+    a = rand((-1, 1)) .* rand((0, (0,90), (0,90,45), (0,90,45,-45), (0,45,-45), -90:90))
     println("angles = ", a)
     a
 end
@@ -29,7 +29,7 @@ function chooseabgcolor(colors)
         if sum(Gray.(parsecolor.(colors)))/length(colors)<0.7 #黑白
             bgcolor = rand((1.0, (rand(0.9:0.01:1.0), rand(0.9:0.01:1.0), rand(0.9:0.01:1.0))))
         else
-            bgcolor = rand((0.0, (rand(0.0:0.01:0.1), rand(0.0:0.01:0.1), rand(0.0:0.01:0.1))))
+            bgcolor = rand((0.0, (rand(0.0:0.01:0.2), rand(0.0:0.01:0.2), rand(0.0:0.01:0.2))))
         end
     catch
         @show "colors sum failed",colors

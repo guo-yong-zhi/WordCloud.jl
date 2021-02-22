@@ -56,6 +56,7 @@ end
     setimages!(wc, 1, wc.imgs[[4,5]])
     setimages!(wc, 1, wc.imgs[4])
     setsvgimages!(wc, 1, wc.svgs[6])
+    setsvgimages!(wc, 6, wc.svgs[6]) #the results of setsvgimages! and initimage! may not be identical
     @test wc.imgs[1] == wc.imgs[6]
 end
 
