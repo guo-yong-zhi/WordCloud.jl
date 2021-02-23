@@ -1,4 +1,7 @@
-@testset "lru.jl" begin
+@testset "train.jl" begin
+    x = rand(Float64, 1000) * 1000;
+    @test sum(floor.(Int, log2.(x))) == sum(WordCloud.intlog2.(x))
+
     lru = WordCloud.LRU{Int}()
     for i in 1:10
         push!(lru, i)

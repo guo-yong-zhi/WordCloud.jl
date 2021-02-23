@@ -3,8 +3,9 @@ using Test
 using Random
 
 include("test_qtree.jl")
-include("test_lru.jl")
+include("test_trainer.jl")
 include("test_render.jl")
+
 @testset "textprocessing.jl" begin
     text = "So dim, so dark, So dense, so dull, So damp, so dank, So dead! The weather, now warm, now cold, Makes it harder Than ever to forget!"
     c = WordCloud.TextProcessing.countwords(text)
@@ -20,18 +21,20 @@ end
     wc = wordcloud(words, weights, fillingrate=0.6)
     paint(wc)
     generate!(wc)
+    placement!(wc)
+    generate!(wc, 100, optimiser=(t, Δ)->Δ./4, patient=5, retry=5)
     paint(wc, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2))
     paint(wc, "test.svg")
     @test isempty(WordCloud.outofbounds(wc.maskqtree, wc.qtrees))
-
-    clq = WordCloud.QTree.listcollision_qtree(wc.qtrees, wc.maskqtree)
-    cln = WordCloud.QTree.listcollision_native(wc.qtrees, wc.maskqtree)
-    @test Set(first.(clq)) == Set(first.(cln))
 
     wordcloud(["singleword"=>12], maskimg=shape(box, 200, 150, 40, color=0.15), fillingrate=0.6, run=generate!) #singleword & Pair
     wordcloud(processtext("giving a single word is ok. giving several words is ok too"), 
             maskimg=shape(box, 20, 15, 0, color=0.15), fillingrate=0.5, transparentcolor=(1,1,1,0)) #String & small mask
     placement!(wc)
+
+    wc = runexample(:random)
+    @test getstate(wc) == :generate!
+
     wc = wordcloud(
             processtext(open("../res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxnum=300), 
             mask = loadmask("../res/alice_mask.png", color="#faeef8", backgroundcolor=0.97),
