@@ -22,7 +22,10 @@ function apply!(o::Momentum, x, Δ)
     @. Δ = apply(o, x, Δ)
 end
 (opt::Momentum)(x, Δ) = apply(opt::Momentum, x, Δ)
-    
+reset!(o::Momentum, x) =  pop!(o.velocity, x)  
+reset!(o, x) = nothing
+Base.broadcastable(m::Momentum) = Ref(m)
+
 function maskqtree(pic::AbstractMatrix{UInt8})
     m = log2(max(size(pic)...)*1.1)
     s = 2^ceil(Int, m)
@@ -443,6 +446,9 @@ function train!(ts, maskqt, nepoch::Number=-1, args...;
         if nc != 0 && length(ts)/10>length(collpool)>0 && patient>0 && (count >= patient || count > length(collpool)) #超出耐心或少数几个碰撞
             nc_min = nc
             cinds = teleport!(ts, maskqt, collpool)
+            if cinds !== nothing && length(cinds)>0
+                reset!.(optimiser, ts[cinds])
+            end
             println("@epoch $ep, count $count collision $nc($(length(collpool))) teleport $cinds to $(getshift.(ts[cinds]))")
             count = 0
             cinds_set = Set(cinds)
