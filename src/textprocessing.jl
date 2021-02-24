@@ -30,30 +30,35 @@ function lemmatize(word)
     return word[1:prevind(word, end, 1)]
 end
 
-function splitwords(text::AbstractString, regexp=r"\w[\w']+"; lemmatizer=lemmatize)
-    if lemmatizer == false || lemmatizer === nothing
-        lemmatizer = x -> x
-    end
+function splitwords(text::AbstractString, regexp=r"\w[\w']+")
     words = findall(regexp, text)
     words = [endswith(text[i], "'s") ? text[i][1:prevind(text[i], end, 2)] : text[i] for i in words]
-    lemmatizer.(words)
 end
 
 function countwords(words::AbstractVector{<:AbstractString}; 
     regexp=r"\w[\w']+", lemmatizer=lemmatize, counter=Dict{String,Int}())
+    if lemmatizer == false || lemmatizer === nothing
+        lemmatizer = x -> x
+    end
     for w in words
-        m = match(regexp, w)
-        if m !== nothing
-            mm = m.match
-            mm = lemmatizer(mm)
-            counter[mm] = get!(counter, mm, 0) + 1
+        if regexp !== nothing
+            m = match(regexp, w)
+            if m !== nothing
+                w = m.match
+            else
+                w = nothing
+            end
+        end
+        if w !== nothing
+            w = lemmatizer(w)
+            counter[w] = get!(counter, w, 0) + 1
         end
     end
     counter
 end
 
-function countwords(text::AbstractString; regexp=r"\w[\w']+", lemmatizer=lemmatize, kargs...)
-    countwords(splitwords(text, regexp, lemmatizer=lemmatizer); kargs...)
+function countwords(text::AbstractString; regexp=r"\w[\w']+", kargs...)
+    countwords(splitwords(text, regexp); regexp=nothing, kargs...)
 end
 
 raw"""
