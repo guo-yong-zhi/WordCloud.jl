@@ -1,4 +1,4 @@
-#top5000[endswith.(top5000, "s").&(.!endswith.(top5000, "ss"))] + "has"
+#top5000[endswith.(top5000, "s").&(.!endswith.(top5000, "ss"))] + "has", "was"
 const s_ending_words = Set(["numerous", "serious", "towards", "clothes", "focus", "bonus", "sometimes", "suspicious", "his", 
         "species", "thanks", "hers", "as", "aids", "proceedings", "analysis", "bus", "us", "gas", "lots", "versus", 
         "emphasis", "nervous", "upstairs", "dangerous", "curious", "delicious", "anonymous", "various", "yours", 
@@ -8,7 +8,7 @@ const s_ending_words = Set(["numerous", "serious", "towards", "clothes", "focus"
         "mathematics", "statistics", "precious", "basis", "ridiculous", "perhaps", "headquarters", "lyrics", "yes", 
         "tennis", "continuous", "diagnosis", "plus", "its", "earnings", "previous", "mysterious", "christmas", 
         "politics", "ourselves", "themselves", "thus", "conscious", "sales", "religious", "generous", "enormous", 
-        "this", "status", "series", "olympics", "famous", "campus", "census", "ethics", "terms", "has"]) 
+        "this", "status", "series", "olympics", "famous", "campus", "census", "ethics", "terms", "has", "was"]) 
 #endswith.(top5000nv, r"se|xe|che|she|oe|ie")])
 const xe_ending_words = Set(["tie", "compromise", "raise", "rookie", "praise", "confuse", "purpose", "pause", "headache", 
         "abuse", "phase", "promise", "impose", "cease", "reverse", "spouse", "rise", "cookie", "disease", "release", 
