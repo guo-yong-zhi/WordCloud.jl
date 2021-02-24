@@ -8,8 +8,11 @@ include("wordlists.jl")
 
 "only handle the simple case of plural nouns and third person singular verbs"
 function lemmatize(word)
+    if (!endswith(word, "s")) || endswith(word, "ss") #quick return
+        return word
+    end
     w = lowercase(word)
-    if (!endswith(w, "s")) || endswith(w, "ss") || w in s_ending_words || uppercase(word)==word
+    if w in s_ending_words || uppercase(word)==word
         return word
     end
     if endswith(w, "ies") && !(w[1:prevind(w, end, 1)] in xe_ending_words)
