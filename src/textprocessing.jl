@@ -5,6 +5,8 @@ stopwords_en = Set(readlines(dir * "/../res/stopwords_en.txt"))
 stopwords_cn = Set(readlines(dir * "/../res/stopwords_cn.txt"))
 stopwords = stopwords_en ∪ stopwords_cn
 include("wordlists.jl")
+
+"only handle the simple case of plural nouns and third person singular verbs"
 function lemmatize(word)
     w = lowercase(word)
     if (!endswith(w, "s")) || endswith(w, "ss") || w in s_ending_words || uppercase(word)==word
@@ -37,11 +39,13 @@ function splitwords(text::AbstractString, regexp=r"\w[\w']+"; lemmatizer=lemmati
     lemmatizer.(words)
 end
 
-function countwords(words::AbstractVector{<:AbstractString}; regexp=r"\w[\w']+", counter=Dict{String,Int}())
+function countwords(words::AbstractVector{<:AbstractString}; 
+    regexp=r"\w[\w']+", lemmatizer=lemmatize, counter=Dict{String,Int}())
     for w in words
         m = match(regexp, w)
         if m !== nothing
             mm = m.match
+            mm = lemmatizer(mm)
             counter[mm] = get!(counter, mm, 0) + 1
         end
     end
@@ -55,7 +59,7 @@ end
 raw"""
 countwords(text; regexp=r"\w[\w']+", lemmatizer=lemmatize, counter=Dict{String,Int}(), kargs...)
 Count words in text. And use `regexp` to split. And save results in `counter`. 
-`lemmatizer` can be `nothing` or a function to do lemmatization.
+`lemmatizer` can be `nothing` or a String-to-String function to do lemmatization.
 `text` can be a String, a Vector of String, or a opend file(IO).
 """
 function countwords(textfile::IO; counter=Dict{String,Int}(), kargs...)
