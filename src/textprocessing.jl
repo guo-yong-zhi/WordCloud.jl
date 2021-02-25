@@ -43,17 +43,22 @@ function countwords(words::AbstractVector{<:AbstractString};
     if lemmatizer == false || lemmatizer === nothing
         lemmatizer = x -> x
     end
+    memo = Dict()
     for w in words
-        if regexp !== nothing
-            m = match(regexp, w)
-            if m !== nothing
-                w = m.match
-            else
-                w = nothing
+        w0 = w
+        if !(w in keys(memo))
+            if regexp !== nothing
+                m = match(regexp, w)
+                if m !== nothing
+                    w = lemmatizer(m.match)
+                else
+                    w = nothing
+                end
             end
+            memo[w0] = w
         end
+        w = memo[w]
         if w !== nothing
-            w = lemmatizer(w)
             counter[w] = get!(counter, w, 0) + 1
         end
     end
