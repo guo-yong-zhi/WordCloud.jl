@@ -1,4 +1,11 @@
 using Colors
+function displayschemes()
+    for scheme in Render.schemes
+        display(scheme)
+        colors = Render.colorschemes[scheme].colors
+        display(colors)
+    end
+end
 function randomscheme()
     scheme = rand(Render.schemes)
     colors = Render.colorschemes[scheme].colors
