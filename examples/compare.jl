@@ -5,7 +5,7 @@ stwords = ["us", "will"];
 println("==Obama's==")
 cs = WordCloud.randomscheme() #:Set1_8
 as = WordCloud.randomangles() #(0,90,45,-45)
-fr = 0.65 #not too high
+fr = 0.7 #not too high
 wca = wordcloud(
     processtext(open(pkgdir(WordCloud)*"/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords), 
     colors = cs,
