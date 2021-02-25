@@ -12,16 +12,18 @@ function lemmatize(word)
         return word
     end
     w = lowercase(word)
-    if w in s_ending_words || uppercase(word)==word
+    if w in s_ending_words || (length(word)<=3 && w == word) || uppercase(word)==word
         return word
-    end
-    if endswith(w, "ies") && !(w[1:prevind(w, end, 1)] in xe_ending_words)
+    elseif endswith(w, "ies") && !(w[1:prevind(w, end, 1)] in xe_ending_words)
         return word[1:prevind(word, end, 3)] * "y"
-    end
-    if endswith(w, r"ses|xes|ches|shes|oes") && !(w[1:prevind(w, end, 1)] in xe_ending_words)
+    elseif endswith(w, "ses")
+        wh = w[1:prevind(w, end, 2)]
+        if wh in s_ending_words || endswith(wh, "ss")
+            return word[1:prevind(word, end, 2)]
+        end
+    elseif endswith(w, r"xes|ches|shes|oes") && !(w[1:prevind(w, end, 1)] in xe_ending_words)
         return word[1:prevind(word, end, 2)]
-    end
-    if endswith(w, "ves")
+    elseif endswith(w, "ves")
         wh = w[1:prevind(w, end, 3)]
         wordh = word[1:prevind(word, end, 3)]
         if wh * "fe" in f_ending_words
@@ -50,14 +52,17 @@ function countwords(words::AbstractVector{<:AbstractString};
             if regexp !== nothing
                 m = match(regexp, w)
                 if m !== nothing
-                    w = lemmatizer(m.match)
+                    w = m.match
                 else
                     w = nothing
                 end
             end
+            if w !== nothing
+                w = lemmatizer(w)
+            end
             memo[w0] = w
         end
-        w = memo[w]
+        w = memo[w0]
         if w !== nothing
             counter[w] = get!(counter, w, 0) + 1
         end

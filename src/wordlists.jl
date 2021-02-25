@@ -1,4 +1,4 @@
-#top5000[endswith.(top5000, "s").&(.!endswith.(top5000, "ss"))] + "has", "was"
+#top5000[endswith.(top5000, "s").&(.!endswith.(top5000, "ss"))] + "has", "is", "was"
 const s_ending_words = Set(["numerous", "serious", "towards", "clothes", "focus", "bonus", "sometimes", "suspicious", "his", 
         "species", "thanks", "hers", "as", "aids", "proceedings", "analysis", "bus", "us", "gas", "lots", "versus", 
         "emphasis", "nervous", "upstairs", "dangerous", "curious", "delicious", "anonymous", "various", "yours", 
@@ -8,17 +8,9 @@ const s_ending_words = Set(["numerous", "serious", "towards", "clothes", "focus"
         "mathematics", "statistics", "precious", "basis", "ridiculous", "perhaps", "headquarters", "lyrics", "yes", 
         "tennis", "continuous", "diagnosis", "plus", "its", "earnings", "previous", "mysterious", "christmas", 
         "politics", "ourselves", "themselves", "thus", "conscious", "sales", "religious", "generous", "enormous", 
-        "this", "status", "series", "olympics", "famous", "campus", "census", "ethics", "terms", "has", "was"]) 
-#endswith.(top5000nv, r"se|xe|che|she|oe|ie")])
-const xe_ending_words = Set(["tie", "compromise", "raise", "rookie", "praise", "confuse", "purpose", "pause", "headache", 
-        "abuse", "phase", "promise", "impose", "cease", "reverse", "spouse", "rise", "cookie", "disease", "release", 
-        "expose", "mouse", "response", "disclose", "premise", "license", "lose", "purchase", "pie", "horse", 
-        "increase", "case", "universe", "base", "surprise", "die", "expense", "verse", "cause", "exercise", "toe", 
-        "purse", "rose", "house", "defense", "endorse", "suppose", "course", "pulse", "expertise", "chase", "choose", 
-        "sense", "use", "dose", "arise", "franchise", "cheese", "excuse", "close", "discourse", "noise", "oppose", 
-        "clause", "lie", "please", "compose", "ease", "decrease", "movie", "diagnose", "phrase", "nonsense", "refuse",
-        "cruise", "calorie", "advise", "comprise", "shoe", "propose", "database", "enterprise", "nose", "accuse", 
-        "nurse", "pose", "japanese", "offense", "collapse"]) 
+        "this", "status", "series", "olympics", "famous", "campus", "census", "ethics", "terms", "has", "is", "was"]) 
+#top5000nv[endswith.(top5000nv, r"xe|che|she|oe|ie")]
+const xe_ending_words = Set(["tie", "lie", "rookie", "pie", "cookie", "toe", "movie", "calorie", "headache", "die", "shoe"])
 #top5000nv[endswith.(top5000nv, r"fe|f")]
 const f_ending_words = Set(["beef", "stuff", "wolf", "gulf", "sheriff", "grief", "chief", "life", "shelf", "relief", "roof",
         "proof", "wildlife", "playoff", "wife", "belief", "leaf", "knife", "self", "staff", "thief", "chef", "half", 
