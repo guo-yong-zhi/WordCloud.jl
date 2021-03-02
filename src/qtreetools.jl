@@ -129,15 +129,9 @@ function listcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree
    listcollision_native(qtrees, mask, inds|>collect; kargs...)
 end
 
-function findroom(ground, q=[(levelnum(ground), 1, 1)])
+function findroom_rand(ground, q=[(levelnum(ground), 1, 1)])
     if isempty(q)
         push!(q, (levelnum(ground), 1, 1))
-    end
-    i = q[1]
-    if ground[i] == EMPTY
-        return i
-    elseif ground[i] == FULL
-        return nothing
     end
     while !isempty(q)
         i = popfirst!(q)
@@ -160,7 +154,41 @@ function findroom(ground, q=[(levelnum(ground), 1, 1)])
     end
     return nothing
 end
-
+function findroom_gathering(ground, q=[]; level=5, p=2)
+    if isempty(q)
+        l = max(1, levelnum(ground)-level)
+        s = size(ground[l], 1)
+        append!(q, ((l, i, j) for i in 1:s for j in 1:s if ground[l, i, j]!=FULL))
+    end
+    while !isempty(q)
+        @assert q[1][1] == q[end][1]
+        ce = (1 + size(ground[q[1][1]], 1)) / 2
+        h,w = kernelsize(ground)
+        shuffle!(q)
+        sort!(q, by=i->(abs((i[2]-ce)/h)^p+(abs(i[3]-ce)/w)^p)) #椭圆p范数
+        lq = length(q)
+        for n in 1:lq
+            i = popfirst!(q)
+            if i[1] == 1
+                if ground[i] == EMPTY return i end
+            else
+                for cn in shuffle4()
+                    ci = child(i, cn)
+                    if ground[ci] == EMPTY
+                        if rand() < 0.7 #避免每次都是局部最优
+                            return ci 
+                        else
+                            push!(q, ci)
+                        end
+                    elseif ground[ci] == HALF
+                        push!(q, ci)
+                    end
+                end
+            end
+        end
+    end
+    return nothing
+end
 function treeset!(tree::ShiftedQtree, ind::Tuple{Int,Int,Int}, value::UInt8) #unused
     l, m1, n1 = ind
     m2, n2 = m1, n1
@@ -223,22 +251,22 @@ function overlap!(tree1::ShiftedQtree, tree2::ShiftedQtree)
 end
 
 "将sortedtrees依次叠加到ground上，同时修改sortedtrees的shift"
-function placement!(ground, sortedtrees)
-    # pos = Vector{Tuple{Int, Int, Int}}()
+function placement!(ground, sortedtrees; kargs...)
+#     pos = Vector{Tuple{Int, Int, Int}}()
     for t in sortedtrees
-        ind = placement!(ground, t)
+        ind = placement!(ground, t; kargs...)
         overlap!(ground, t)
         if ind === nothing
-            return pos
+            return ind
         end
-        # push!(pos, ind)
+#         push!(pos, ind)
     end
     nothing
-    # return pos
+#     return pos
 end
 
-function placement!(ground, qtree::ShiftedQtree)
-    ind = findroom(ground)
+function placement!(ground, qtree::ShiftedQtree; roomfinder=findroom_rand, kargs...)
+    ind = roomfinder(ground; kargs...)
     # @show ind
     if ind === nothing
         return nothing
@@ -251,17 +279,17 @@ function placement!(ground, qtree::ShiftedQtree)
     return ind
 end
 
-function placement!(ground, sortedtrees, index::Number)
+function placement!(ground, sortedtrees, index::Number; kargs...)
     for i in 1:length(sortedtrees)
         if i == index
             continue
         end
         overlap!(ground, sortedtrees[i])
     end
-    placement!(ground, sortedtrees[index])
+    placement!(ground, sortedtrees[index]; kargs...)
     # return ind
 end
-function placement!(ground, sortedtrees, indexes)
+function placement!(ground, sortedtrees, indexes; kargs...)
     for i in 1:length(sortedtrees)
         if i in indexes
             continue
@@ -269,7 +297,8 @@ function placement!(ground, sortedtrees, indexes)
         overlap!(ground, sortedtrees[i])
     end
     for i in indexes
-        placement!(ground, sortedtrees[i])
+        placement!(ground, sortedtrees[i]; kargs...)
+        overlap!(ground, sortedtrees[i])
     end
     nothing
 end

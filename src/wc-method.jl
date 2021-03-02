@@ -40,12 +40,33 @@ function initimage!(wc::WC)
     wc
 end
 initimages! = initimage!
-        
-function QTree.placement!(wc::WC)
+"""
+* placement!(wc)
+* placement!(wc, style=:random)
+* placement!(wc, style=:gathering)
+* placement!(wc, style=:gathering, level=5) 
+#`level` controls the intensity of gathering, typically between 4 and 6, defaults to 5.
+* placement!(wc, style=:gathering, level=6, p=1) 
+# `p` refers to p-norm (Minkowski distance), defaults to 2. 
+p=1 produces a rhombus, p=2 produces an ellipse, p>2 produces a rectangle with rounded corners.
+"""
+function QTree.placement!(wc::WC; style=:random, kargs...)
     if getstate(wc) == nameof(wordcloud)
         initimages!(wc)
     end
-    placement!(deepcopy(wc.maskqtree), wc.qtrees)
+    @assert style in [:random, :gathering]
+    if style == :gathering
+        if wc.maskqtree[1][(wc.params[:groundsize].÷2)] == EMPTY && (length(wc.qtrees)<2 
+            || (length(wc.qtrees)>=2 && prod(kernelsize(wc.qtrees[2]))/prod(kernelsize(wc.qtrees[1])) < 0.5))
+            setcenter!(wc.qtrees[1],  wc.params[:groundsize] .÷ 2)
+            placement!(deepcopy(wc.maskqtree), wc.qtrees, 2:length(wc.qtrees)|>collect, 
+                roomfinder=findroom_gathering; kargs...)
+        else
+            placement!(deepcopy(wc.maskqtree), wc.qtrees, roomfinder=findroom_gathering; kargs...)
+        end
+    else
+        placement!(deepcopy(wc.maskqtree), wc.qtrees, roomfinder=findroom_rand; kargs...)
+    end
     wc.params[:state] = nameof(placement!)
     wc
 end

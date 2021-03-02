@@ -15,7 +15,7 @@ wca = wordcloud(
 println("==Trump's==")
 wcb = wordcloud(
     processtext(open(pkgdir(WordCloud)*"/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords),
-    mask = getmask(wca),
+    mask = getsvgmask(wca),
     colors = cs,
     angles = as,
     fillingrate = fr,
