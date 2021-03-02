@@ -79,6 +79,9 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     mask, maskqtree, groundsize, groundoccupied = preparebackground(mask, transparentcolor)
     params[:groundsize] = groundsize
     params[:groundoccupied] = groundoccupied
+    if groundoccupied == 0
+        error("Have you set the right `transparentcolor`? e.g. `transparentcolor=mask[1,1]`")
+    end
     @assert groundoccupied > 0
     minfontsize = get(params, :minfontsize, :auto)
     if minfontsize==:auto

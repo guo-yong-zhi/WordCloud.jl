@@ -2,7 +2,7 @@ module QTree
 export AbstractStackedQtree, StackedQtree, ShiftedQtree, buildqtree!,
     shift!, setrshift!,　setcshift!, setshift!, getshift, getcenter, setcenter!,
     collision, collision_bfs, collision_bfs_rand, listcollision,
-    findroom, levelnum, outofbounds, kernelsize, placement!, decode
+    findroom_rand, findroom_gathering, levelnum, outofbounds, kernelsize, placement!, decode
 
 using Random
 using Combinatorics
