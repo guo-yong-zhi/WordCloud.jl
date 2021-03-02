@@ -41,9 +41,9 @@ paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", li
 ![animation](res/animation.gif)  
 [Training animation](./examples/animation.jl)  
 *Run the command `runexample(:animation)` or `showexample(:animation)` to get the result.* 
-## Specifies the style of a particular word
+## Specifying the style of a particular word
 ![specifiedstyle](res/specifiedstyle.png)  
-[Specifies the style of a particular word](./examples/specifiedstyle.jl)  
+[Speciying the style of a particular word](./examples/specifiedstyle.jl)  
 *Run the command `runexample(:specifiedstyle)` or `showexample(:specifiedstyle)` to get the result.* 
 ## Comparison
 ![compare](res/compare.png)  
