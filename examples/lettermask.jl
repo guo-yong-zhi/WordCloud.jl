@@ -7,7 +7,7 @@ wc = wordcloud(
         mask = mask,
         angles = 0,
         colors = ("#006BB0", "#EFA90D", "#1D1815", "#059341", "#DC2F1F"),
-        fillingrate=0.7,
+        density=0.7,
         ) |> generate!
 println("results are saved to lettermask.svg")
 paint(wc, "lettermask.svg" , background=false)

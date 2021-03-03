@@ -30,7 +30,7 @@ wc = wordcloud(
     mask = loadmask(pkgdir(WordCloud)*"/res/alice_mask.png", color="#faeef8"),
     colors = :Set1_5,
     angles = (0, 90),
-    fillingrate = 0.7) |> generate!
+    density = 0.7) |> generate!
 paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", linewidth=1))
 ```
 *Run the command `runexample(:alice)` or `showexample(:alice)` to get the result.*  
@@ -73,7 +73,7 @@ linux添加中文字体
 > add /path/to/ffmpeg-4.2.1/lib to ENV["LD_LIBRARY_PATH"]  
 > add /path/to/ffmpeg-4.2.1/bin to ENV["PATH"]  
 ***
-# other word cloud 
+# other wordclouds
 > [word_cloud](https://github.com/amueller/word_cloud)  
 > [d3-cloud](https://github.com/jasondavies/d3-cloud)  
 > [wordcloud](https://github.com/timdream/wordcloud)  

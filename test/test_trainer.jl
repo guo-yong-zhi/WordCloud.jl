@@ -1,8 +1,8 @@
 @testset "train.jl" begin
     x = rand(Float64, 1000) * 1000;
-    @test sum(floor.(Int, log2.(x))) == sum(WordCloud.intlog2.(x))
+    @test sum(floor.(Int, log2.(x))) == sum(WordCloud.Trainer.intlog2.(x))
 
-    lru = WordCloud.LRU{Int}()
+    lru = WordCloud.Trainer.LRU{Int}()
     for i in 1:10
         push!(lru, i)
     end
@@ -10,8 +10,8 @@
         push!(lru, i)
     end
     push!(lru, 1)
-    @test WordCloud.take(lru) == [1,2,4,6,8,10,9,7,5,3]
-    lru = WordCloud.LRU{Int}(WordCloud.IntMap{Int}(10))
+    @test WordCloud.Trainer.take(lru) == [1,2,4,6,8,10,9,7,5,3]
+    lru = WordCloud.Trainer.LRU{Int}(WordCloud.Trainer.IntMap{Int}(10))
     for i in 1:10
         push!(lru, i)
     end
@@ -19,8 +19,8 @@
         push!(lru, i)
     end
     push!(lru, 1)
-    @test WordCloud.take(lru) == [1,2,4,6,8,10,9,7,5,3]
-    @test WordCloud.take(lru, 3) == [1,2,4]
+    @test WordCloud.Trainer.take(lru) == [1,2,4,6,8,10,9,7,5,3]
+    @test WordCloud.Trainer.take(lru, 3) == [1,2,4]
     push!.(lru, 7:9)
-    @test WordCloud.take(lru, 3) == [9,8,7]
+    @test WordCloud.Trainer.take(lru, 3) == [9,8,7]
 end

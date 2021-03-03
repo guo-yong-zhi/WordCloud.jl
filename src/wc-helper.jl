@@ -1,4 +1,14 @@
 using Colors
+iter_expand(e) = Base.Iterators.repeated(e)
+iter_expand(l::Vector) = Base.Iterators.cycle(l)
+iter_expand(r::AbstractRange) = IterGen(st->rand(r))
+iter_expand(t::Tuple) = IterGen(st->rand(t))
+struct IterGen
+    generator
+end
+Base.iterate(it::IterGen, state=0) = it.generator(state),state+1
+Base.IteratorSize(it::IterGen) = Base.IsInfinite()
+
 function displayschemes()
     for scheme in Render.schemes
         display(scheme)

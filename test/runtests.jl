@@ -12,7 +12,7 @@ include("test_textprocessing.jl")
     # @show pwd()
     words = [Random.randstring(rand(1:8)) for i in 1:rand(100:1000)]
     weights = randexp(length(words)) .* 1000 .+ randexp(length(words)) .* 200 .+ rand(20:100, length(words));
-    wc = wordcloud(words, weights, fillingrate=0.6)
+    wc = wordcloud(words, weights, density=0.6)
     paint(wc)
     generate!(wc)
     placement!(wc)
@@ -21,20 +21,22 @@ include("test_textprocessing.jl")
     paint(wc, "test.svg")
     @test isempty(WordCloud.outofbounds(wc.maskqtree, wc.qtrees))
 
-    wordcloud(["singleword"=>12], maskimg=shape(box, 200, 150, 40, color=0.15), fillingrate=0.6, run=generate!) #singleword & Pair
+    wordcloud(["singleword"=>12], maskimg=shape(box, 200, 150, 40, color=0.15), density=0.6, run=generate!) #singleword & Pair
     wordcloud(processtext("giving a single word is ok. giving several words is ok too"), 
-            maskimg=shape(box, 20, 15, 0, color=0.15), fillingrate=0.5, transparentcolor=(1,1,1,0)) #String & small mask
-    placement!(wc)
+            maskimg=shape(box, 20, 15, 0, color=0.15), density=0.5, transparentcolor=(1,1,1,0)) #String & small mask
+    placement!(wc, style=:gathering)
 
     wc = runexample(:random)
     @test getstate(wc) == :generate!
-
+    @test wc.params[:groundoccupied] == WordCloud.occupied(WordCloud.QTree.kernel(wc.maskqtree[1]), WordCloud.QTree.FULL)
+    @test wc.params[:groundoccupied] == WordCloud.occupied(wc.mask .!= wc.mask[1])
+    
     wc = wordcloud(
             processtext(open("../res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxnum=300), 
             mask = loadmask("../res/alice_mask.png", color="#faeef8", backgroundcolor=0.97),
             colors = (WordCloud.colorschemes[:Set1_5].colors..., ),
             angles = (0, 90),
-            fillingrate = 0.6);
+            density = 0.6);
     rescale!(wc, 1.23)
     pin(wc, ["little", "know"]) do 
         @test length(wc.words)==298

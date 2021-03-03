@@ -161,7 +161,7 @@ function findroom_gathering(ground, q=[]; level=5, p=2)
         append!(q, ((l, i, j) for i in 1:s for j in 1:s if ground[l, i, j]!=FULL))
     end
     while !isempty(q)
-        @assert q[1][1] == q[end][1]
+        # @assert q[1][1] == q[end][1]
         ce = (1 + size(ground[q[1][1]], 1)) / 2
         h,w = kernelsize(ground)
         shuffle!(q)

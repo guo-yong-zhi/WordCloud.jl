@@ -9,7 +9,7 @@ wc = wordcloud(
     transparentcolor = (0,0,0,0),
     run=x->x)
 #md# * `words` & `weights` are just placeholders  
-#md# * style arguments like `colors`, `angles` and `fillingrate` have no effect  
+#md# * style arguments like `colors`, `angles` and `density` have no effect  
 #md# 
 #md# And, you should manually initialize images for the placeholders, instead of calling `initimages!`  
 ## svg version

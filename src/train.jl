@@ -1,6 +1,10 @@
+module Trainer
+export Momentum, train!
+export trainepoch_E!, trainepoch_EM!, trainepoch_EM2!, trainepoch_EM3!, trainepoch_P!, trainepoch_P2!, trainepoch_Px!
+
 using Combinatorics
 using Random
-using .QTree
+using ..QTree
 
 include("traintools.jl")
 mutable struct Momentum
@@ -26,21 +30,6 @@ reset!(o::Momentum, x) =  pop!(o.velocity, x)
 reset!(o, x) = nothing
 Base.broadcastable(m::Momentum) = Ref(m)
 
-function maskqtree(pic::AbstractMatrix{UInt8})
-    m = log2(max(size(pic)...)*1.1)
-    s = 2^ceil(Int, m)
-    qt = ShiftedQtree(pic, s, default=QTree.FULL)
-#     @show size(pic),m,s
-    a, b = size(pic)
-    setrshift!(qt[1], (s-a)÷2)
-    setcshift!(qt[1], (s-b)÷2)
-    return qt
-end
-function maskqtree(pic::AbstractMatrix, bgcolor=pic[1])
-    pic = map(x -> x==bgcolor ? QTree.FULL : QTree.EMPTY, pic)
-    maskqtree(pic)
-end
-
 near(a::Integer, b::Integer, r=1) = a-r:a+r, b-r:b+r
 near(m::AbstractMatrix, a::Integer, b::Integer, r=1) = @view m[near(a, b, r)...]
 const DIRECTKERNEL = collect.(Iterators.product(-1:1,-1:1))
@@ -50,14 +39,14 @@ whitesum(m::AbstractMatrix) = sum(DIRECTKERNEL .* m)
 whitesum(t::ShiftedQtree, l, a, b) = whitesum(decode2(near(t[l],a,b)))
 # function intlog2(x::Float64) #not safe, x can't be nan or inf
 #     #Float64 符号位(S)，编号63；阶码位，编号62 ~52
-#     b8 = reinterpret(UInt64, x)
+#     b64 = reinterpret(UInt64, x)
 #     m = UInt64(0x01)<<63 #符号位mask
-#     Int(1-((b8&m)>>62)), Int((b8&(~m)) >> 52 - 1023) #符号位:1-2S (1->-1、0->1)，指数位 - 1023
+#     Int(1-((b64&m)>>62)), Int((b64&(~m)) >> 52 - 1023) #符号位:1-2S (1->-1、0->1)，指数位 - 1023
 # end
 function intlog2(x::Float64) #not safe, x>0 and x can't be nan or inf
     #Float64 符号位(S)，编号63；阶码位，编号62 ~52
-    b8 = reinterpret(Int64, x)
-    (b8 >> 52 - 1023) #符号位:1-2S (1->-1、0->1)，指数位 - 1023
+    b64 = reinterpret(Int64, x)
+    (b64 >> 52 - 1023) #符号位:1-2S (1->-1、0->1)，指数位 - 1023
 end
 
 function move!(qt, ws)
@@ -402,6 +391,70 @@ function trainepoch_Px!(qtrees, mask;
     nc
 end
 
+function max_collisional_index(qtrees, mask)
+    l = length(qtrees)
+    getqtree(i) = i==0 ? mask : qtrees[i]
+    for i in l:-1:1
+        for j in 0:i-1
+            cp = collision(getqtree(i), getqtree(j))
+            if cp[1] >= 0
+                return i
+            end
+        end
+    end
+    nothing
+end
+
+function max_collisional_index_rand(qtrees, mask; collpool)
+    l = length(collpool)
+    b = l - floor(Int, l / 8 * randexp()) #从末尾1/8起
+    sort!(collpool)
+    getqtree(i) = i==0 ? mask : qtrees[i]
+    for k in b:-1:1
+        i, j = collpool[k]
+        cp = collision(getqtree(i), getqtree(j))
+        if cp[1] >= 0
+            return j
+        end
+    end
+    for k in l:-1:b+1
+        i, j = collpool[k]
+        cp = collision(getqtree(i), getqtree(j))
+        if cp[1] >= 0
+            return j
+        end
+    end
+    return nothing
+end
+
+function collisional_indexes_rand(qtrees, mask, collpool::Vector{Tuple{Int,Int}})
+    cinds = Vector{Int}()
+    l = length(collpool)
+    if l == 0
+        return cinds
+    end
+    keep = (l ./ 8 .* randexp(l)) .> l:-1:1 #约保留1/8
+    if !any(keep)
+        keep[end] = 1
+    end
+    sort!(collpool, by=x->x[2])
+#     @show collpool keep
+    getqtree(i) = i==0 ? mask : qtrees[i]
+    for (i, j) in @view collpool[keep]
+        if j in cinds
+            continue
+        end
+        cp = collision(getqtree(i), getqtree(j))
+        if cp[1] >= 0
+            push!(cinds, j)
+        end
+    end
+    return cinds
+end
+function collisional_indexes_rand(qtrees, mask, collpool::Vector{QTree.ColItemType})
+    collisional_indexes_rand(qtrees, mask, first.(collpool))
+end
+
 function teleport!(ts, maskqt, collpool, args...; kargs...)
     outinds = outofbounds(maskqt, ts)
     if !isempty(outinds)
@@ -475,4 +528,5 @@ function train!(ts, maskqt, nepoch::Number=-1, args...;
         end
     end
     ep, nc
+end
 end

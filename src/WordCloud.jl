@@ -8,13 +8,15 @@ export getcolors, getangles, getwords, getweights, setcolors!, setangles!, setwo
     getpositions, setpositions!, getimages, getsvgimages, setimages!, setsvgimages!, getmask, getsvgmask, 
     getfontsizes, setfontsizes!, getfonts, setfonts!, getstate, setstate!, initimage!, initimages!
 
-include("qtree.jl")
 include("rendering.jl")
+include("qtree.jl")
+include("train.jl")
 include("textprocessing.jl")
 using .Render
 using .QTree
+using .Trainer
 using .TextProcessing
-include("train.jl")
+
 include("wc-class.jl")
 include("wc-method.jl")
 include("wc-helper.jl")
