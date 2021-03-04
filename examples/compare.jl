@@ -32,7 +32,7 @@ end
 initimages!(wcb)
 
 println("=ignore defferent words=")
-ignore(wcb, getwords(wcb) .∉ Ref(samewords)) do
+keep(wcb, samewords) do
     @assert Set(wcb.words) == Set(samewords)
     centers = getpositions(wca, samewords, type=getcenter)
     setpositions!(wcb, samewords, centers, type=setcenter!) #manually initialize the position,

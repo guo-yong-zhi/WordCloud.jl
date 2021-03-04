@@ -46,7 +46,8 @@ initimages! = initimage!
 * placement!(wc, style=:gathering)
 * placement!(wc, style=:gathering, level=5) #`level` controls the intensity of gathering, typically between 4 and 6, defaults to 5.
 * placement!(wc, style=:gathering, level=6, p=1) #`p` refers to p-norm (Minkowski distance), defaults to 2. 
-p=1 produces a rhombus, p=2 produces an ellipse, p>2 produces a rectangle with rounded corners.
+p=1 produces a rhombus, p=2 produces an ellipse, p>2 produces a rectangle with rounded corners. 
+When setting `style=:gathering`, you need to disable teleport (`generate!(wc, patient=-1)`).
 """
 function placement!(wc::WC; style=:uniform, kargs...)
     if getstate(wc) == nameof(wordcloud)
@@ -137,16 +138,15 @@ function generate_animation!(wc::WC, args...; outputdir="gifresult", overwrite=f
 end
 
 """
-ignore some words as if they don't exist, then execute the function.
-* ignore(fun, wc, ws::String) #ignore a word
-* ignore(fun, wc, ws::Set{String}) #ignore all words in ws
-* ignore(fun, wc, ws::Array{String}) #ignore all words in ws
-* ignore(fun, wc::WC, mask::AbstractArray{Bool}) #ignore words. length(mask)==length(wc.words)
+keep some words and ignore the others, then execute the function. It's the opposite of `ignore`.
+* keep(fun, wc, ws::String) #keep a word
+* keep(fun, wc, ws::Set{String}) #kepp all words in ws
+* keep(fun, wc, ws::Array{String}) #keep all words in ws
+* keep(fun, wc::WC, mask::AbstractArray{Bool}) #keep words. length(mask)==length(wc.words)
 """
-function ignore(fun, wc::WC, mask::AbstractArray{Bool})
+function keep(fun, wc::WC, mask::AbstractArray{Bool})
     mem = [wc.words, wc.weights, wc.imgs, wc.svgs, wc.qtrees, 
             wc.params[:colors], wc.params[:angles], wc.params[:indsmap]]
-    mask = .!mask
     wc.words = @view wc.words[mask]
     wc.weights = @view wc.weights[mask]
     wc.imgs = @view wc.imgs[mask]
@@ -200,14 +200,32 @@ function pin(fun, wc::WC, mask::AbstractArray{Bool})
     r
 end
 
+function keep(fun, wc, ws::AbstractString)
+    keep(fun, wc, wc.words .== ws)
+end
+function keep(fun, wc, ws::AbstractSet{<:AbstractString})
+    keep(fun, wc, wc.words .∈ Ref(ws))
+end
+function keep(fun, wc, ws::AbstractArray{<:AbstractString})
+    keep(fun, wc, Set(ws))
+end
+
+"""
+ignore some words as if they don't exist, then execute the function. It's the opposite of `keep`.
+* ignore(fun, wc, ws::String) #ignore a word
+* ignore(fun, wc, ws::Set{String}) #ignore all words in ws
+* ignore(fun, wc, ws::Array{String}) #ignore all words in ws
+* ignore(fun, wc::WC, mask::AbstractArray{Bool}) #ignore words. length(mask)==length(wc.words)
+"""
+function ignore(fun, wc::WC, mask::AbstractArray{Bool})
+    keep(fun, wc, .!mask)
+end
 function ignore(fun, wc, ws::AbstractString)
     ignore(fun, wc, wc.words .== ws)
 end
-
 function ignore(fun, wc, ws::AbstractSet{<:AbstractString})
     ignore(fun, wc, wc.words .∈ Ref(ws))
 end
-
 function ignore(fun, wc, ws::AbstractArray{<:AbstractString})
     ignore(fun, wc, Set(ws))
 end
@@ -215,11 +233,9 @@ end
 function pin(fun, wc, ws::AbstractString)
     pin(fun, wc, wc.words .== ws)
 end
-
 function pin(fun, wc, ws::AbstractSet{<:AbstractString})
     pin(fun, wc, wc.words .∈ Ref(ws))
 end
-
 function pin(fun, wc, ws::AbstractArray{<:AbstractString})
     pin(fun, wc, Set(ws))
 end
