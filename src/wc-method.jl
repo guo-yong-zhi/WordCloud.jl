@@ -1,6 +1,6 @@
-function initqtree!(wc, i::Integer; bgcolor=(0,0,0,0), border=wc.params[:border])
+function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[:border])
     img = wc.imgs[i]
-    mimg = wordmask(img, bgcolor, border) 
+    mimg = wordmask(img, backgroundcolor, border) 
     t = ShiftedQtree(mimg, wc.params[:groundsize])
     c = isassigned(wc.qtrees, i) ? getcenter(wc.qtrees[i]) : wc.params[:groundsize] .÷ 2
     setcenter!(t, c)
@@ -9,17 +9,17 @@ function initqtree!(wc, i::Integer; bgcolor=(0,0,0,0), border=wc.params[:border]
 end
 initqtree!(wc, i; kargs...) = initqtree!.(wc, index(wc, i); kargs...)
 "Initialize word's images and other resources with specified style"
-function initimage!(wc, i::Integer; bgcolor=(0,0,0,0), border=wc.params[:border])
+function initimage!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[:border])
     params = wc.params
     img, svg = prepareword(wc.words[i], getfontsizes(wc, i), params[:colors][i], params[:angles][i],
-        params[:groundsize], font=getfonts(wc, i), bgcolor=bgcolor, border=border)
+        params[:groundsize], font=getfonts(wc, i), backgroundcolor=backgroundcolor, border=border)
     wc.imgs[i] = img
     wc.svgs[i] = svg
-    initqtree!(wc, i, bgcolor=bgcolor, border=border)
+    initqtree!(wc, i, backgroundcolor=backgroundcolor, border=border)
     nothing
 end
 initimage!(wc, i; kargs...) = initimage!.(wc, index(wc, i); kargs...)
-function initimage!(wc::WC)
+function initimage!(wc::WC; maxiter=5, error=0.01)
     params = wc.params
     mask = wc.mask
     
@@ -33,7 +33,7 @@ function initimage!(wc::WC)
     wc.params[:angles] .= wc.params[:angles][si]
     wc.params[:indsmap] = nothing
 
-    scale = find_weight_scale!(wc, border=params[:border], density=params[:density], maxiter=5, error=0.03)
+    scale = find_weight_scale!(wc, density=params[:density], maxiter=maxiter, error=error)
     println("density set to $(params[:density]), with scale=$scale, font minimum is $(getfontsizes(wc, wc.words[end]))")
     initimage!.(wc, 1:length(words))
     params[:state] = nameof(initimages!)
@@ -94,7 +94,6 @@ function generate!(wc::WC, args...; retry=3, krags...)
     end
     ep, nc = -1, -1
     for r in 1:retry
-        # fr = feelingoccupied(wc.params[:mimgs])/wc.params[:groundoccupied]
         if r != 1
             rescale!(wc, 0.95)
         end

@@ -6,7 +6,7 @@ using Luxor
 using Colors
 using ColorSchemes
 using ImageMagick
-import ImageTransformations.imresize
+import ImageTransformations.filter
 
 save = Luxor.FileIO.save
 

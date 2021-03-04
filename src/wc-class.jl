@@ -27,7 +27,7 @@ Positional arguments are used to specify words and weights, and can be in differ
 * angles = (0, 90, 45) #choose entries randomly  
 * angles = 0:180 #choose entries randomly  
 * angles = [0, 22, 4, 1, 100, 10, ......] #use entries sequentially in cycle  
-* density = 0.5 #default 0.65  
+* density = 0.55 #default 0.5  
 * border = 1  
 ### mask keyword arguments
 * mask = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
@@ -91,7 +91,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
         params[:minfontsize] = minfontsize
     end
     get!(params, :border, 1)
-    get!(params, :density, 0.65)
+    get!(params, :density, 0.5)
     get!(params, :font, "")
     
     params[:state] = nameof(wordcloud)

@@ -5,12 +5,12 @@ stwords = ["us", "will"];
 println("==Obama's==")
 cs = WordCloud.randomscheme() #:Set1_8
 as = WordCloud.randomangles() #(0,90,45,-45)
-fr = 0.7 #not too high
+dens = 0.55 #not too high
 wca = wordcloud(
     processtext(open(pkgdir(WordCloud)*"/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords), 
     colors = cs,
     angles = as,
-    density = fr) |> generate!
+    density = dens) |> generate!
 #md# ### Then generate the wordcloud on the right      
 println("==Trump's==")
 wcb = wordcloud(
@@ -18,7 +18,7 @@ wcb = wordcloud(
     mask = getsvgmask(wca),
     colors = cs,
     angles = as,
-    density = fr,
+    density = dens,
     run = x->nothing, #turn off the useless initimage! and placement! in advance
 )
 #md# Follow these steps to generate a wordcloud: initimage! -> placement! -> generate!

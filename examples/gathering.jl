@@ -3,10 +3,10 @@ using WordCloud
 wc = wordcloud(
     processtext(open(pkgdir(WordCloud)*"/res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
     angles = 0,
-    density = 0.7,
+    density = 0.6,
     run = initimages!)
 placement!(wc, style=:gathering, level=5)
-generate!(wc)
+generate!(wc, patient=-1)
 println("results are saved to gathering.svg")
 paint(wc, "gathering.svg")
 wc

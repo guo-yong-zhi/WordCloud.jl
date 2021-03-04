@@ -1,33 +1,37 @@
 ## occupied
-function occupied(img::AbstractMatrix, bgvalue=0)
+import Statistics.quantile
+function occupied(img::AbstractMatrix, bgvalue=img[1])
     return sum(img .!= bgvalue)
 end
 
-function occupied(imgs::AbstractVector, bgvalue=0)
+function occupied(imgs::AbstractVector, bgvalue=imgs[1][1])
     if isempty(imgs) return 0 end
     return sum(p->occupied(p, bgvalue), imgs)
 end
-function box_occupied(img::AbstractMatrix)
-    return size(img, 1) * size(img, 2)
+function boxoccupied(img::AbstractMatrix, border=0)
+    return (size(img, 1)-2border) * (size(img, 2)-2border)
 end
-function box_occupied(imgs::AbstractVector)
+function boxoccupied(imgs::AbstractVector, border=0)
     if isempty(imgs) return 0 end
-    return sum(box_occupied, imgs)
+    return sum(p->boxoccupied(p, border), imgs)
 end
-function feelingoccupied(imgs)
-    imgs = sort(imgs, by=prod∘size, rev=true)
-    m = length(imgs) ÷ 100
-    occupied(imgs[1:m])/4 + 3box_occupied(imgs[1:m])/4 + box_occupied(imgs[m+1:end]) #兼顾大字的内隙和小字的占据
+function feelingoccupied(imgs, border=0, bgvalue=imgs[1][1])
+    s = boxoccupied.(imgs, border)
+    th = 10quantile(s, 0.1)
+    bigind = findall(x->x>th, s)
+#     @show length(bigind)
+    er = (sum(s[bigind]) - occupied(imgs[bigind], bgvalue)) * 0.25 #兼顾大字的内隙和小字的占据
+    sum(s) - er
 end
 
-function text_occupied(words, fontsizes, fonts; border=0)
+function textoccupied(words, fontsizes, fonts; border=0)
     imgs = []
     for (c, sz, ft) in zip(words, fontsizes, fonts)
 #         print(c)
         img = Render.rendertext(string(c), sz, backgroundcolor=(0,0,0,0),font=ft, border=border)
         push!(imgs, wordmask(img, (0,0,0,0), border))
     end
-    feelingoccupied(imgs)
+    feelingoccupied(imgs, border) #border>0 以获取背景色imgs[1]
 end
 
 ## prepare
@@ -53,8 +57,8 @@ function preparebackground(img, bgcolor)
     return img, maskqt, groundsize, groundoccupied
 end
 
-function prepareword(word, fontsize, color, angle, groundsize; bgcolor=(0,0,0,0), font="", border=0)
-    rendertext(string(word), fontsize, color=color, backgroundcolor=bgcolor,
+function prepareword(word, fontsize, color, angle, groundsize; backgroundcolor=(0,0,0,0), font="", border=0)
+    rendertext(string(word), fontsize, color=color, backgroundcolor=backgroundcolor,
         angle=angle, border=border, font=font, type=:both)
 end
 
@@ -62,18 +66,17 @@ wordmask(img, bgcolor, border) = dilate(img.!=img[1], border)
 #https://github.com/JuliaGraphics/Luxor.jl/issues/107
 
 ## weight_scale
-function cal_weight_scale(words, fontsizes, fonts, target, initialscale; border=0, kargs...)
+function cal_weight_scale(words, fontsizes, fonts, target, initialscale; kargs...)
     input = initialscale
-    output = text_occupied(words, fontsizes, fonts; border=border, kargs...)
-#     @show input,output 
-    return output, sqrt(target/output) * (input+2border) - 2border# 假设output=k*(input+2border)^2
+    output = textoccupied(words, fontsizes, fonts;  kargs...)
+    return output, sqrt(target/output) * input# 假设output=k*input^2
 end
 
 function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, error=0.05, kargs...)
     ground_size = wc.params[:groundoccupied]
     words = wc.words
     if initialscale <= 0
-        initialscale = √(ground_size/length(words))
+        initialscale = √(ground_size/length(words)/0.4*density)
     end
     @assert sum(wc.weights.^2 .* length.(words)) / length(wc.weights) ≈ 1.0
     target_lower = (density - error) * ground_size
@@ -90,13 +93,13 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, erro
         wc.params[:scale] = sc
         tg, sc = cal_weight_scale(words, getfontsizes(wc, words), fonts, 
         density*ground_size, sc; kargs...)
-        println("scale=$sc, density=$(tg/ground_size)")
+        println("scale=$(wc.params[:scale]), density=$(tg/ground_size)")
         if target_lower <= tg <= target_upper
             break
         end
         
     end
-#     @show text_occupied(words, weights, sc, radius=border)
+#     @show textoccupied(words, weights, sc, radius=border)
     wc.params[:scale] = sc
     return sc
 end

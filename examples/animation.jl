@@ -6,7 +6,7 @@ df = CSV.File(pkgdir(WordCloud)*"/res/guxiang_frequency.txt", header=false)|> Da
 words = df[!, "Column2"]
 weights = df[!, "Column3"]
 
-wc = wordcloud(words, weights, density=0.8)
+wc = wordcloud(words, weights, density=0.7)
 gifdirectory = "guxiang_animation"
 #eval# try rm("guxiang_animation", force=true, recursive=true) catch end 
 generate_animation!(wc, 100, outputdir=gifdirectory)

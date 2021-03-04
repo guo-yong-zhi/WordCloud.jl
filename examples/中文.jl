@@ -22,7 +22,7 @@ wc = wordcloud(
     processtext(jieba.lcut(TheInternationale)), 
     colors = "#DE2910",
     mask = WordCloud.randommask("#FFDE00", 400),
-    density=0.8)|>generate!
+    density=0.65)|>generate!
 println("结果保存在 中文.svg")
 paint(wc, "中文.svg")
 wc

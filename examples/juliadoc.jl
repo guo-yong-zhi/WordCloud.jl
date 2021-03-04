@@ -23,7 +23,7 @@ end
 wc = wordcloud(
     [words..., "∴"], #add a placeholder for julia-logo
     [weights..., weights[1]], 
-    density=0.8,
+    density = 0.65,
     mask = shape(box, 900, 300, 0, color=0.95, backgroundcolor=(0,0,0,0)),
     colors = ((0.796,0.235,0.20), (0.584,0.345,0.698), (0.22,0.596,0.149)),
     angles = (0, -45, 45),
