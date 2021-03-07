@@ -21,10 +21,12 @@ jieba.add_word("英特纳雄耐尔")
 wc = wordcloud(
     processtext(jieba.lcut(TheInternationale)), 
     colors = "#DE2910",
-    mask = WordCloud.randommask("#FFDE00", 400),
-    density=0.65)|>generate!
-println("结果保存在 中文.svg")
-paint(wc, "中文.svg")
+#     mask = WordCloud.randommask("#FFDE00", 400),
+    mask = loadmask(pkgdir(WordCloud)*"/res/heart_mask.png", color="#FFDE00"),
+    density=0.65) |> generate!
+
+println("结果保存在 中文.png")
+paint(wc, "中文.png")
 wc
 #eval# runexample(:中文)
-#md# ![](中文.svg)  
+#md# ![](中文.png)  

@@ -31,6 +31,14 @@ include("test_textprocessing.jl")
     @test wc.params[:groundoccupied] == WordCloud.occupied(WordCloud.QTree.kernel(wc.maskqtree[1]), WordCloud.QTree.FULL)
     @test wc.params[:groundoccupied] == WordCloud.occupied(wc.mask .!= wc.mask[1])
 
+    words = ["." for i in 1:500]
+    weights = [1 for i in 1:length(words)]
+    
+    @test_throws ErrorException begin
+        wc = wordcloud(words, weights, mask=shape(ellipse, 5, 5, color=0.95, backgroundsize=(10,10)), density=1000, angles=0)
+        placement!(wc)
+    end
+    
     wc = wordcloud(
             processtext(open("../res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxnum=300), 
             mask = loadmask("../res/alice_mask.png", color="#faeef8", backgroundcolor=0.97),

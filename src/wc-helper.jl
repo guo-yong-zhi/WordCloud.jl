@@ -28,6 +28,7 @@ function randommask(color, sz=800)
     ratio = ratio>0.9 ? 1.0 : ratio
     h = round(Int, sqrt(s*ratio))
     w = round(Int, h/ratio)
+    println("mask size is $((h, w))")
     if rand() > 0.5
         return shape(box, w, h, round(Int, h*(0.05+rand()/5)), color=color, backgroundcolor=ARGB(1, 1, 1, 0))
     else

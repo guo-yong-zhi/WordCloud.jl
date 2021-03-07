@@ -1,8 +1,8 @@
 module QTree
 export AbstractStackedQtree, StackedQtree, ShiftedQtree, buildqtree!,
     shift!, setrshift!,　setcshift!, setshift!, getshift, getcenter, setcenter!,
-    collision, collision_bfs, collision_bfs_rand, listcollision,
-    findroom_rand, findroom_gathering, levelnum, outofbounds, kernelsize, placement!, decode
+    collision, collision_bfs, collision_bfs_rand, batchcollision,
+    findroom_uniform, findroom_gathering, levelnum, outofbounds, kernelsize, placement!, decode
 
 using Random
 using Combinatorics
@@ -206,7 +206,7 @@ function shift!(t::ShiftedQtree, l::Integer, st1::Integer, st2::Integer)
     end
     buildqtree!(t, l + 1)
 end
-shift!(t::ShiftedQtree, l::Integer, st::Tuple{Integer,Integer}) = shift!(t, l, st...)
+shift!(t::ShiftedQtree, l::Integer, st::Tuple{Integer, Integer}) = shift!(t, l, st...)
 function setshift!(t::ShiftedQtree, l::Integer, st1::Integer, st2::Integer)
     for i in l:-1:1
         setrshift!(t[i], st1)
@@ -216,11 +216,13 @@ function setshift!(t::ShiftedQtree, l::Integer, st1::Integer, st2::Integer)
     end
     buildqtree!(t, l + 1)
 end
-setshift!(t::ShiftedQtree, l::Integer, st::Tuple{Integer,Integer}) = setshift!(t, l, st...)
-setshift!(t::ShiftedQtree, st::Tuple{Integer,Integer}) = setshift!(t, 1, st)
+setshift!(t::ShiftedQtree, l::Integer, st::Tuple{Integer, Integer}) = setshift!(t, l, st...)
+setshift!(t::ShiftedQtree, st::Tuple{Integer, Integer}) = setshift!(t, 1, st)
 getshift(t::ShiftedQtree, l::Integer=1) = getshift(t[l])
 kernelsize(t::ShiftedQtree, l::Integer=1) = kernelsize(t[l])
 getcenter(t::ShiftedQtree) = getshift(t) .+ kernelsize(t) .÷ 2
+getcenter(l::Integer, a::Integer, b::Integer) = l == 1 ? (a, b) : (2^(l-1)*(a-1)+2^(l-2), 2^(l-1)*(b-1)+2^(l-2))
+getcenter(ind::Tuple{Integer, Integer, Integer}) = getcenter(ind...)
 callefttop(t::ShiftedQtree, center) = center .- kernelsize(t) .÷  2
 setcenter!(t::ShiftedQtree, center) = setshift!(t, callefttop(t, center))
 function inbounds(bgqt::ShiftedQtree, qt::ShiftedQtree)

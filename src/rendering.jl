@@ -6,7 +6,7 @@ using Luxor
 using Colors
 using ColorSchemes
 using ImageMagick
-import ImageTransformations.filter
+import ImageTransformations.imresize
 
 save = Luxor.FileIO.save
 
@@ -225,7 +225,7 @@ schemes_seaborn = filter(s -> occursin("seaborn", colorschemes[s].category), col
 schemes = [schemes_colorbrewer..., schemes_seaborn...]
 
 """
-get box or ellipse image
+get a box or ellipse svg image
 ## Examples
 * shape(box, 80, 50) #80*50 box
 * shape(box, 80, 50, 4) #box with cornerradius=4

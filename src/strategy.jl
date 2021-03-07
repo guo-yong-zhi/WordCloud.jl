@@ -24,12 +24,13 @@ function feelingoccupied(imgs, border=0, bgvalue=imgs[1][1])
     sum(s) - er
 end
 
-function textoccupied(words, fontsizes, fonts; border=0)
+function textoccupied(words, fontsizes, fonts)
+    border=1
     imgs = []
     for (c, sz, ft) in zip(words, fontsizes, fonts)
 #         print(c)
-        img = Render.rendertext(string(c), sz, backgroundcolor=(0,0,0,0),font=ft, border=border)
-        push!(imgs, wordmask(img, (0,0,0,0), border))
+        img = Render.rendertext(string(c), sz, backgroundcolor=(0,0,0,0), font=ft, border=border)
+        push!(imgs, img)
     end
     feelingoccupied(imgs, border) #border>0 以获取背景色imgs[1]
 end
@@ -57,7 +58,7 @@ function preparebackground(img, bgcolor)
     return img, maskqt, groundsize, groundoccupied
 end
 
-function prepareword(word, fontsize, color, angle, groundsize; backgroundcolor=(0,0,0,0), font="", border=0)
+function prepareword(word, fontsize, color, angle; backgroundcolor=(0,0,0,0), font="", border=0)
     rendertext(string(word), fontsize, color=color, backgroundcolor=backgroundcolor,
         angle=angle, border=border, font=font, type=:both)
 end
@@ -66,17 +67,17 @@ wordmask(img, bgcolor, border) = dilate(img.!=img[1], border)
 #https://github.com/JuliaGraphics/Luxor.jl/issues/107
 
 ## weight_scale
-function cal_weight_scale(words, fontsizes, fonts, target, initialscale; kargs...)
+function cal_weight_scale(words, fontsizes, fonts, target, initialscale)
     input = initialscale
-    output = textoccupied(words, fontsizes, fonts;  kargs...)
+    output = textoccupied(words, fontsizes, fonts)
     return output, sqrt(target/output) * input# 假设output=k*input^2
 end
 
-function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, error=0.05, kargs...)
+function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, error=0.05)
     ground_size = wc.params[:groundoccupied]
     words = wc.words
     if initialscale <= 0
-        initialscale = √(ground_size/length(words)/0.4*density)
+        initialscale = √(ground_size/length(words)/0.4*density) #初始值假设字符的字面框面积占正方格比率为0.4（低估了汉字）
     end
     @assert sum(wc.weights.^2 .* length.(words)) / length(wc.weights) ≈ 1.0
     target_lower = (density - error) * ground_size
@@ -91,8 +92,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, erro
             break
         end
         wc.params[:scale] = sc
-        tg, sc = cal_weight_scale(words, getfontsizes(wc, words), fonts, 
-        density*ground_size, sc; kargs...)
+        tg, sc = cal_weight_scale(words, getfontsizes(wc, words), fonts, density*ground_size, sc)
         println("scale=$(wc.params[:scale]), density=$(tg/ground_size)")
         if target_lower <= tg <= target_upper
             break

@@ -12,7 +12,7 @@ initqtree!(wc, i; kargs...) = initqtree!.(wc, index(wc, i); kargs...)
 function initimage!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[:border])
     params = wc.params
     img, svg = prepareword(wc.words[i], getfontsizes(wc, i), params[:colors][i], params[:angles][i],
-        params[:groundsize], font=getfonts(wc, i), backgroundcolor=backgroundcolor, border=border)
+        font=getfonts(wc, i), backgroundcolor=backgroundcolor, border=border)
     wc.imgs[i] = img
     wc.svgs[i] = svg
     initqtree!(wc, i, backgroundcolor=backgroundcolor, border=border)
@@ -45,26 +45,29 @@ initimages! = initimage!
 * placement!(wc, style=:uniform)
 * placement!(wc, style=:gathering)
 * placement!(wc, style=:gathering, level=5) #`level` controls the intensity of gathering, typically between 4 and 6, defaults to 5.
-* placement!(wc, style=:gathering, level=6, p=1) #`p` refers to p-norm (Minkowski distance), defaults to 2. 
+* placement!(wc, style=:gathering, level=6, p=4) #`p` refers to p-norm (Minkowski distance), defaults to 2. 
 p=1 produces a rhombus, p=2 produces an ellipse, p>2 produces a rectangle with rounded corners. 
-When setting `style=:gathering`, you need to disable teleport (`generate!(wc, patient=-1)`).
+When you have set `style=:gathering`, you should disable teleporting in ``generate!` at the same time(`generate!(wc, patient=-1)`).
 """
 function placement!(wc::WC; style=:uniform, kargs...)
     if getstate(wc) == nameof(wordcloud)
         initimages!(wc)
     end
     @assert style in [:uniform, :gathering]
-    if style == :gathering
-        if wc.maskqtree[1][(wc.params[:groundsize].÷2)] == EMPTY && (length(wc.qtrees)<2 
-            || (length(wc.qtrees)>=2 && prod(kernelsize(wc.qtrees[2]))/prod(kernelsize(wc.qtrees[1])) < 0.5))
-            setcenter!(wc.qtrees[1],  wc.params[:groundsize] .÷ 2)
-            QTree.placement!(deepcopy(wc.maskqtree), wc.qtrees, 2:length(wc.qtrees)|>collect, 
-                roomfinder=findroom_gathering; kargs...)
+    if length(wc.qtrees) > 0
+        if style == :gathering
+            if wc.maskqtree[1][(wc.params[:groundsize].÷2)] == EMPTY && (length(wc.qtrees)<2 
+                || (length(wc.qtrees)>=2 && prod(kernelsize(wc.qtrees[2]))/prod(kernelsize(wc.qtrees[1])) < 0.5))
+                setcenter!(wc.qtrees[1],  wc.params[:groundsize] .÷ 2)
+                ind = QTree.placement!(deepcopy(wc.maskqtree), wc.qtrees, 2:length(wc.qtrees)|>collect, 
+                    roomfinder=findroom_gathering; kargs...)
+            else
+                ind = QTree.placement!(deepcopy(wc.maskqtree), wc.qtrees, roomfinder=findroom_gathering; kargs...)
+            end
         else
-            QTree.placement!(deepcopy(wc.maskqtree), wc.qtrees, roomfinder=findroom_gathering; kargs...)
+            ind = QTree.placement!(deepcopy(wc.maskqtree), wc.qtrees, roomfinder=findroom_uniform; kargs...)
         end
-    else
-        QTree.placement!(deepcopy(wc.maskqtree), wc.qtrees, roomfinder=findroom_rand; kargs...)
+        if ind === nothing error("no room for placement") end
     end
     wc.params[:state] = nameof(placement!)
     wc
@@ -85,8 +88,8 @@ end
 * wc: the wordcloud to train
 * nepoch: training epoch nums
 # Keyword Args
-* retry: shrink & retrain times, default 3
-* patient: number of epochs before teleporting
+* retry: shrink & retrain times, defaults to 3, set to `1` to disable shrinking
+* patient: number of epochs before teleporting, set to `-1` to disable teleporting
 * trainer: appoint a training engine
 """
 function generate!(wc::WC, args...; retry=3, krags...)
@@ -96,9 +99,12 @@ function generate!(wc::WC, args...; retry=3, krags...)
     ep, nc = -1, -1
     for r in 1:retry
         if r != 1
-            rescale!(wc, 0.95)
+            rescale!(wc, 0.97)
+            dens = textoccupied(getwords(wc), getfontsizes(wc), getfonts(wc))/wc.params[:groundoccupied]
+            println("#$r. try scale = $(wc.params[:scale]). The density is reduced to $dens")
+        else
+            print("#$r. scale = $(wc.params[:scale])")
         end
-        println("#$r. scale = $(wc.params[:scale])")
         ep, nc = train!(wc.qtrees, wc.maskqtree, args...; krags...)
         wc.params[:epoch] += ep
         if nc == 0
@@ -110,7 +116,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
         wc.params[:state] = nameof(generate!)
         @assert isempty(outofbounds(wc.maskqtree, wc.qtrees))
     else #check
-        colllist = first.(listcollision(wc.qtrees, wc.maskqtree))
+        colllist = first.(batchcollision(wc.qtrees, wc.maskqtree))
         get_text(i) = i>0 ? wc.words[i] : "#MASK#"
         collwords = [(get_text(i), get_text(j)) for (i,j) in colllist]
         if length(colllist) > 0

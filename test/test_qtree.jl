@@ -32,7 +32,7 @@ testqtree = WordCloud.testqtree
     words = [Random.randstring(rand(1:8)) for i in 1:rand(100:1000)]
     weights = randexp(length(words)) .* 1000 .+ randexp(length(words)) .* 200 .+ rand(20:100, length(words));
     wc = wordcloud(words, weights, density=0.7)
-    clq = WordCloud.QTree.listcollision_qtree(wc.qtrees, wc.maskqtree)
-    cln = WordCloud.QTree.listcollision_native(wc.qtrees, wc.maskqtree)
+    clq = WordCloud.QTree.batchcollision_qtree(wc.qtrees, wc.maskqtree)
+    cln = WordCloud.QTree.batchcollision_native(wc.qtrees, wc.maskqtree)
     @test Set(first.(clq)) == Set(first.(cln))
 end
