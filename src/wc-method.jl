@@ -47,7 +47,7 @@ initimages! = initimage!
 * placement!(wc, style=:gathering, level=5) #`level` controls the intensity of gathering, typically between 4 and 6, defaults to 5.
 * placement!(wc, style=:gathering, level=6, p=4) #`p` refers to p-norm (Minkowski distance), defaults to 2. 
 p=1 produces a rhombus, p=2 produces an ellipse, p>2 produces a rectangle with rounded corners. 
-When you have set `style=:gathering`, you should disable teleporting in ``generate!` at the same time(`generate!(wc, patient=-1)`).
+When you have set `style=:gathering`, you should disable teleporting in `generate!` at the same time(`generate!(wc, patient=-1)`).
 """
 function placement!(wc::WC; style=:uniform, kargs...)
     if getstate(wc) == nameof(wordcloud)
