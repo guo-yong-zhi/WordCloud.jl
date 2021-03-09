@@ -23,9 +23,9 @@ function qcode(Q, i)
     c1 | c2 | c3 | c4
 end
 qcode!(Q, i) = @inbounds Q[i] = qcode(Q, i)
-decode(c) = [0., 1., 0.5][c .& 0x03]
+decode(c) = [0., 1., 0.5][c]
 
-const FULL = 0xaa; EMPTY = 0x55; HALF = 0xff
+const FULL = 0x02; EMPTY = 0x01; HALF = 0x03
 
 abstract type AbstractStackedQtree end
 function Base.getindex(t::AbstractStackedQtree, l::Integer) end

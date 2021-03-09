@@ -94,6 +94,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, erro
         wc.params[:scale] = sc
         tg, sc = cal_weight_scale(words, getfontsizes(wc, words), fonts, density*ground_size, sc)
         println("scale=$(wc.params[:scale]), density=$(tg/ground_size)")
+        @assert sc < 50initialscale #防止全空白words的输入，计算出sc过大渲染字体耗尽内存
         if target_lower <= tg <= target_upper
             break
         end

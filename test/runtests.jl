@@ -17,7 +17,7 @@ include("test_textprocessing.jl")
     generate!(wc)
     placement!(wc)
     generate!(wc, 100, optimiser=(t, Δ)->Δ./4, patient=5, retry=5)
-    paint(wc, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2))
+    paint(wc, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2), ratio=0.5)
     paint(wc, "test.svg")
     @test isempty(WordCloud.outofbounds(wc.maskqtree, wc.qtrees))
 
@@ -33,12 +33,14 @@ include("test_textprocessing.jl")
 
     words = ["." for i in 1:500]
     weights = [1 for i in 1:length(words)]
-    
-    @test_throws ErrorException begin
+    @test_throws ErrorException begin #no room
         wc = wordcloud(words, weights, mask=shape(ellipse, 5, 5, color=0.95, backgroundsize=(10,10)), density=1000, angles=0)
         placement!(wc)
     end
-    
+    @test_throws AssertionError wordcloud(["1"],[2,3], density=0.1)|>generate! #length unmatch
+    @test_throws AssertionError wordcloud(String[],Int[], density=0.1)|>generate! #empty inputs
+    @test_throws AssertionError wordcloud([" ", " "],[2.0, 1], density=0.1) #blank words
+
     wc = wordcloud(
             processtext(open("../res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxnum=300), 
             mask = loadmask("../res/alice_mask.png", color="#faeef8", backgroundcolor=0.97),

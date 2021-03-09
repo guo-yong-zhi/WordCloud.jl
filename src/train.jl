@@ -34,7 +34,7 @@ near(a::Integer, b::Integer, r=1) = a-r:a+r, b-r:b+r
 near(m::AbstractMatrix, a::Integer, b::Integer, r=1) = @view m[near(a, b, r)...]
 const DIRECTKERNEL = collect.(Iterators.product(-1:1,-1:1))
 const DECODETABLE = [0, 2, 1]
-decode2(c) = DECODETABLE[c.&0x03]
+decode2(c) = DECODETABLE[c]
 whitesum(m::AbstractMatrix) = sum(DIRECTKERNEL .* m)
 whitesum(t::ShiftedQtree, l, a, b) = whitesum(decode2(near(t[l],a,b)))
 # function intlog2(x::Float64) #not safe, x can't be nan or inf
