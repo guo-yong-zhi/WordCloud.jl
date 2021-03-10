@@ -91,7 +91,7 @@ end
 
 ColItemType = Pair{Tuple{Int,Int},Tuple{Int,Int,Int}}
 function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree, 
-        indpairs::Vector{<:Union{Vector, Tuple}}; collist=Vector{ColItemType}(),
+        indpairs; collist=Vector{ColItemType}(),
         queue=Vector{Tuple{Int,Int,Int}}(), at=(levelnum(qtrees[1]), 1, 1))
     getqtree(i) = i==0 ? mask : qtrees[i]
     for (i1, i2) in indpairs
@@ -105,7 +105,7 @@ function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtre
     collist
 end
 function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree, 
-    indpairs::Vector{Tuple{Tuple{Int,Int},Tuple{Int,Int,Int}}}; collist=Vector{ColItemType}(),
+    indpairs::Vector{Tuple{Tuple{Integer,Integer},Tuple{Integer,Integer,Integer}}}; collist=Vector{ColItemType}(),
     queue=Vector{Tuple{Int,Int,Int}}())
     getqtree(i) = i==0 ? mask : qtrees[i]
     for ((i1, i2), at) in indpairs
@@ -113,19 +113,19 @@ function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtre
         push!(queue, at)
         cp = collision_bfs_rand(getqtree(i1), getqtree(i2), queue)
         if cp[1] >= 0
-            push!(collist, (i1, i2)=>cp)
+            push!(collist, (i1,i2)=>cp)
         end
     end
     collist
 end
 function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree, 
-    inds=0:length(qtrees); collist=Vector{ColItemType}(), 
+    inds::AbstractVector{<:Integer}=0:length(qtrees); collist=Vector{ColItemType}(), 
     queue=Vector{Tuple{Int,Int,Int}}(), at=(levelnum(qtrees[1]), 1, 1))
-   indpairs = combinations(inds, 2) |> collect |> shuffle!
+   indpairs = combinations(inds, 2)
    batchcollision_native(qtrees, mask, indpairs, collist=collist, at=at)
 end
 function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree, 
-    inds::AbstractSet; kargs...)
+    inds::AbstractSet{<:Integer}; kargs...)
    batchcollision_native(qtrees, mask, inds|>collect; kargs...)
 end
 
@@ -284,7 +284,6 @@ function placement!(ground, sortedtrees, index::Number; kargs...)
         overlap!(ground, sortedtrees[i])
     end
     placement!(ground, sortedtrees[index]; kargs...)
-    # return ind
 end
 function placement!(ground, sortedtrees, indexes; kargs...)
     for i in 1:length(sortedtrees)
@@ -376,13 +375,11 @@ function batchcollision_qtree(qtrees::AbstractVector, mask::AbstractStackedQtree
         loctree = popfirst!(nodequeue)
         if length(loctree.value.loc) > 1
 #             @show length(loctree.value.loc), length(loctree.value.cumloc)
-            indpairs = combinations(loctree.value.loc, 2) |> collect
-            indpairs = [(min(p...), max(p...)) for p in indpairs] |> shuffle!
+            indpairs = combinations(loctree.value.loc, 2)
             batchcollision_native(qtrees, mask, indpairs, collist=collist, queue=queue, at=loctree.value.ind)
         end
         if length(loctree.value.loc) > 0 && length(loctree.value.cumloc) > 0
-            indpairs = Iterators.product(loctree.value.cumloc, loctree.value.loc) |> collect |> vec
-            indpairs = [(min(p...), max(p...)) for p in indpairs] |> shuffle!
+            indpairs = Iterators.product(loctree.value.cumloc, loctree.value.loc)
             batchcollision_native(qtrees, mask, indpairs, collist=collist, queue=queue, at=loctree.value.ind)
         end
         for c in loctree.children

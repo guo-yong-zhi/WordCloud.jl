@@ -1,6 +1,6 @@
 function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[:border])
     img = wc.imgs[i]
-    mimg = wordmask(img, backgroundcolor, border) 
+    mimg = wordmask(img, backgroundcolor, border)
     t = ShiftedQtree(mimg, wc.params[:groundsize])
     c = isassigned(wc.qtrees, i) ? getcenter(wc.qtrees[i]) : wc.params[:groundsize] .÷ 2
     setcenter!(t, c)
@@ -19,7 +19,7 @@ function initimage!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[
     nothing
 end
 initimage!(wc, i; kargs...) = initimage!.(wc, index(wc, i); kargs...)
-function initimage!(wc::WC; maxiter=5, error=0.01)
+function initimage!(wc::WC; maxiter=5, error=0.02)
     params = wc.params
     mask = wc.mask
     
@@ -103,7 +103,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
             dens = textoccupied(getwords(wc), getfontsizes(wc), getfonts(wc))/wc.params[:groundoccupied]
             println("#$r. try scale = $(wc.params[:scale]). The density is reduced to $dens")
         else
-            print("#$r. scale = $(wc.params[:scale])")
+            println("#$r. scale = $(wc.params[:scale])")
         end
         ep, nc = train!(wc.qtrees, wc.maskqtree, args...; krags...)
         wc.params[:epoch] += ep
@@ -111,7 +111,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
             break
         end
     end
-    @show ep, nc
+    println("ran $ep epochs, have $nc collections")
     if nc == 0
         wc.params[:state] = nameof(generate!)
         @assert isempty(outofbounds(wc.maskqtree, wc.qtrees))
@@ -121,7 +121,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
         collwords = [(get_text(i), get_text(j)) for (i,j) in colllist]
         if length(colllist) > 0
             wc.params[:completed] = false
-            println("have $(length(colllist)) collisions.",
+            println("have $(length(colllist)) collision.",
             " try setting a larger `nepoch` and `retry`, or lower `density` in `wordcloud` to fix that")
             println("$collwords")
         else

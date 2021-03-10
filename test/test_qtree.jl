@@ -34,5 +34,5 @@ testqtree = WordCloud.testqtree
     wc = wordcloud(words, weights, density=0.7)
     clq = WordCloud.QTree.batchcollision_qtree(wc.qtrees, wc.maskqtree)
     cln = WordCloud.QTree.batchcollision_native(wc.qtrees, wc.maskqtree)
-    @test Set(first.(clq)) == Set(first.(cln))
+    @test Set(Set.(first.(clq))) == Set(Set.(first.(cln)))
 end

@@ -9,38 +9,35 @@ include("test_textprocessing.jl")
 
 
 @testset "WordCloud.jl" begin
-    # @show pwd()
-    words = [Random.randstring(rand(1:8)) for i in 1:rand(100:1000)]
-    weights = randexp(length(words)) .* 1000 .+ randexp(length(words)) .* 200 .+ rand(20:100, length(words));
-    wc = wordcloud(words, weights, density=0.45)
-    paint(wc)
-    generate!(wc)
-    placement!(wc)
-    generate!(wc, 100, optimiser=(t, Δ)->Δ./4, patient=5, retry=5)
-    paint(wc, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2), ratio=0.5)
-    paint(wc, "test.svg")
-    @test isempty(WordCloud.outofbounds(wc.maskqtree, wc.qtrees))
-
-    wordcloud(["singleword"=>12], maskimg=shape(box, 200, 150, 40, color=0.15), density=0.45, run=generate!) #singleword & Pair
-    wordcloud(processtext("giving a single word is ok. giving several words is ok too"), 
-            maskimg=shape(box, 20, 15, 0, color=0.15), density=0.45, transparentcolor=(1,1,1,0)) #String & small mask
-    placement!(wc, style=:gathering)
-
+    #@show pwd()
+    # overall test
     wc = runexample(:random)
     @test getstate(wc) == :generate!
+    @test isempty(WordCloud.outofbounds(wc.maskqtree, wc.qtrees))
+    paint(wc)
+    paint(wc, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2), ratio=0.5)
+    paint(wc, "test.svg")
     @test wc.params[:groundoccupied] == WordCloud.occupied(WordCloud.QTree.kernel(wc.maskqtree[1]), WordCloud.QTree.FULL)
     @test wc.params[:groundoccupied] == WordCloud.occupied(wc.mask .!= wc.mask[1])
-
+    
+    # placement!
+    placement!(wc, style=:gathering)
     words = ["." for i in 1:500]
     weights = [1 for i in 1:length(words)]
     @test_throws ErrorException begin #no room
         wc = wordcloud(words, weights, mask=shape(ellipse, 5, 5, color=0.95, backgroundsize=(10,10)), density=1000, angles=0)
         placement!(wc)
     end
+
+    # wordcloud factory
+    wc = wordcloud(["singleword"=>12], maskimg=shape(box, 200, 150, 40, color=0.15), density=0.45, run=generate!) #singleword & Pair
+    wc = wordcloud(processtext("giving a single word is ok. giving several words is ok too"), 
+            maskimg=shape(box, 20, 15, 0, color=0.15), density=0.45, transparentcolor=(1,1,1,0)) #String & small mask
     @test_throws AssertionError wordcloud(["1"],[2,3], density=0.1)|>generate! #length unmatch
     @test_throws AssertionError wordcloud(String[],Int[], density=0.1)|>generate! #empty inputs
     @test_throws AssertionError wordcloud([" ", " "],[2.0, 1], density=0.1) #blank words
 
+    # get&set
     wc = wordcloud(
             processtext(open("../res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxnum=300), 
             mask = loadmask("../res/alice_mask.png", color="#faeef8", backgroundcolor=0.97),

@@ -23,4 +23,13 @@
     @test WordCloud.Trainer.take(lru, 3) == [1,2,4]
     push!.(lru, 7:9)
     @test WordCloud.Trainer.take(lru, 3) == [9,8,7]
+
+    words = [Random.randstring(rand(1:8)) for i in 1:rand(100:1000)]
+    weights = randexp(length(words)) .* 1000 .+ randexp(length(words)) .* 200 .+ rand(20:100, length(words));
+    wc = wordcloud(words, weights, density=0.45)
+    generate!(wc, trainer=WordCloud.trainepoch_P2!)
+    placement!(wc)
+    generate!(wc, trainer=WordCloud.trainepoch_Px!)
+    placement!(wc)
+    generate!(wc, 100, optimiser=(t, Δ)->Δ./4, patient=5, retry=5)
 end

@@ -114,7 +114,7 @@ function step_ind!(mask, qtrees, i1, i2, collisionpoint, optimiser)
 end
 
 function step_inds!(mask, qtrees, collist::Vector{QTree.ColItemType}, optimiser)
-    for ((i1, i2), cp) in collist
+    for ((i1, i2), cp) in shuffle!(collist)
 #         @show cp
         # @assert cp[1] > 0
         step_ind!(mask, qtrees, i1, i2, cp, optimiser)
@@ -285,7 +285,7 @@ trainepoch_P!(s::Symbol) = get(Dict(:patient=>10, :nepoch=>100), s, nothing)
 function trainepoch_P!(qtrees, mask; optimiser=(t, Δ)->Δ./4, nearlevel=-levelnum(qtrees[1])/2, queue=Vector{Tuple{Int, Int, Int}}(), 
     nearpool = Vector{Tuple{Int,Int}}(), collpool = Vector{Tuple{Int, Int}}())
     nearlevel = min(-1, nearlevel)
-    indpairs = combinations(0:length(qtrees), 2) |> collect |> shuffle!
+    indpairs = combinations(0:length(qtrees), 2) |> collect
     # @time 
     nsp = filttrain!(qtrees, mask, indpairs, empty!(nearpool), nearlevel, optimiser=optimiser, queue=queue)
     # @show nsp
@@ -324,7 +324,7 @@ function trainepoch_P2!(qtrees, mask; optimiser=(t, Δ)->Δ./4,
     nearlevel1 = min(-1, nearlevel1)
     nearlevel2 = min(-1, nearlevel2)
 
-    indpairs = combinations(0:length(qtrees), 2) |> collect |> shuffle!
+    indpairs = combinations(0:length(qtrees), 2) |> collect
     nsp = filttrain!(qtrees, mask, indpairs, empty!(nearpool1), nearlevel1, optimiser=optimiser, queue=queue)
     # @show nsp
     if nsp == 0 return 0 end 
@@ -391,42 +391,6 @@ function trainepoch_Px!(qtrees, mask;
     nc
 end
 
-function max_collisional_index(qtrees, mask)
-    l = length(qtrees)
-    getqtree(i) = i==0 ? mask : qtrees[i]
-    for i in l:-1:1
-        for j in 0:i-1
-            cp = collision(getqtree(i), getqtree(j))
-            if cp[1] >= 0
-                return i
-            end
-        end
-    end
-    nothing
-end
-
-function max_collisional_index_rand(qtrees, mask; collpool)
-    l = length(collpool)
-    b = l - floor(Int, l / 8 * randexp()) #从末尾1/8起
-    sort!(collpool)
-    getqtree(i) = i==0 ? mask : qtrees[i]
-    for k in b:-1:1
-        i, j = collpool[k]
-        cp = collision(getqtree(i), getqtree(j))
-        if cp[1] >= 0
-            return j
-        end
-    end
-    for k in l:-1:b+1
-        i, j = collpool[k]
-        cp = collision(getqtree(i), getqtree(j))
-        if cp[1] >= 0
-            return j
-        end
-    end
-    return nothing
-end
-
 function collisional_indexes_rand(qtrees, mask, collpool::Vector{Tuple{Int,Int}})
     cinds = Vector{Int}()
     l = length(collpool)
@@ -437,16 +401,17 @@ function collisional_indexes_rand(qtrees, mask, collpool::Vector{Tuple{Int,Int}}
     if !any(keep)
         keep[end] = 1
     end
-    sort!(collpool, by=x->x[2])
+    sort!(collpool, by=maximum)
 #     @show collpool keep
     getqtree(i) = i==0 ? mask : qtrees[i]
     for (i, j) in @view collpool[keep]
-        if j in cinds
+        mij = max(i, j)
+        if mij in cinds
             continue
         end
         cp = collision(getqtree(i), getqtree(j))
         if cp[1] >= 0
-            push!(cinds, j)
+            push!(cinds, mij)
         end
     end
     return cinds
@@ -502,7 +467,7 @@ function train!(ts, maskqt, nepoch::Number=-1, args...;
             if cinds !== nothing && length(cinds)>0
                 reset!.(optimiser, ts[cinds])
             end
-            println("@epoch $ep, count $count collision $nc($(length(collpool))) teleport $cinds to $(getshift.(ts[cinds]))")
+            println("@epoch $ep <waited $count>, $nc($(length(collpool))) collisions, teleport $cinds to $(getshift.(ts[cinds]))")
             count = 0
             cinds_set = Set(cinds)
             if last_cinds == cinds_set
