@@ -51,6 +51,7 @@ function maskqtree(pic::AbstractMatrix, bgcolor=pic[1])
     maskqtree(pic)
 end
 function preparebackground(img, bgcolor)
+    bgcolor = convert(eltype(img), parsecolor(bgcolor))
     maskqt = maskqtree(img, bgcolor) |> buildqtree!
     groundsize = size(maskqt[1], 1)
     groundoccupied = occupied(img, bgcolor)
@@ -64,6 +65,7 @@ function prepareword(word, fontsize, color, angle; backgroundcolor=(0,0,0,0), fo
 end
 
 wordmask(img, bgcolor, border) = dilate(img.!=img[1], border) 
+#use `img[1]` instead of `convert(eltype(img), parsecolor(bgcolor))`
 #https://github.com/JuliaGraphics/Luxor.jl/issues/107
 
 ## weight_scale

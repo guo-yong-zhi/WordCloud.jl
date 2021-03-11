@@ -154,18 +154,18 @@ end
 function outline(img; transparentcolor=:auto, color="black", linewidth=1)
     img = deepcopy(img)
     transparentcolor = transparentcolor==:auto ? img[1] : parsecolor(transparentcolor)
-    mask = img .!== convert(typeof(img[1]), transparentcolor)
+    mask = img .!== convert(eltype(img), transparentcolor)
     mask2 = dilate(mask, 1)
     for r in 2:linewidth #ok with small linewidth
         mask2 .|= dilate(mask, r)
     end
     border = mask2 .& (.!mask)
-    img[border] .= convert(typeof(img[1]), parsecolor(color))
+    img[border] .= convert(eltype(img), parsecolor(color))
     img
 end
 
 function padding(img, r=0.1; color=img[1])
-    color = convert(typeof(img[1]), parsecolor(color))
+    color = convert(eltype(img), parsecolor(color))
     p = round.(Int, size(img) .* r)
     r = fill(color, size(img) .+ 2 .* p)
     overlay!(r, img, reverse(p)...)

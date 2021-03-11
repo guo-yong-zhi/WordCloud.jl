@@ -33,7 +33,7 @@ Positional arguments are used to specify words and weights, and can be in differ
 * mask = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
 * mask = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
 * mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #see doc of `shape`  
-* transparentcolor = ARGB32(0,0,0,0) #set the transparent color in mask  
+* transparentcolor = (1,0,0) #set the transparent color in mask  
 ### other keyword arguments
 The keyword argument `run` is a function. It will be called after the `wordcloud` object constructed.
 * run = placement! #default setting, will initialize word's position
@@ -66,7 +66,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
         maskcolor = chooseabgcolor(colors_o)
         @show maskcolor
         mask = randommask(maskcolor)
-        transparentcolor = get(params, :transparentcolor, ARGB(1, 1, 1, 0)) |> parsecolor
+        transparentcolor = get(params, :transparentcolor, ARGB(1, 1, 1, 0))
     else
         mask = params[:mask]
     end
@@ -75,7 +75,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
         svgmask = mask
         mask = svg2bitmap(mask)
     end
-    transparentcolor = get(params, :transparentcolor, mask[1]) |> parsecolor
+    transparentcolor = get(params, :transparentcolor, mask[1])
     mask, maskqtree, groundsize, groundoccupied = preparebackground(mask, transparentcolor)
     params[:groundsize] = groundsize
     params[:groundoccupied] = groundoccupied

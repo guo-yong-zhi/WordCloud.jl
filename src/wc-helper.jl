@@ -68,16 +68,16 @@ function loadmask(img::AbstractMatrix, args...; color=:original, backgroundcolor
     if color!=:original || backgroundcolor!=:original
         img = ARGB.(img)
         transparentcolor = transparentcolor==:auto ? img[1] : parsecolor(transparentcolor)
-        mask = img.!=transparentcolor
+        mask = img .!= convert(eltype(img), transparentcolor)
         if color!=:original
             color = parsecolor(color)
             m = @view img[mask]
-            m .= convert.(typeof(img[1]), Colors.alphacolor.(color, Colors.alpha.(m))) #保持透明度
+            m .= convert.(eltype(img), Colors.alphacolor.(color, Colors.alpha.(m))) #保持透明度
         end
         if backgroundcolor!=:original
             backgroundcolor = parsecolor(backgroundcolor)
             m = @view img[.~mask]
-            m .= convert.(typeof(img[1]), Colors.alphacolor.(backgroundcolor, Colors.alpha.(m))) #保持透明度
+            m .= convert.(eltype(img), Colors.alphacolor.(backgroundcolor, Colors.alpha.(m))) #保持透明度
         end
     end
     if !(isempty(args) && isempty(kargs))
