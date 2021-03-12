@@ -328,6 +328,10 @@ function locate!(qt::AbstractStackedQtree, loctree::QtreeNode=LocQtree((levelnum
     if qt[ind] == EMPTY
         return loctree
     end
+    if ind[1] == 1
+        push!(loctree.value.loc, label)
+        return loctree
+    end
     unempty = (-1, -1, -1)
     unemptyci = -1
     for ci in 1:4

@@ -124,14 +124,12 @@ function generate!(wc::WC, args...; retry=3, krags...)
             println("have $(length(colllist)) collisions.",
             " try setting a larger `nepoch` and `retry`, or lower `density` in `wordcloud` to fix that")
             println("$collwords")
-        else
-            wc.params[:state] = nameof(generate!)
         end
     end
     wc
 end
 
-function generate_animation!(wc::WC, args...; outputdir="gifresult", overwrite=false, callbackstep=1, kargs...)
+function generate_animation!(wc::WC, args...; outputdir="gifresult", overwrite=outputdir!="gifresult", callbackstep=1, kargs...)
     if overwrite
         try rm(outputdir, force=true, recursive=true) catch end
     end

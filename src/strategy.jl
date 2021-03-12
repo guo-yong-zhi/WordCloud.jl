@@ -37,8 +37,9 @@ end
 
 ## prepare
 function maskqtree(pic::AbstractMatrix{UInt8})
-    m = log2(max(size(pic)...)*1.1)
-    s = 2^ceil(Int, m)
+    ms = max(size(pic)...)
+    b = max(ms * 0.024, 20)
+    s = 2^ceil(Int, log2(ms+b))
     qt = ShiftedQtree(pic, s, default=QTree.FULL)
 #     @show size(pic),m,s
     a, b = size(pic)

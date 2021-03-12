@@ -420,18 +420,20 @@ function collisional_indexes_rand(qtrees, mask, collpool::Vector{QTree.ColItemTy
     collisional_indexes_rand(qtrees, mask, first.(collpool))
 end
 
-function teleport!(ts, maskqt, collpool, args...; kargs...)
+function teleport!(ts, maskqt, collpool=nothing, args...; kargs...)
     outinds = outofbounds(maskqt, ts)
     if !isempty(outinds)
-        @show outinds
         placement!(deepcopy(maskqt), ts, outinds)
         return outinds
     end
-    cinds = collisional_indexes_rand(ts, maskqt, collpool, args...; kargs...)
-    if cinds !== nothing && length(cinds)>0
-        placement!(deepcopy(maskqt), ts, cinds)
+    if collpool !== nothing
+        cinds = collisional_indexes_rand(ts, maskqt, collpool, args...; kargs...)
+        if cinds !== nothing && length(cinds)>0
+            placement!(deepcopy(maskqt), ts, cinds)
+        end
+        return cinds
     end
-    return cinds
+    return outinds
 end
 
 function train!(ts, maskqt, nepoch::Number=-1, args...; 
@@ -481,7 +483,14 @@ function train!(ts, maskqt, nepoch::Number=-1, args...;
             callbackfun(ep)
         end
         if nc == 0
-            return ep, nc
+            outinds = teleport!(ts, maskqt)
+            lout = length(outinds)
+            if lout == 0
+                return ep, nc
+            else
+                println("$outinds out of bounds")
+                nc += lout
+            end
         end
         if teleport_count >= 10
             println("The teleport strategy failed after $ep epochs")
