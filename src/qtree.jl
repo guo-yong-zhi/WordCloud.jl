@@ -9,20 +9,16 @@ using Combinatorics
 
 const PERM4 = permutations(1:4)|>collect
 @assert length(PERM4) == 24
-shuffle4() = @inbounds PERM4[rand(1:24)]
-function child(ind::Tuple{Int,Int,Int}, n::Int)
+@inline shuffle4() = @inbounds PERM4[rand(1:24)]
+@inline function child(ind::Tuple{Int,Int,Int}, n::Int)
     @inbounds (ind[1] - 1, 2ind[2] - n & 0x01, 2ind[3] - (n & 0x02) >> 1)
 end
-parent(ind::Tuple{Int,Int,Int}) = (ind[1] + 1, (ind[2] + 1) ÷ 2, (ind[3] + 1) ÷ 2)
+@inline parent(ind::Tuple{Int,Int,Int}) = @inbounds (ind[1] + 1, (ind[2] + 1) ÷ 2, (ind[3] + 1) ÷ 2)
 
-function qcode(Q, i)
-    @inbounds c1 = Q[child(i, 1)] |> first
-    @inbounds c2 = Q[child(i, 2)] |> first
-    @inbounds c3 = Q[child(i, 3)] |> first
-    @inbounds c4 = Q[child(i, 4)] |> first
-    c1 | c2 | c3 | c4
+@inline function qcode(Q, i)
+    _getindex(Q, child(i, 1)) | _getindex(Q, child(i, 2)) | _getindex(Q, child(i, 3)) | _getindex(Q, child(i, 4))
 end
-qcode!(Q, i) = @inbounds Q[i] = qcode(Q, i)
+@inline qcode!(Q, i) = _setindex!(Q, qcode(Q, i), i)
 decode(c) = [0., 1., 0.5][c]
 
 const FULL = 0x02; EMPTY = 0x01; HALF = 0x03
@@ -33,6 +29,12 @@ Base.getindex(t::AbstractStackedQtree, l, r, c) = t[l][r, c]
 Base.getindex(t::AbstractStackedQtree, inds::Tuple{Int,Int,Int}) = t[inds...]
 Base.setindex!(t::AbstractStackedQtree, v, l, r, c) =  t[l][r, c] = v
 Base.setindex!(t::AbstractStackedQtree, v, inds::Tuple{Int,Int,Int}) = t[inds...] = v
+@inline _getindex(t::AbstractStackedQtree, inds) = _getindex(t, inds...)
+@inline _getindex(t::AbstractStackedQtree, l, r, c) = @inbounds t[l][r, c]
+@inline _setindex!(t::AbstractStackedQtree, v, inds) = _setindex!(t, v, inds...)
+@inline _setindex!(t::AbstractStackedQtree, v, l, r, c) = @inbounds t[l][r, c] = v
+#Base.setindex!用@inline无法成功内联致@propagate_inbounds失效，
+#无法传递上层的@inbounds，故专门实现一个inbounds版的_setindex!
 function levelnum(t::AbstractStackedQtree) end
 Base.lastindex(t::AbstractStackedQtree) = levelnum(t)
 Base.size(t::AbstractStackedQtree) = levelnum(t) > 0 ? size(t[1]) : (0,)
@@ -111,7 +113,7 @@ function Base.getindex(l::PaddedMat, r, c)
     end
     return l.default #负索引、超界索引返回default
 end
-function Base.setindex!(l::PaddedMat, v, r, c)
+Base.@propagate_inbounds function Base.setindex!(l::PaddedMat, v, r, c)
     l.kernel[r - l.rshift, c - l.cshift] = v #kernel自身有边界检查
 end
 
@@ -149,7 +151,7 @@ function ShiftedQtree(pic::AbstractMatrix, args...; kargs...)
     pic = map(x -> x == 0 ? EMPTY : FULL, pic)
     ShiftedQtree(pic, args...; kargs...)
 end
-Base.getindex(t::ShiftedQtree, l::Integer) = t.layers[l]
+Base.@propagate_inbounds Base.getindex(t::ShiftedQtree, l::Integer) = t.layers[l]
 levelnum(t::ShiftedQtree) = length(t.layers)
 function buildqtree!(t::ShiftedQtree, layer=2)
     for l in layer:levelnum(t)
