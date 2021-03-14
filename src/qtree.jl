@@ -1,5 +1,5 @@
 module QTree
-export AbstractStackedQtree, StackedQtree, ShiftedQtree, buildqtree!,
+export AbstractStackQtree, StackQtree, ShiftedQtree, buildqtree!,
     shift!, setrshift!,　setcshift!, setshift!, getshift, getcenter, setcenter!,
     collision, collision_bfs, collision_bfs_rand, batchcollision,
     findroom_uniform, findroom_gathering, levelnum, outofbounds, kernelsize, placement!, decode
@@ -23,30 +23,30 @@ decode(c) = [0., 1., 0.5][c]
 
 const FULL = 0x02; EMPTY = 0x01; HALF = 0x03
 
-abstract type AbstractStackedQtree end
-function Base.getindex(t::AbstractStackedQtree, l::Integer) end
-Base.getindex(t::AbstractStackedQtree, l, r, c) = t[l][r, c]
-Base.getindex(t::AbstractStackedQtree, inds::Tuple{Int,Int,Int}) = t[inds...]
-Base.setindex!(t::AbstractStackedQtree, v, l, r, c) =  t[l][r, c] = v
-Base.setindex!(t::AbstractStackedQtree, v, inds::Tuple{Int,Int,Int}) = t[inds...] = v
-@inline _getindex(t::AbstractStackedQtree, inds) = _getindex(t, inds...)
-@inline _getindex(t::AbstractStackedQtree, l, r, c) = @inbounds t[l][r, c]
-@inline _setindex!(t::AbstractStackedQtree, v, inds) = _setindex!(t, v, inds...)
-@inline _setindex!(t::AbstractStackedQtree, v, l, r, c) = @inbounds t[l][r, c] = v
-#Base.setindex!用@inline无法成功内联致@propagate_inbounds失效，
+abstract type AbstractStackQtree end
+function Base.getindex(t::AbstractStackQtree, l::Integer) end
+Base.getindex(t::AbstractStackQtree, l, r, c) = t[l][r, c]
+Base.getindex(t::AbstractStackQtree, inds::Tuple{Int,Int,Int}) = t[inds...]
+Base.setindex!(t::AbstractStackQtree, v, l, r, c) =  t[l][r, c] = v
+Base.setindex!(t::AbstractStackQtree, v, inds::Tuple{Int,Int,Int}) = t[inds...] = v
+@inline _getindex(t::AbstractStackQtree, inds) = _getindex(t, inds...)
+@inline _getindex(t::AbstractStackQtree, l, r, c) = @inbounds _getindex(t[l], r, c)
+@inline _setindex!(t::AbstractStackQtree, v, inds) = _setindex!(t, v, inds...)
+@inline _setindex!(t::AbstractStackQtree, v, l, r, c) = @inbounds t[l][r, c] = v
+#Base.setindex!中调用@boundscheck时用@inline无法成功内联致@propagate_inbounds失效，
 #无法传递上层的@inbounds，故专门实现一个inbounds版的_setindex!
-function levelnum(t::AbstractStackedQtree) end
-Base.lastindex(t::AbstractStackedQtree) = levelnum(t)
-Base.size(t::AbstractStackedQtree) = levelnum(t) > 0 ? size(t[1]) : (0,)
-Base.broadcastable(t::AbstractStackedQtree) = Ref(t)
+function levelnum(t::AbstractStackQtree) end
+Base.lastindex(t::AbstractStackQtree) = levelnum(t)
+Base.size(t::AbstractStackQtree) = levelnum(t) > 0 ? size(t[1]) : (0,)
+Base.broadcastable(t::AbstractStackQtree) = Ref(t)
 
-################ StackedQtree
-struct StackedQtree{T <: AbstractVector{<:AbstractMatrix{UInt8}}} <: AbstractStackedQtree
+################ StackQtree
+struct StackQtree{T <: AbstractVector{<:AbstractMatrix{UInt8}}} <: AbstractStackQtree
     layers::T
 end
 
-StackedQtree(l::T) where T = StackedQtree{T}(l)
-function StackedQtree(pic::AbstractMatrix{UInt8})
+StackQtree(l::T) where T = StackQtree{T}(l)
+function StackQtree(pic::AbstractMatrix{UInt8})
     m, n = size(pic)
     @assert m == n
     @assert isinteger(log2(m))
@@ -57,18 +57,18 @@ function StackedQtree(pic::AbstractMatrix{UInt8})
         m, n = size(l[end])
         push!(l, similar(pic, (m + 1) ÷ 2, (n + 1) ÷ 2))
     end
-    StackedQtree(l)
+    StackQtree(l)
 end
 
-function StackedQtree(pic::AbstractMatrix)
+function StackQtree(pic::AbstractMatrix)
     pic = map(x -> x == 0 ? EMPTY : FULL, pic)
-    StackedQtree(pic)
+    StackQtree(pic)
 end
 
-Base.getindex(t::StackedQtree, l::Integer) = t.layers[l]
-levelnum(t::StackedQtree) = length(t.layers)
+Base.getindex(t::StackQtree, l::Integer) = t.layers[l]
+levelnum(t::StackQtree) = length(t.layers)
 
-function buildqtree!(t::AbstractStackedQtree, layer=2)
+function buildqtree!(t::AbstractStackQtree, layer=2)
     for l in layer:levelnum(t)
         for r in 1:size(t[l], 1)
             for c in 1:size(t[l], 2)
@@ -88,9 +88,20 @@ mutable struct PaddedMat{T <: AbstractMatrix{UInt8}} <: AbstractMatrix{UInt8}
     default::UInt8
 end
 
-PaddedMat(l::AbstractMatrix{UInt8}, sz::Tuple{Int,Int}=size(l), rshift=0, cshift=0; default=0x00) = PaddedMat(l, sz, rshift, cshift, default)
-PaddedMat{T}(l::T, sz::Tuple{Int,Int}=size(l), rshift=0, 
-cshift=0; default=0x00) where {T <: AbstractMatrix{UInt8}} = PaddedMat(l, sz, rshift, cshift, default)
+function PaddedMat(l::T, sz::Tuple{Int,Int}=size(l), rshift=0, cshift=0; default=0x00) where {T <: AbstractMatrix{UInt8}}
+    m = PaddedMat{T}(size(l), sz, rshift, cshift; default=default)
+    m.kernel[2:end-2, 2:end-2] .= l
+    m
+end
+function PaddedMat{T}(kernelsz::Tuple{Int,Int}, sz::Tuple{Int,Int}=size(l), 
+    rshift=0, cshift=0; default=0x00) where {T <: AbstractMatrix{UInt8}}
+    k = similar(T, kernelsz.+3)
+    k[[1, end-1, end], :] .= default
+    k[:, [1, end-1, end]] .= default
+    PaddedMat(k, sz, rshift, cshift, default)
+end
+# PaddedMat{T}(l::T, sz::Tuple{Int,Int}=size(l).-2, rshift=0, 
+# cshift=0; default=0x00) where {T <: AbstractMatrix{UInt8}} = PaddedMat(l, sz, rshift, cshift; default=default)
 
 rshift!(l::PaddedMat, v) = l.rshift += v
 cshift!(l::PaddedMat, v) = l.cshift += v
@@ -102,29 +113,44 @@ getrshift(l::PaddedMat) = l.rshift
 getcshift(l::PaddedMat) = l.cshift
 getshift(l::PaddedMat) = l.rshift, l.cshift
 getdefault(l::PaddedMat) = l.default
-inkernelbounds(l::PaddedMat, r, c) = 0 < r - l.rshift <= size(l.kernel, 1) && 0 < c - l.cshift <= size(l.kernel, 2)
+function inkernelbounds(l::PaddedMat, r, c)
+    r -= l.rshift
+    c -= l.cshift
+    if r <= 0 || c <= 0
+        return false
+    end
+    m, n = kernelsize(l)
+    if r > m || c > n
+        return false
+    end
+    true
+end
 inbounds(l::PaddedMat, r, c) = 0 < r <= size(l, 1) && 0 < c  <= size(l, 2)
-kernelsize(l::PaddedMat) = size(l.kernel)
+kernelsize(l::PaddedMat) = size(l.kernel).-3
+kernelsize(l::PaddedMat, i) = size(l.kernel, i)-3
 kernel(l::PaddedMat) = l.kernel
 function Base.checkbounds(l::PaddedMat, I...) end #关闭边界检查，允许负索引、超界索引
 function Base.getindex(l::PaddedMat, r, c)
     if inkernelbounds(l, r, c)
-        return @inbounds l.kernel[r - l.rshift, c - l.cshift]
+        return @inbounds l.kernel[r - l.rshift + 1, c - l.cshift + 1]
     end
-    return l.default #负索引、超界索引返回default
+    return l.default
+end
+function _getindex(l::PaddedMat, r, c)
+    return @inbounds l.kernel[r - l.rshift + 1, c - l.cshift + 1]
 end
 Base.@propagate_inbounds function Base.setindex!(l::PaddedMat, v, r, c)
-    l.kernel[r - l.rshift, c - l.cshift] = v #kernel自身有边界检查
+    l.kernel[r - l.rshift + 1, c - l.cshift + 1] = v #kernel自身有边界检查
 end
 
 Base.size(l::PaddedMat) = l.size
 
-struct ShiftedQtree{T <: AbstractVector{<:PaddedMat}} <: AbstractStackedQtree
+struct ShiftedQtree{T <: AbstractVector{<:PaddedMat}} <: AbstractStackQtree
     layers::T
 end
 
 ShiftedQtree(l::T) where T = ShiftedQtree{T}(l)
-function ShiftedQtree(pic::PaddedMat{Array{UInt8,2}})
+function ShiftedQtree(pic::PaddedMat{T}) where T
     sz = size(pic, 1)
     @assert size(pic, 1) == size(pic, 2)
     @assert isinteger(log2(sz))
@@ -134,7 +160,7 @@ function ShiftedQtree(pic::PaddedMat{Array{UInt8,2}})
         sz ÷= 2
         m, n = m ÷ 2 + 1, n ÷ 2 + 1
 #         @show m,n
-        push!(l, PaddedMat(similar(pic, m, n), (sz, sz), default=getdefault(pic)))
+        push!(l, PaddedMat{T}((m, n), (sz, sz), default=getdefault(pic)))
     end
     ShiftedQtree(l)
 end
@@ -157,8 +183,8 @@ function buildqtree!(t::ShiftedQtree, layer=2)
     for l in layer:levelnum(t)
         m = rshift(t[l - 1])
         n = cshift(t[l - 1])
-        m2 = m ÷ 2
-        n2 = n ÷ 2
+        m2 = floor(Int, m/2)
+        n2 = floor(Int, n/2)
         setrshift!(t[l], m2)
         setcshift!(t[l], n2)
         for r in 1:kernelsize(t[l])[1]

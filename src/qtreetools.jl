@@ -1,4 +1,4 @@
-function collision(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, i=(levelnum(Q1), 1, 1))
+function collision(Q1::AbstractStackQtree, Q2::AbstractStackQtree, i=(levelnum(Q1), 1, 1))
     #     @show i
 #     @assert size(Q1) == size(Q2)
     n1 = Q1[i]
@@ -21,7 +21,7 @@ function collision(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, i=(leveln
     return r # no collision
 end
 
-function collision_bfs(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, q=[(levelnum(Q1), 1, 1)])
+function collision_bfs(Q1::AbstractStackQtree, Q2::AbstractStackQtree, q=[(levelnum(Q1), 1, 1)])
 #     @assert size(Q1) == size(Q2)
     if isempty(q)
         push!(q, (levelnum(Q1), 1, 1))
@@ -55,7 +55,7 @@ function collision_bfs(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, q=[(l
     return false, i # no collision
 end
 
-function collision_bfs_rand(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, q=[(levelnum(Q1), 1, 1)])
+function collision_bfs_rand(Q1::AbstractStackQtree, Q2::AbstractStackQtree, q=[(levelnum(Q1), 1, 1)])
 #     @assert size(Q1) == size(Q2)
     if isempty(q)
         push!(q, (levelnum(Q1), 1, 1))
@@ -77,8 +77,10 @@ function collision_bfs_rand(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, 
             ci = child(i, cn)
 #             @show cn,ci
 #             @show Q1[ci],Q2[ci]
-            if !(Q1[ci] == EMPTY || Q2[ci] == EMPTY)
-                if Q1[ci] == FULL || Q2[ci] == FULL
+            q1 = _getindex(Q1, ci)
+            q2 = _getindex(Q2, ci)
+            if !(q1 == EMPTY || q2 == EMPTY)
+                if q1 == FULL || q2 == FULL
                     return ci
                 else
                     push!(q, ci)
@@ -90,7 +92,7 @@ function collision_bfs_rand(Q1::AbstractStackedQtree, Q2::AbstractStackedQtree, 
 end
 
 ColItemType = Pair{Tuple{Int,Int},Tuple{Int,Int,Int}}
-function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree, 
+function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackQtree, 
         indpairs; collist=Vector{ColItemType}(),
         queue=Vector{Tuple{Int,Int,Int}}(), at=(levelnum(qtrees[1]), 1, 1))
     getqtree(i) = i==0 ? mask : qtrees[i]
@@ -104,7 +106,7 @@ function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtre
     end
     collist
 end
-function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree, 
+function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackQtree, 
     indpairs::Vector{Tuple{Tuple{Integer,Integer},Tuple{Integer,Integer,Integer}}}; collist=Vector{ColItemType}(),
     queue=Vector{Tuple{Int,Int,Int}}())
     getqtree(i) = i==0 ? mask : qtrees[i]
@@ -118,13 +120,13 @@ function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtre
     end
     collist
 end
-function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree, 
+function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackQtree, 
     inds::AbstractVector{<:Integer}=0:length(qtrees); collist=Vector{ColItemType}(), 
     queue=Vector{Tuple{Int,Int,Int}}(), at=(levelnum(qtrees[1]), 1, 1))
    indpairs = combinations(inds, 2)
    batchcollision_native(qtrees, mask, indpairs, collist=collist, at=at)
 end
-function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackedQtree, 
+function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackQtree, 
     inds::AbstractSet{<:Integer}; kargs...)
    batchcollision_native(qtrees, mask, inds|>collect; kargs...)
 end
@@ -135,6 +137,7 @@ function findroom_uniform(ground, q=[(levelnum(ground), 1, 1)])
     end
     while !isempty(q)
         i = popfirst!(q)
+#         @show i
         if i[1] == 1
             if ground[i] == EMPTY return i end
         else
@@ -301,7 +304,7 @@ function placement!(ground, sortedtrees, indexes; kargs...)
     ind
 end
 
-function locate(qt::AbstractStackedQtree, ind::Tuple{Int, Int, Int}=(levelnum(qt), 1, 1))
+function locate(qt::AbstractStackQtree, ind::Tuple{Int, Int, Int}=(levelnum(qt), 1, 1))
     if qt[ind] == EMPTY
         return ind
     end
@@ -323,7 +326,7 @@ LocQtreeType = QtreeNode{NamedTuple{(:loc, :cumloc, :ind),Tuple{Array{Any,1},Arr
 LocQtreeTypeInt = QtreeNode{NamedTuple{(:loc, :cumloc, :ind),Tuple{Array{Int,1},Array{Int,1}, IndType}}}
 LocQtree(ind) = LocQtreeType((loc = Vector(), cumloc = Vector(), ind=ind))
 LocQtreeInt(ind) = LocQtreeTypeInt((loc = Vector{Int}(), cumloc = Vector{Int}(), ind=ind))
-function locate!(qt::AbstractStackedQtree, loctree::QtreeNode=LocQtree((levelnum(qt), 1, 1)),
+function locate!(qt::AbstractStackQtree, loctree::QtreeNode=LocQtree((levelnum(qt), 1, 1)),
     ind::Tuple{Int, Int, Int}=(levelnum(qt), 1, 1); label=qt, newnode=LocQtree)
     if qt[ind] == EMPTY
         return loctree
@@ -369,7 +372,7 @@ function locate!(qts::AbstractVector, inds::Union{AbstractVector{Int}, AbstractS
 end
 
 
-function batchcollision_qtree(qtrees::AbstractVector, mask::AbstractStackedQtree, loctree::QtreeNode;
+function batchcollision_qtree(qtrees::AbstractVector, mask::AbstractStackQtree, loctree::QtreeNode;
     collist = Vector{ColItemType}(),
     queue =  Vector{Tuple{Int, Int, Int}}(),
     )
@@ -394,18 +397,18 @@ function batchcollision_qtree(qtrees::AbstractVector, mask::AbstractStackedQtree
     end
     collist
 end
-function batchcollision_qtree(qtrees::AbstractVector, mask::AbstractStackedQtree; kargs...)
+function batchcollision_qtree(qtrees::AbstractVector, mask::AbstractStackQtree; kargs...)
     loctree = locate!(qtrees)
     loctree = locate!(mask, loctree, label=0, newnode=LocQtreeInt)
     batchcollision_qtree(qtrees, mask, loctree; kargs...)
 end
-function batchcollision_qtree(qtrees::AbstractVector, mask::AbstractStackedQtree, inds::Union{AbstractVector{Int}, AbstractSet{Int}}; kargs...)
+function batchcollision_qtree(qtrees::AbstractVector, mask::AbstractStackQtree, inds::Union{AbstractVector{Int}, AbstractSet{Int}}; kargs...)
     loctree = locate!(qtrees, inds)
     loctree = locate!(mask, loctree, label=0, newnode=LocQtreeInt)
     batchcollision_qtree(qtrees, mask, loctree; kargs...)
 end
 
-function batchcollision(qtrees::AbstractVector, mask::AbstractStackedQtree, args...; kargs...)
+function batchcollision(qtrees::AbstractVector, mask::AbstractStackQtree, args...; kargs...)
     if length(qtrees) > 25
         return batchcollision_qtree(qtrees, mask, args...; kargs...)
     else
