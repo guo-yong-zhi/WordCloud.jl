@@ -18,9 +18,10 @@ Momentum(;η = 0.01, ρ = 0.9) = Momentum(η, ρ, IdDict())
 
 function apply(o::Momentum, x, Δ)
     η, ρ = o.eta, o.rho
-    v = get!(o.velocity, x, Float64.(Δ))
+    Δ = collect(Float64, Δ)
+    v = get!(o.velocity, x, Δ)
     @. v = ρ * v + (1 - ρ) * Δ
-    η * v
+    η .* v
 end
 function apply!(o::Momentum, x, Δ)
     @. Δ = apply(o, x, Δ)
@@ -30,13 +31,32 @@ reset!(o::Momentum, x) =  pop!(o.velocity, x)
 reset!(o, x) = nothing
 Base.broadcastable(m::Momentum) = Ref(m)
 
+const DECODETABLE = [0, 2, 1]
+@inline decode2(c) = @inbounds DECODETABLE[c]
+
 near(a::Integer, b::Integer, r=1) = a-r:a+r, b-r:b+r
 near(m::AbstractMatrix, a::Integer, b::Integer, r=1) = @view m[near(a, b, r)...]
 const DIRECTKERNEL = collect.(Iterators.product(-1:1,-1:1))
-const DECODETABLE = [0, 2, 1]
-decode2(c) = DECODETABLE[c]
-whitesum(m::AbstractMatrix) = sum(DIRECTKERNEL .* m)
-whitesum(t::ShiftedQtree, l, a, b) = whitesum(decode2(near(t[l],a,b)))
+whitesum_native(m::AbstractMatrix) = sum(DIRECTKERNEL .* m)
+whitesum_native(t::ShiftedQtree, l, a, b) = whitesum_native(decode2(near(t[l],a,b)))|>Tuple
+function whitesum(t::ShiftedQtree, l, a, b)
+    m = t[l]
+    (
+    - decode2(m[a-1, b-1])
+    - decode2(m[a-1, b])
+    - decode2(m[a-1, b+1])
+    + decode2(m[a+1, b-1])
+    + decode2(m[a+1, b])
+    + decode2(m[a+1, b+1])
+    ),(
+    - decode2(m[a-1, b-1])
+    - decode2(m[a, b-1])
+    - decode2(m[a+1, b-1])
+    + decode2(m[a-1, b+1])
+    + decode2(m[a, b+1])
+    + decode2(m[a+1, b+1])
+    )
+end
 # function intlog2(x::Float64) #not safe, x can't be nan or inf
 #     #Float64 符号位(S)，编号63；阶码位，编号62 ~52
 #     b64 = reinterpret(UInt64, x)
@@ -51,7 +71,7 @@ end
 
 function move!(qt, ws)
     if rand()<0.1 #破坏周期运动
-        ws .+= rand(((1.,-1.), (-1.,1.), (-1.,-1.), (1.,1.)))
+        ws = ws .+ rand(((1.,-1.), (-1.,1.), (-1.,-1.), (1.,1.)))
     end
     if (-1<ws[1]<1 && -1<ws[2]<1) #避免静止
         ws = rand(((1.,-1.), (-1.,1.), (-1.,-1.), (1.,1.)))
@@ -70,8 +90,10 @@ function step!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimis
     ks2 = ks2[1] * ks2[2]
     l = collisionpoint[1]
     ll = 2 ^ (l-1)
+#     @show collisionpoint
     ws1 = ll .* whitesum(t1, collisionpoint...)
     ws2 = ll .* whitesum(t2, collisionpoint...)
+#     @assert whitesum(t1, collisionpoint...)==whitesum_native(t1, collisionpoint...)
     #     @show ws1,collisionpoint,whitesum(t1, collisionpoint...)
     ws1 = optimiser(t1, ws1)
 #     @show ws1
@@ -80,13 +102,13 @@ function step!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimis
     move2 = rand()<ks1/ks2
     if move1
         if !move2
-            ws1 .= ws1 .- ws2
+            ws1 = ws1 .- ws2
         end
         move!(t1, ws1)
     end
     if move2
         if !move1
-            ws2 .= ws2 .- ws1
+            ws2 = ws2 .- ws1
         end
         move!(t2, ws2)
     end
@@ -98,12 +120,12 @@ function step_mask!(mask, t2, collisionpoint::Tuple{Integer, Integer, Integer}, 
     ws2 = ll .* whitesum(t2, collisionpoint...)
     ws1 = optimiser(mask, ws1)
     ws2 = optimiser(t2, ws2)
-    ws2 .= (ws2 .- ws1) ./ 2
+    ws2 = (ws2 .- ws1) ./ 2
     move!(t2, ws2)
 end
 
 function step_ind!(mask, qtrees, i1, i2, collisionpoint, optimiser)
-#     @show i1, i2
+#     @show i1, i2, collisionpoint
     if i1 == 0
         step_mask!(mask, qtrees[i2], collisionpoint, optimiser)
     elseif i2 == 0
