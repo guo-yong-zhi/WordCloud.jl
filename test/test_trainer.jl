@@ -31,5 +31,5 @@
     placement!(wc)
     generate!(wc, trainer=WordCloud.trainepoch_Px!)
     placement!(wc)
-    generate!(wc, 100, optimiser=(t, Δ)->Δ./4, patient=5, retry=5)
+    generate!(wc, 100, optimiser=(t, Δ)->Δ./6, patient=5, retry=5)
 end

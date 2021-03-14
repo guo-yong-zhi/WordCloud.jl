@@ -83,7 +83,7 @@ function move!(qt, ws)
     shift!(qt, 1+u, (trunc.(Int, ws) .÷ 2^u)...) #舍尾，保留最高二进制位
 end
 
-function step!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimiser=(t, Δ)->Δ./4)
+function step!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimiser=(t, Δ)->Δ./6)
     ks1 = kernelsize(t1[1])
     ks1 = ks1[1] * ks1[2]
     ks2 = kernelsize(t2[1])
@@ -113,7 +113,7 @@ function step!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimis
         move!(t2, ws2)
     end
 end
-function step_mask!(mask, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimiser=(t, Δ)->Δ./4)
+function step_mask!(mask, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimiser=(t, Δ)->Δ./6)
     l = collisionpoint[1]
     ll = 2 ^ (l-1)
     ws1 = ll .* whitesum(mask, collisionpoint...)
@@ -146,7 +146,7 @@ end
 "element-wise trainer"
 trainepoch_E!(tr_ma) = Dict(:collpool=>Vector{QTree.ColItemType}(), :queue=>Vector{Tuple{Int, Int, Int}}())
 trainepoch_E!(s::Symbol) = get(Dict(:patient=>10, :nepoch=>1000), s, nothing)
-function trainepoch_E!(qtrees, mask; optimiser=(t, Δ)->Δ./4, 
+function trainepoch_E!(qtrees, mask; optimiser=(t, Δ)->Δ./6, 
     queue=Vector{Tuple{Int, Int, Int}}(), collpool=trainepoch_E!(:collpool))
     batchcollision(qtrees, mask, queue=queue, collist=empty!(collpool))
     nc = length(collpool)
@@ -168,7 +168,7 @@ trainepoch_EM!(tr_ma) = Dict(:collpool=>Vector{QTree.ColItemType}(),
                             :queue=>Vector{Tuple{Int, Int, Int}}(), 
                             :memory=>intlru(length(tr_ma[1])))
 trainepoch_EM!(s::Symbol) = get(Dict(:patient=>10, :nepoch=>1000), s, nothing)
-function trainepoch_EM!(qtrees, mask; memory, optimiser=(t, Δ)->Δ./4, 
+function trainepoch_EM!(qtrees, mask; memory, optimiser=(t, Δ)->Δ./6, 
     queue=Vector{Tuple{Int, Int, Int}}(), collpool=Vector{QTree.ColItemType}())
     batchcollision(qtrees, mask, queue=queue, collist=empty!(collpool))
     nc = length(collpool)
@@ -197,7 +197,7 @@ end
 "element-wise trainer with LRU(more levels)"
 trainepoch_EM2!(tr_ma) = trainepoch_EM!(tr_ma)
 trainepoch_EM2!(s::Symbol) = trainepoch_EM!(s)
-function trainepoch_EM2!(qtrees, mask; memory, optimiser=(t, Δ)->Δ./4, 
+function trainepoch_EM2!(qtrees, mask; memory, optimiser=(t, Δ)->Δ./6, 
     queue=Vector{Tuple{Int, Int, Int}}(), collpool=Vector{QTree.ColItemType}())
     batchcollision(qtrees, mask, queue=queue, collist=empty!(collpool))
     nc = length(collpool)
@@ -236,7 +236,7 @@ end
 "element-wise trainer with LRU(more-more levels)"
 trainepoch_EM3!(tr_ma) = trainepoch_EM!(tr_ma)
 trainepoch_EM3!(s::Symbol) = trainepoch_EM!(s)
-function trainepoch_EM3!(qtrees, mask; memory, optimiser=(t, Δ)->Δ./4, 
+function trainepoch_EM3!(qtrees, mask; memory, optimiser=(t, Δ)->Δ./6, 
     queue=Vector{Tuple{Int, Int, Int}}(), collpool=Vector{QTree.ColItemType}())
     batchcollision(qtrees, mask, queue=queue, collist=empty!(collpool))
     nc = length(collpool)
@@ -304,7 +304,7 @@ trainepoch_P!(tr_ma) = Dict(:collpool=>Vector{Tuple{Int, Int}}(),
                             :queue=>Vector{Tuple{Int, Int, Int}}(),
                             :nearpool=>Vector{Tuple{Int,Int}}())
 trainepoch_P!(s::Symbol) = get(Dict(:patient=>10, :nepoch=>100), s, nothing)
-function trainepoch_P!(qtrees, mask; optimiser=(t, Δ)->Δ./4, nearlevel=-levelnum(qtrees[1])/2, queue=Vector{Tuple{Int, Int, Int}}(), 
+function trainepoch_P!(qtrees, mask; optimiser=(t, Δ)->Δ./6, nearlevel=-levelnum(qtrees[1])/2, queue=Vector{Tuple{Int, Int, Int}}(), 
     nearpool = Vector{Tuple{Int,Int}}(), collpool = Vector{Tuple{Int, Int}}())
     nearlevel = min(-1, nearlevel)
     indpairs = combinations(0:length(qtrees), 2) |> collect
@@ -335,7 +335,7 @@ trainepoch_P2!(tr_ma) = Dict(:collpool=>Vector{Tuple{Int, Int}}(),
                             :nearpool1=>Vector{Tuple{Int,Int}}(),
                             :nearpool2=>Vector{Tuple{Int,Int}}())
 trainepoch_P2!(s::Symbol) = get(Dict(:patient=>2, :nepoch=>100), s, nothing)
-function trainepoch_P2!(qtrees, mask; optimiser=(t, Δ)->Δ./4, 
+function trainepoch_P2!(qtrees, mask; optimiser=(t, Δ)->Δ./6, 
     nearlevel1=-levelnum(qtrees[1])*0.75, 
     nearlevel2=-levelnum(qtrees[1])*0.5, 
     queue=Vector{Tuple{Int, Int, Int}}(), 
@@ -389,7 +389,7 @@ trainepoch_Px!(tr_ma) = Dict(:levelpools=>levelpools(tr_ma[1]),
 trainepoch_Px!(s::Symbol) = get(Dict(:patient=>1, :nepoch=>10), s, nothing)
 function trainepoch_Px!(qtrees, mask; 
     levelpools::AbstractVector{<:Pair{Int, <:AbstractVector{Tuple{Int, Int}}}} = levelpools(qtrees),
-    optimiser=(t, Δ)->Δ./4, queue=Vector{Tuple{Int, Int, Int}}())
+    optimiser=(t, Δ)->Δ./6, queue=Vector{Tuple{Int, Int, Int}}())
     last_nc = typemax(Int)
     nc = 0
     if (length(levelpools) == 0) return nc end
