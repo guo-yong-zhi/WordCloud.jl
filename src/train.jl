@@ -2,7 +2,6 @@ module Trainer
 export Momentum, train!
 export trainepoch_E!, trainepoch_EM!, trainepoch_EM2!, trainepoch_EM3!, trainepoch_P!, trainepoch_P2!, trainepoch_Px!
 
-using Combinatorics
 using Random
 using ..QTree
 
@@ -24,21 +23,23 @@ function apply(o::Momentum, x, Δ)
     η .* v
 end
 function apply!(o::Momentum, x, Δ)
-    @. Δ = apply(o, x, Δ)
+    Δ .= apply(o, x, Δ)
 end
 (opt::Momentum)(x, Δ) = apply(opt::Momentum, x, Δ)
 reset!(o::Momentum, x) =  pop!(o.velocity, x)  
 reset!(o, x) = nothing
 Base.broadcastable(m::Momentum) = Ref(m)
 
-const DECODETABLE = [0, 2, 1]
+const DECODETABLE = (0, 2, 1)
 @inline decode2(c) = @inbounds DECODETABLE[c]
 
-near(a::Integer, b::Integer, r=1) = a-r:a+r, b-r:b+r
-near(m::AbstractMatrix, a::Integer, b::Integer, r=1) = @view m[near(a, b, r)...]
-const DIRECTKERNEL = collect.(Iterators.product(-1:1,-1:1))
-whitesum_native(m::AbstractMatrix) = sum(DIRECTKERNEL .* m)
-whitesum_native(t::ShiftedQtree, l, a, b) = whitesum_native(decode2(near(t[l],a,b)))|>Tuple
+#const DECODETABLE = [0, 2, 1]
+#near(a::Integer, b::Integer, r=1) = a-r:a+r, b-r:b+r
+#near(m::AbstractMatrix, a::Integer, b::Integer, r=1) = @view m[near(a, b, r)...]
+#const DIRECTKERNEL = collect.(Iterators.product(-1:1,-1:1))
+#whitesum(m::AbstractMatrix) = sum(DIRECTKERNEL .* m)
+#whitesum(t::ShiftedQtree, l, a, b) = whitesum(decode2(near(t[l],a,b)))|>Tuple
+
 function whitesum(t::ShiftedQtree, l, a, b)
     m = t[l]
     (
@@ -307,7 +308,7 @@ trainepoch_P!(s::Symbol) = get(Dict(:patient=>10, :nepoch=>100), s, nothing)
 function trainepoch_P!(qtrees, mask; optimiser=(t, Δ)->Δ./6, nearlevel=-levelnum(qtrees[1])/2, queue=Vector{Tuple{Int, Int, Int}}(), 
     nearpool = Vector{Tuple{Int,Int}}(), collpool = Vector{Tuple{Int, Int}}())
     nearlevel = min(-1, nearlevel)
-    indpairs = combinations(0:length(qtrees), 2) |> collect
+    indpairs = [(i,j) for i in 0:length(qtrees) for j in i+1:length(qtrees)]
     # @time 
     nsp = filttrain!(qtrees, mask, indpairs, empty!(nearpool), nearlevel, optimiser=optimiser, queue=queue)
     # @show nsp
@@ -346,7 +347,7 @@ function trainepoch_P2!(qtrees, mask; optimiser=(t, Δ)->Δ./6,
     nearlevel1 = min(-1, nearlevel1)
     nearlevel2 = min(-1, nearlevel2)
 
-    indpairs = combinations(0:length(qtrees), 2) |> collect
+    indpairs = [(i,j) for i in 0:length(qtrees) for j in i+1:length(qtrees)]
     nsp = filttrain!(qtrees, mask, indpairs, empty!(nearpool1), nearlevel1, optimiser=optimiser, queue=queue)
     # @show nsp
     if nsp == 0 return 0 end 
@@ -378,8 +379,11 @@ end
 function levelpools(qtrees, levels=[-levelnum(qtrees[1]):2:-3..., -1])
     pools = [i=>Vector{Tuple{Int, Int}}() for i in levels]
 #     @show typeof(pools)
-    for (i1, i2) in combinations(0:length(qtrees), 2)
-        push!(last(pools[1]), (i1, i2))
+    l = length(qtrees)
+    for i1 in 0:l
+        for i2 in i1+1:l
+            push!(last(pools[1]), (i1, i2))
+        end
     end
     pools
 end

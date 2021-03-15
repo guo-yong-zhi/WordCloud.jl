@@ -123,8 +123,21 @@ end
 function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackQtree, 
     inds::AbstractVector{<:Integer}=0:length(qtrees); collist=Vector{ColItemType}(), 
     queue=Vector{Tuple{Int,Int,Int}}(), at=(levelnum(qtrees[1]), 1, 1))
-   indpairs = combinations(inds, 2)
-   batchcollision_native(qtrees, mask, indpairs, collist=collist, at=at)
+    getqtree(i) = i==0 ? mask : qtrees[i]
+    l = length(inds)
+    for i in 1:l
+        for j in i+1:l
+            empty!(queue)
+            push!(queue, at)
+            @inbounds i1 = inds[i]
+            @inbounds i2 = inds[j]
+            cp = collision_bfs_rand(getqtree(i1), getqtree(i2), queue)
+            if cp[1] >= 0
+                push!(collist, (i1,i2)=>cp)
+            end
+        end
+    end
+    collist
 end
 function batchcollision_native(qtrees::AbstractVector, mask::AbstractStackQtree, 
     inds::AbstractSet{<:Integer}; kargs...)
@@ -382,8 +395,7 @@ function batchcollision_qtree(qtrees::AbstractVector, mask::AbstractStackQtree, 
         loctree = popfirst!(nodequeue)
         if length(loctree.value.loc) > 1
 #             @show length(loctree.value.loc), length(loctree.value.cumloc)
-            indpairs = combinations(loctree.value.loc, 2)
-            batchcollision_native(qtrees, mask, indpairs, collist=collist, queue=queue, at=loctree.value.ind)
+            batchcollision_native(qtrees, mask, loctree.value.loc, collist=collist, queue=queue, at=loctree.value.ind)
         end
         if length(loctree.value.loc) > 0 && length(loctree.value.cumloc) > 0
             indpairs = Iterators.product(loctree.value.cumloc, loctree.value.loc)

@@ -5,9 +5,10 @@ export AbstractStackQtree, StackQtree, ShiftedQtree, buildqtree!,
     findroom_uniform, findroom_gathering, levelnum, outofbounds, kernelsize, placement!, decode
 
 using Random
-using Combinatorics
 
-const PERM4 = permutations(1:4)|>collect
+const PERM4 = ((1, 2, 3, 4), (1, 2, 4, 3), (1, 3, 2, 4), (1, 3, 4, 2), (1, 4, 2, 3), (1, 4, 3, 2), (2, 1, 3, 4), 
+(2, 1, 4, 3), (2, 3, 1, 4), (2, 3, 4, 1), (2, 4, 1, 3), (2, 4, 3, 1), (3, 1, 2, 4), (3, 1, 4, 2), (3, 2, 1, 4), 
+(3, 2, 4, 1), (3, 4, 1, 2), (3, 4, 2, 1), (4, 1, 2, 3), (4, 1, 3, 2), (4, 2, 1, 3), (4, 2, 3, 1), (4, 3, 1, 2), (4, 3, 2, 1))
 @assert length(PERM4) == 24
 @inline shuffle4() = @inbounds PERM4[rand(1:24)]
 @inline function child(ind::Tuple{Int,Int,Int}, n::Int)
