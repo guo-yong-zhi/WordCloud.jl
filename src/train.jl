@@ -29,9 +29,8 @@ end
 reset!(o::Momentum, x) =  pop!(o.velocity, x)  
 reset!(o, x) = nothing
 Base.broadcastable(m::Momentum) = Ref(m)
-
-const DECODETABLE = (0, 2, 1)
-@inline decode2(c) = @inbounds DECODETABLE[c]
+@assert QTree.EMPTY == 1 && QTree.FULL == 2 && QTree.MIX == 3
+@inline decode2(c) = @inbounds (0, 2, 1)[c]
 
 #const DECODETABLE = [0, 2, 1]
 #near(a::Integer, b::Integer, r=1) = a-r:a+r, b-r:b+r
@@ -40,23 +39,21 @@ const DECODETABLE = (0, 2, 1)
 #whitesum(m::AbstractMatrix) = sum(DIRECTKERNEL .* m)
 #whitesum(t::ShiftedQtree, l, a, b) = whitesum(decode2(near(t[l],a,b)))|>Tuple
 
-function whitesum(t::ShiftedQtree, l, a, b)
+function whitesum(t::ShiftedQtree, l, a, b) #FULL is white, Positive directions are right & down 
     m = t[l]
+    diag = -decode2(m[a-1, b-1]) +decode2(m[a+1, b+1])
+    cdiag = -decode2(m[a-1, b+1]) +decode2(m[a+1, b-1])
     (
-    - decode2(m[a-1, b-1])
+    + diag
+    + cdiag
     - decode2(m[a-1, b])
-    - decode2(m[a-1, b+1])
-    + decode2(m[a+1, b-1])
     + decode2(m[a+1, b])
-    + decode2(m[a+1, b+1])
     ),(
-    - decode2(m[a-1, b-1])
+    + diag
+    - cdiag
     - decode2(m[a, b-1])
-    - decode2(m[a+1, b-1])
-    + decode2(m[a-1, b+1])
     + decode2(m[a, b+1])
-    + decode2(m[a+1, b+1])
-    )
+    ) # (h, w)
 end
 # function intlog2(x::Float64) #not safe, x can't be nan or inf
 #     #Float64 符号位(S)，编号63；阶码位，编号62 ~52
@@ -94,7 +91,7 @@ function step!(t1, t2, collisionpoint::Tuple{Integer, Integer, Integer}, optimis
 #     @show collisionpoint
     ws1 = ll .* whitesum(t1, collisionpoint...)
     ws2 = ll .* whitesum(t2, collisionpoint...)
-#     @assert whitesum(t1, collisionpoint...)==whitesum_native(t1, collisionpoint...)
+    # @assert whitesum(t1, collisionpoint...)==whitesum2(t1, collisionpoint...)
     #     @show ws1,collisionpoint,whitesum(t1, collisionpoint...)
     ws1 = optimiser(t1, ws1)
 #     @show ws1

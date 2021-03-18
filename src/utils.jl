@@ -8,7 +8,7 @@ bitor(l) = reduce((a,b)->a.|b, l)
 
 FULL = WordCloud.QTree.FULL
 EMPTY = WordCloud.QTree.EMPTY
-HALF = WordCloud.QTree.HALF
+MIX = WordCloud.QTree.MIX
 function testqtree(qt)
     for l in 2:WordCloud.levelnum(qt)
         for i in 1:size(qt[l], 1)
@@ -18,7 +18,7 @@ function testqtree(qt)
                     @assert all(c .== FULL) (qt[l, i, j], (l, i, j))
                 elseif qt[l, i, j] == EMPTY
                     @assert all(c .== EMPTY) (qt[l, i, j], (l, i, j))
-                elseif qt[l, i, j] == HALF
+                elseif qt[l, i, j] == MIX
                     @assert !(all(c .== FULL) || all(c .== EMPTY)) (qt[l, i, j], (l, i, j))
                 else
                     error(qt[l, i, j], (l, i, j))

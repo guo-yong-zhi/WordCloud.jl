@@ -37,7 +37,7 @@ function collision_bfs(Q1::AbstractStackQtree, Q2::AbstractStackQtree, q=[(level
     end
     while !isempty(q)
 #         @show q
-        # Q1[i],Q2[i]都是HALF
+        # Q1[i],Q2[i]都是MIX
         i = popfirst!(q)
         for cn in 1:4
             ci = child(i, cn)
@@ -60,9 +60,9 @@ function collision_bfs_rand(Q1::AbstractStackQtree, Q2::AbstractStackQtree, q=[(
     if isempty(q)
         push!(q, (levelnum(Q1), 1, 1))
     end
-    i = q[1]
-    n1 = Q1[i]
-    n2 = Q2[i]
+    i = @inbounds q[1]
+    n1 = _getindex(Q1, i)
+    n2 = _getindex(Q2, i)
     if n1 == EMPTY || n2 == EMPTY
         return .-i
     end
@@ -71,7 +71,7 @@ function collision_bfs_rand(Q1::AbstractStackQtree, Q2::AbstractStackQtree, q=[(
     end
     while !isempty(q)
 #         @show q
-        # Q1[i],Q2[i]都是HALF
+        # Q1[i],Q2[i]都是MIX
         i = popfirst!(q)
         for cn in shuffle4()
             ci = child(i, cn)
@@ -79,13 +79,15 @@ function collision_bfs_rand(Q1::AbstractStackQtree, Q2::AbstractStackQtree, q=[(
 #             @show Q1[ci],Q2[ci]
             q1 = _getindex(Q1, ci)
             q2 = _getindex(Q2, ci)
-            if !(q1 == EMPTY || q2 == EMPTY)
-                if q1 == FULL || q2 == FULL
-                    return ci
-                else
-                    push!(q, ci)
-                end
+            if q1 == EMPTY || q2 == EMPTY
+                continue
             end
+            if q1 == FULL || q2 == FULL
+                return ci
+            else
+                push!(q, ci)
+            end
+            
         end
     end
     return .- i # no collision
@@ -162,7 +164,7 @@ function findroom_uniform(ground, q=[(levelnum(ground), 1, 1)])
                     else
                         push!(q, ci)
                     end
-                elseif ground[ci] == HALF
+                elseif ground[ci] == MIX
                     push!(q, ci)
                 end
             end
@@ -196,7 +198,7 @@ function findroom_gathering(ground, q=[]; level=5, p=2)
                         else
                             push!(q, ci)
                         end
-                    elseif ground[ci] == HALF
+                    elseif ground[ci] == MIX
                         push!(q, ci)
                     end
                 end
@@ -341,7 +343,7 @@ LocQtree(ind) = LocQtreeType((loc = Vector(), cumloc = Vector(), ind=ind))
 LocQtreeInt(ind) = LocQtreeTypeInt((loc = Vector{Int}(), cumloc = Vector{Int}(), ind=ind))
 function locate!(qt::AbstractStackQtree, loctree::QtreeNode=LocQtree((levelnum(qt), 1, 1)),
     ind::Tuple{Int, Int, Int}=(levelnum(qt), 1, 1); label=qt, newnode=LocQtree)
-    if qt[ind] == EMPTY
+    if _getindex(qt, ind) == EMPTY
         return loctree
     end
     if ind[1] == 1
@@ -352,7 +354,7 @@ function locate!(qt::AbstractStackQtree, loctree::QtreeNode=LocQtree((levelnum(q
     unemptyci = -1
     for ci in 1:4
         c = child(ind, ci)
-        if qt[c] != EMPTY
+        if _getindex(qt, c) != EMPTY
             if unemptyci == -1 #only one empty child
                 unempty = c
                 unemptyci = ci

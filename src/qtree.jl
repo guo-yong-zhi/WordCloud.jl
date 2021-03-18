@@ -20,9 +20,9 @@ end
     _getindex(Q, child(i, 1)) | _getindex(Q, child(i, 2)) | _getindex(Q, child(i, 3)) | _getindex(Q, child(i, 4))
 end
 @inline qcode!(Q, i) = _setindex!(Q, qcode(Q, i), i)
-decode(c) = [0., 1., 0.5][c]
+decode(c) = (0., 1., 0.5)[c]
 
-const FULL = 0x02; EMPTY = 0x01; HALF = 0x03
+const FULL = 0x02; EMPTY = 0x01; MIX = 0x03
 
 abstract type AbstractStackQtree end
 function Base.getindex(t::AbstractStackQtree, l::Integer) end
