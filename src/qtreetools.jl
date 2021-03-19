@@ -1,93 +1,39 @@
-function collision(Q1::AbstractStackQtree, Q2::AbstractStackQtree, i=(levelnum(Q1), 1, 1))
-    #     @show i
-#     @assert size(Q1) == size(Q2)
-    n1 = Q1[i]
-    n2 = Q2[i]
-    if n1 == EMPTY || n2 == EMPTY
-        return false, i
-    end
-    if n1 == FULL || n2 == FULL
-        return true, i
-    end
-        
-    r = false, i
-    for cn in 1:4 # half
-        ci = child(i, cn)
-    #         @show cn,ci
-    #         @show Q1[ci],Q2[ci]
-        r = collision(Q1, Q2, ci)
-        if r[1] return r end 
-    end
-    return r # no collision
-end
-
-function collision_bfs(Q1::AbstractStackQtree, Q2::AbstractStackQtree, q=[(levelnum(Q1), 1, 1)])
-#     @assert size(Q1) == size(Q2)
-    if isempty(q)
-        push!(q, (levelnum(Q1), 1, 1))
-    end
-    i = q[1]
-    n1 = Q1[i]
-    n2 = Q2[i]
-    if n1 == EMPTY || n2 == EMPTY
-        return false, i
-    end
-    if n1 == FULL || n2 == FULL
-        return true, i
-    end
-    while !isempty(q)
-#         @show q
-        # Q1[i],Q2[i]都是MIX
-        i = popfirst!(q)
-        for cn in 1:4
-            ci = child(i, cn)
-#             @show cn,ci
-#             @show Q1[ci],Q2[ci]
-            if !(Q1[ci] == EMPTY || Q2[ci] == EMPTY)
-                if Q1[ci] == FULL || Q2[ci] == FULL
-                    return true, ci
-                else
-                    push!(q, ci)
-                end
-            end
-        end
-    end
-    return false, i # no collision
-end
-
+# q1cc = [0,0,0]
+# q2cc = [0,0,0]
 function collision_bfs_rand(Q1::AbstractStackQtree, Q2::AbstractStackQtree, q=[(levelnum(Q1), 1, 1)])
 #     @assert size(Q1) == size(Q2)
     if isempty(q)
         push!(q, (levelnum(Q1), 1, 1))
     end
     i = @inbounds q[1]
-    n1 = _getindex(Q1, i)
-    n2 = _getindex(Q2, i)
-    if n1 == EMPTY || n2 == EMPTY
-        return .-i
-    end
-    if n1 == FULL || n2 == FULL
-        return i
-    end
     while !isempty(q)
-#         @show q
-        # Q1[i],Q2[i]都是MIX
         i = popfirst!(q)
         for cn in shuffle4()
             ci = child(i, cn)
-#             @show cn,ci
-#             @show Q1[ci],Q2[ci]
-            q1 = _getindex(Q1, ci)
             q2 = _getindex(Q2, ci)
-            if q1 == EMPTY || q2 == EMPTY
+            # q1 = _getindex(Q1, ci)
+            # q1cc[q1] += 1 result ratio [1.4, 0.002, 1.0] EMPTY > MIX > FULL
+            # q2cc[q2] += 1 result ratio [2.6, 0.002, 1.0]
+            cond = q2 == EMPTY
+            if cond #q2 is smaller, so it's more empty
                 continue
-            end
-            if q1 == FULL || q2 == FULL
-                return ci
+            elseif q2 == MIX
+                q1 = _getindex(Q1, ci)
+                if q1 == EMPTY
+                    continue
+                elseif q1 == MIX
+                    push!(q, ci)
+                    continue
+                else
+                    return ci
+                end
             else
-                push!(q, ci)
+                q1 = _getindex(Q1, ci)
+                if q1 == EMPTY
+                    continue
+                end
+                return ci
             end
-            
         end
     end
     return .- i # no collision
@@ -386,7 +332,7 @@ function locate!(qts::AbstractVector, inds::Union{AbstractVector{Int}, AbstractS
     loctree
 end
 
-
+@assert collect(Iterators.product(1:2,4:6))[1] == (1,4)
 function batchcollision_qtree(qtrees::AbstractVector, mask::AbstractStackQtree, loctree::QtreeNode;
     collist = Vector{ColItemType}(),
     queue =  Vector{Tuple{Int, Int, Int}}(),
@@ -400,7 +346,7 @@ function batchcollision_qtree(qtrees::AbstractVector, mask::AbstractStackQtree, 
             batchcollision_native(qtrees, mask, loctree.value.loc, collist=collist, queue=queue, at=loctree.value.ind)
         end
         if length(loctree.value.loc) > 0 && length(loctree.value.cumloc) > 0
-            indpairs = Iterators.product(loctree.value.cumloc, loctree.value.loc)
+            indpairs = Iterators.product(loctree.value.loc, loctree.value.cumloc)
             batchcollision_native(qtrees, mask, indpairs, collist=collist, queue=queue, at=loctree.value.ind)
         end
         for c in loctree.children
