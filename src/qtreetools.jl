@@ -1,3 +1,24 @@
+function collision(Q1::AbstractStackQtree, Q2::AbstractStackQtree, i=(levelnum(Q1), 1, 1))
+    #     @show i
+#     @assert size(Q1) == size(Q2)
+    n1 = Q1[i]
+    n2 = Q2[i]
+    if n1 == EMPTY || n2 == EMPTY
+        return false, i
+    end
+    if n1 == FULL || n2 == FULL
+        return true, i
+    end     
+    r = .- i
+    for cn in 1:4 # half
+        ci = child(i, cn)
+    #         @show cn,ci
+    #         @show Q1[ci],Q2[ci]
+        r = collision(Q1, Q2, ci)
+        if r[1] return r end 
+    end
+    return r # no collision
+end
 # q1cc = [0,0,0]
 # q2cc = [0,0,0]
 function collision_bfs_rand(Q1::AbstractStackQtree, Q2::AbstractStackQtree, q=[(levelnum(Q1), 1, 1)])
