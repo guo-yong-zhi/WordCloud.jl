@@ -38,7 +38,7 @@ end
 ## prepare
 function preparebackground(img, bgcolor)
     bgcolor = convert(eltype(img), parsecolor(bgcolor))
-    maskqt = maskqtree(img, bgcolor) |> buildqtree!
+    maskqt = maskqtree(img, background=bgcolor)
     groundsize = size(maskqt[1], 1)
     groundoccupied = occupied(img, bgcolor)
     @assert groundoccupied==occupied(QTree.kernel(maskqt[1]), QTree.FULL)
