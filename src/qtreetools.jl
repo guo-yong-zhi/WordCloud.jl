@@ -15,7 +15,7 @@ function collision(Q1::AbstractStackQtree, Q2::AbstractStackQtree, i=(levelnum(Q
     #         @show cn,ci
     #         @show Q1[ci],Q2[ci]
         r = collision(Q1, Q2, ci)
-        if r[1] return r end 
+        if r[1]>0 return r end 
     end
     return r # no collision
 end
