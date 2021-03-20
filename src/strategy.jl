@@ -36,21 +36,6 @@ function textoccupied(words, fontsizes, fonts)
 end
 
 ## prepare
-function maskqtree(pic::AbstractMatrix{UInt8})
-    ms = max(size(pic)...)
-    b = max(ms * 0.024, 20)
-    s = 2^ceil(Int, log2(ms+b))
-    qt = ShiftedQtree(pic, s, default=QTree.FULL)
-#     @show size(pic),m,s
-    a, b = size(pic)
-    setrshift!(qt[1], (s-a)÷2)
-    setcshift!(qt[1], (s-b)÷2)
-    return qt
-end
-function maskqtree(pic::AbstractMatrix, bgcolor=pic[1])
-    pic = map(x -> x==bgcolor ? QTree.FULL : QTree.EMPTY, pic)
-    maskqtree(pic)
-end
 function preparebackground(img, bgcolor)
     bgcolor = convert(eltype(img), parsecolor(bgcolor))
     maskqt = maskqtree(img, bgcolor) |> buildqtree!
