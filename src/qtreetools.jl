@@ -4,10 +4,10 @@ function collision(Q1::AbstractStackQtree, Q2::AbstractStackQtree, i=(levelnum(Q
     n1 = Q1[i]
     n2 = Q2[i]
     if n1 == EMPTY || n2 == EMPTY
-        return false, i
+        return .- i
     end
     if n1 == FULL || n2 == FULL
-        return true, i
+        return i
     end     
     r = .- i
     for cn in 1:4 # half
