@@ -63,7 +63,7 @@ paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", li
 * [x] 控制字体大小和填充密度的策略
 * [x] 重新放置和缩放的策略
 * [x] 文字颜色和方向
-* [ ] 并行计算
+* [x] 并行计算
 ***
 linux添加中文字体  
 > mv wqy-microhei.ttc ~/.fonts  
