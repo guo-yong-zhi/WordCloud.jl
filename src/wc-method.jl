@@ -58,13 +58,13 @@ function placement!(wc::WC; style=:uniform, kargs...)
             if wc.maskqtree[1][(wc.params[:groundsize].÷2)] == QTree.EMPTY && (length(wc.qtrees)<2 
                 || (length(wc.qtrees)>=2 && prod(kernelsize(wc.qtrees[2]))/prod(kernelsize(wc.qtrees[1])) < 0.5))
                 setcenter!(wc.qtrees[1],  wc.params[:groundsize] .÷ 2)
-                ind = QTree.placement!(deepcopy(wc.maskqtree), wc.qtrees, 2:length(wc.qtrees)|>collect, 
-                    roomfinder=findroom_gathering; kargs...)
+                ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees, 2:length(wc.qtrees)|>collect; 
+                    roomfinder=findroom_gathering, kargs...)
             else
-                ind = QTree.placement!(deepcopy(wc.maskqtree), wc.qtrees, roomfinder=findroom_gathering; kargs...)
+                ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees; roomfinder=findroom_gathering, kargs...)
             end
         else
-            ind = QTree.placement!(deepcopy(wc.maskqtree), wc.qtrees, roomfinder=findroom_uniform; kargs...)
+            ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees; roomfinder=findroom_uniform, kargs...)
         end
         if ind === nothing error("no room for placement") end
     end
@@ -188,7 +188,7 @@ function pin(fun, wc::WC, mask::AbstractArray{Bool})
     groundoccupied = wc.params[:groundoccupied]
     
     maskqtree2 = deepcopy(maskqtree)
-    QTree.overlap!.(Ref(maskqtree2), wc.qtrees[mask])
+    Stuffing.overlap!(maskqtree2, wc.qtrees[mask])
     wc.maskqtree = maskqtree2
     resultpic = convert.(ARGB32, wc.mask)
     wc.mask = overlay!(resultpic, wc.imgs[mask], getpositions(wc, mask))
