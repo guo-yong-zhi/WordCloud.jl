@@ -1,5 +1,5 @@
 module WordCloud
-export wordcloud, processtext, html2text, countwords, filtcount
+export wordcloud, processtext, html2text, countwords, lemmatize, casemerge!
 export parsecolor, rendertext, shape, ellipse, box, loadmask, outline, padding, paint, paintsvg, svgstring
 export record, placement!, rescale!, take, keep, ignore, pin, runexample, showexample, imageof,
     generate!, generate_animation!

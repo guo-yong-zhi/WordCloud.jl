@@ -114,7 +114,9 @@ function generate!(wc::WC, args...; retry=3, krags...)
     println("$ep epochs, $nc collections")
     if nc == 0
         wc.params[:state] = nameof(generate!)
-        @assert isempty(outofbounds(wc.maskqtree, wc.qtrees))
+        # @assert isempty(outofbounds(wc.maskqtree, wc.qtrees))
+        # colllist = first.(batchcollision(qtrees))
+        # @assert length(colllist) == 0
     else #check
         colllist = first.(batchcollision(qtrees))
         get_text(i) = i>1 ? wc.words[i-1] : "#MASK#"
