@@ -507,6 +507,14 @@ git-tree-sha1 = "400aa43f7de43aeccc5b2e39a76a79d262202b76"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 version = "0.33.3"
 
+[[Stuffing]]
+deps = ["Random"]
+git-tree-sha1 = "96bf18fe08230deeec0ae7899e84c3e59309738f"
+repo-rev = "main"
+repo-url = "..\\..\\..\\Stuffing"
+uuid = "4175e07e-e5b7-423e-8796-3ea7f6d48281"
+version = "0.1.0"
+
 [[Test]]
 deps = ["Distributed", "InteractiveUtils", "Logging", "Random"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

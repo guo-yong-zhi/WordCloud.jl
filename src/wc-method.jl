@@ -1,10 +1,9 @@
 function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[:border])
     img = wc.imgs[i]
     mimg = wordmask(img, backgroundcolor, border)
-    t = ShiftedQtree(mimg, wc.params[:groundsize])
+    t = qtree(mimg, wc.params[:groundsize])
     c = isassigned(wc.qtrees, i) ? getcenter(wc.qtrees[i]) : wc.params[:groundsize] ÷ 2
     setcenter!(t, c)
-    t |> buildqtree!
     wc.qtrees[i] = t
 end
 initqtree!(wc, i; kargs...) = initqtree!.(wc, index(wc, i); kargs...)
@@ -56,16 +55,16 @@ function placement!(wc::WC; style=:uniform, kargs...)
     @assert style in [:uniform, :gathering]
     if length(wc.qtrees) > 0
         if style == :gathering
-            if wc.maskqtree[1][(wc.params[:groundsize].÷2)] == EMPTY && (length(wc.qtrees)<2 
+            if wc.maskqtree[1][(wc.params[:groundsize].÷2)] == QTree.EMPTY && (length(wc.qtrees)<2 
                 || (length(wc.qtrees)>=2 && prod(kernelsize(wc.qtrees[2]))/prod(kernelsize(wc.qtrees[1])) < 0.5))
                 setcenter!(wc.qtrees[1],  wc.params[:groundsize] .÷ 2)
-                ind = QTree.placement!(deepcopy(wc.maskqtree), wc.qtrees, 2:length(wc.qtrees)|>collect, 
-                    roomfinder=findroom_gathering; kargs...)
+                ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees, 2:length(wc.qtrees)|>collect; 
+                    roomfinder=findroom_gathering, kargs...)
             else
-                ind = QTree.placement!(deepcopy(wc.maskqtree), wc.qtrees, roomfinder=findroom_gathering; kargs...)
+                ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees; roomfinder=findroom_gathering, kargs...)
             end
         else
-            ind = QTree.placement!(deepcopy(wc.maskqtree), wc.qtrees, roomfinder=findroom_uniform; kargs...)
+            ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees; roomfinder=findroom_uniform, kargs...)
         end
         if ind === nothing error("no room for placement") end
     end
@@ -96,6 +95,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
     if getstate(wc) != nameof(placement!) && getstate(wc) != nameof(generate!)
         placement!(wc)
     end
+    qtrees = [wc.maskqtree, wc.qtrees...]
     ep, nc = -1, -1
     for r in 1:retry
         if r != 1
@@ -105,7 +105,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
         else
             println("#$r. scale = $(wc.params[:scale])")
         end
-        ep, nc = train!(wc.qtrees, wc.maskqtree, args...; krags...)
+        ep, nc = train!(qtrees, args...; krags...)
         wc.params[:epoch] += ep
         if nc == 0
             break
@@ -114,10 +114,12 @@ function generate!(wc::WC, args...; retry=3, krags...)
     println("$ep epochs, $nc collections")
     if nc == 0
         wc.params[:state] = nameof(generate!)
-        @assert isempty(outofbounds(wc.maskqtree, wc.qtrees))
+        # @assert isempty(outofbounds(wc.maskqtree, wc.qtrees))
+        # colllist = first.(batchcollision(qtrees))
+        # @assert length(colllist) == 0
     else #check
-        colllist = first.(batchcollision(wc.qtrees, wc.maskqtree))
-        get_text(i) = i>0 ? wc.words[i] : "#MASK#"
+        colllist = first.(batchcollision(qtrees))
+        get_text(i) = i>1 ? wc.words[i-1] : "#MASK#"
         collwords = [(get_text(i), get_text(j)) for (i,j) in colllist]
         if length(colllist) > 0
             wc.params[:completed] = false
@@ -188,7 +190,7 @@ function pin(fun, wc::WC, mask::AbstractArray{Bool})
     groundoccupied = wc.params[:groundoccupied]
     
     maskqtree2 = deepcopy(maskqtree)
-    QTree.overlap!.(Ref(maskqtree2), wc.qtrees[mask])
+    Stuffing.overlap!(maskqtree2, wc.qtrees[mask])
     wc.maskqtree = maskqtree2
     resultpic = convert.(ARGB32, wc.mask)
     wc.mask = overlay!(resultpic, wc.imgs[mask], getpositions(wc, mask))

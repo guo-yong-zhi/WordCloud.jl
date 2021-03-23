@@ -187,20 +187,12 @@ getsvgmask(wc::WC) = wc.svgmask
 
 @doc getdoc * " Keyword argment `type` can be `getshift` or `getcenter`."
 function getpositions(wc::WC, w=:; type=getshift)
-    msy, msx = getshift(wc.maskqtree)
-    pos = type.(wc.qtrees[index(wc, w)])
-    pos = eltype(pos) <: Number ? Ref(pos) : pos
-    Broadcast.broadcast(p->(p[2]-msx+1, p[1]-msy+1), pos) #左上角重合时返回(1,1)
+    Stuffing.getpositions(wc.maskqtree, wc.qtrees, index(wc, w), type=type)
 end
 
 @doc setdoc * " Keyword argment `type` can be `setshift!` or `setcenter!`."
 function setpositions!(wc::WC, w, x_y; type=setshift!)
-    msy, msx = getshift(wc.maskqtree)
-    x_y = eltype(x_y) <: Number ? Ref(x_y) : x_y
-    Broadcast.broadcast(wc.qtrees[index(wc, w)], x_y) do qt, p
-        type(qt, (p[2]-1+msy, p[1]-1+msx))
-    end
-    x_y
+    Stuffing.setpositions!(wc.maskqtree, wc.qtrees, index(wc, w), x_y, type=type)
 end
 
 Base.show(io::IO, m::MIME"image/png", wc::WC) = Base.show(io, m, paint(wc::WC))

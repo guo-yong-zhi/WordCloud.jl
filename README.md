@@ -2,7 +2,7 @@
 ![juliadoc](res/juliadoc.png)  
  Word cloud (tag cloud or wordle) is a novelty visual representation of text data. The importance of each word is shown with font size or color. Our generator has the following highlights:
 * **Flexible** Any mask, any color, any angle, adjustable density. You can specify the initial position of some words. Or you can pin some words and adjust others, etc.
-* **Fast**  100% in Julia and efficient implementation based on Quadtree & gradient optimization. The advantage is more obvious when generating large images.
+* **Fast**  100% in Julia and efficient implementation based on Quadtree & gradient optimization (see [Stuffing.jl](https://github.com/guo-yong-zhi/Stuffing.jl)). The advantage is more obvious when generating large images.
 * **Exact**  Words with the same weight have the exact same size. The algorithm will never scale the word to fit the blank.  
 
  *run `showexample(:juliadoc)` to see how to generate the banner*
@@ -63,7 +63,7 @@ paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", li
 * [x] 控制字体大小和填充密度的策略
 * [x] 重新放置和缩放的策略
 * [x] 文字颜色和方向
-* [ ] 并行计算
+* [x] 并行计算
 ***
 linux添加中文字体  
 > mv wqy-microhei.ttc ~/.fonts  

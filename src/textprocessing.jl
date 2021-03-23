@@ -1,5 +1,6 @@
 module TextProcessing
-export countwords, processtext, html2text, stopwords_en, stopwords_cn, stopwords
+export countwords, processtext, html2text, stopwords_en, stopwords_cn, stopwords, 
+lemmatize, casemerge!
 dir = @__DIR__
 stopwords_en = Set(readlines(dir * "/../res/stopwords_en.txt"))
 stopwords_cn = Set(readlines(dir * "/../res/stopwords_cn.txt"))
@@ -93,8 +94,22 @@ end
 #     end
 #     counter
 # end
+
+function casemerge!(d)
+    for w in keys(d)
+        if length(w)>0 && isuppercase(w[1]) && islowercase(w[end])
+            lw = lowercase(w)
+            if lw in keys(d) && d[lw]>d[w]
+                d[lw] += d[w]
+                pop!(d, w)
+            end
+        end
+    end
+    d
+end
+
 """
-processtext the text, filter the words, and adjust the weights. return processtexted words vector and weights vector.
+processtext the text, filter the words, and adjust the weights. return words vector and weights vector.
 ## Positional Arguments
 * text: string, a vector of words, or a opend file(IO)
 * Or, a counter::Dict{<:AbstractString, <:Number}
@@ -104,6 +119,7 @@ processtext the text, filter the words, and adjust the weights. return processte
 * minfrequency: minimum frequency of a word to be included
 * maxnum: maximum number of words
 * minweight, maxweight: within 0 ~ 1, set to adjust extreme weight
+* counterprocessor: a function to process word counter at the end, default is `casemerge!`
 """
 function processtext(counter::Dict{<:AbstractString, <:Number}; 
     stopwords=stopwords,
@@ -146,8 +162,11 @@ function processtext(counter::Dict{<:AbstractString, <:Number};
     words, weights
 end
 
-function processtext(text; regexp=r"\w[\w']+", lemmatizer=lemmatize, counter=Dict{String,Int}(), kargs...)
-    processtext(countwords(text, regexp=regexp, lemmatizer=lemmatizer, counter=counter); kargs...)
+function processtext(text; regexp=r"\w[\w']+", lemmatizer=lemmatize, 
+    counter=Dict{String,Int}(), counterprocessor=casemerge!, kargs...)
+    processtext(
+        countwords(text, regexp=regexp, lemmatizer=lemmatizer, counter=counter) |>counterprocessor;
+        kargs...)
 end
 processtext(fun::Function; kargs...) = processtext(fun(); kargs...)
 

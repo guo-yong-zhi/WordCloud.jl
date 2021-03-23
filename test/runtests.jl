@@ -2,8 +2,6 @@ using WordCloud
 using Test
 using Random
 
-include("test_qtree.jl")
-include("test_trainer.jl")
 include("test_render.jl")
 include("test_textprocessing.jl")
 
