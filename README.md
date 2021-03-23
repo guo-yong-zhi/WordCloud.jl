@@ -1,4 +1,4 @@
-# [WordCloud](https://github.com/guo-yong-zhi/WordCloud)
+# [WordCloud.jl](https://github.com/guo-yong-zhi/WordCloud.jl)
 ![juliadoc](res/juliadoc.png)  
  Word cloud (tag cloud or wordle) is a novelty visual representation of text data. The importance of each word is shown with font size or color. Our generator has the following highlights:
 * **Flexible** Any mask, any color, any angle, adjustable density. You can specify the initial position of some words. Or you can pin some words and adjust others, etc.
