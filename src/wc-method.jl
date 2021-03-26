@@ -147,7 +147,8 @@ end
 keep some words and ignore the others, then execute the function. It's the opposite of `ignore`.
 * keep(fun, wc, ws::String) #keep a word
 * keep(fun, wc, ws::Set{String}) #kepp all words in ws
-* keep(fun, wc, ws::Array{String}) #keep all words in ws
+* keep(fun, wc, ws::Vector{String}) #keep all words in ws
+* keep(fun, wc, inds::Union{Integer, Vector{Integer}})
 * keep(fun, wc::WC, mask::AbstractArray{Bool}) #keep words. length(mask)==length(wc.words)
 """
 function keep(fun, wc::WC, mask::AbstractArray{Bool})
@@ -181,7 +182,8 @@ end
 pin some words as if they were part of the background, then execute the function.
 * pin(fun, wc, ws::String) #pin a word
 * pin(fun, wc, ws::Set{String}) #pin all words in ws
-* pin(fun, wc, ws::Array{String}) #pin all words in ws
+* pin(fun, wc, ws::Vector{String}) #pin all words in ws
+* pin(fun, wc, inds::Union{Integer, Vector{Integer}})
 * pin(fun, wc::WC, mask::AbstractArray{Bool}) #pin words. length(mask)==length(wc.words)
 """           
 function pin(fun, wc::WC, mask::AbstractArray{Bool})
@@ -206,42 +208,55 @@ function pin(fun, wc::WC, mask::AbstractArray{Bool})
     r
 end
 
-function keep(fun, wc, ws::AbstractString)
-    keep(fun, wc, wc.words .== ws)
+function keep(fun, wc, ind::Integer)
+    mask = falses(length(wc.words))
+    mask[ind] = 1
+    keep(fun, wc, mask)
 end
-function keep(fun, wc, ws::AbstractSet{<:AbstractString})
-    keep(fun, wc, wc.words .∈ Ref(ws))
+function keep(fun, wc, inds::AbstractArray{<:Integer})
+    mask = falses(length(wc.words))
+    mask[inds] .= 1
+    keep(fun, wc, mask)
 end
-function keep(fun, wc, ws::AbstractArray{<:AbstractString})
-    keep(fun, wc, Set(ws))
+function keep(fun, wc, ws)
+    keep(fun, wc, index(wc, ws))
 end
 
 """
 ignore some words as if they don't exist, then execute the function. It's the opposite of `keep`.
 * ignore(fun, wc, ws::String) #ignore a word
 * ignore(fun, wc, ws::Set{String}) #ignore all words in ws
-* ignore(fun, wc, ws::Array{String}) #ignore all words in ws
+* ignore(fun, wc, ws::Vector{String}) #ignore all words in ws
+* ignore(fun, wc, inds::Union{Integer, Vector{Integer}})
 * ignore(fun, wc::WC, mask::AbstractArray{Bool}) #ignore words. length(mask)==length(wc.words)
 """
 function ignore(fun, wc::WC, mask::AbstractArray{Bool})
     keep(fun, wc, .!mask)
 end
-function ignore(fun, wc, ws::AbstractString)
-    ignore(fun, wc, wc.words .== ws)
+function ignore(fun, wc, ind::Integer)
+    mask = falses(length(wc.words))
+    mask[ind] = 1
+    ignore(fun, wc, mask)
 end
-function ignore(fun, wc, ws::AbstractSet{<:AbstractString})
-    ignore(fun, wc, wc.words .∈ Ref(ws))
+function ignore(fun, wc, inds::AbstractArray{<:Integer})
+    mask = falses(length(wc.words))
+    mask[inds] .= 1
+    ignore(fun, wc, mask)
 end
-function ignore(fun, wc, ws::AbstractArray{<:AbstractString})
-    ignore(fun, wc, Set(ws))
+function ignore(fun, wc, ws)
+    ignore(fun, wc, index(wc, ws))
 end
 
-function pin(fun, wc, ws::AbstractString)
-    pin(fun, wc, wc.words .== ws)
+function pin(fun, wc, ind::Integer)
+    mask = falses(length(wc.words))
+    mask[ind] = 1
+    pin(fun, wc, mask)
 end
-function pin(fun, wc, ws::AbstractSet{<:AbstractString})
-    pin(fun, wc, wc.words .∈ Ref(ws))
+function pin(fun, wc, inds::AbstractArray{<:Integer})
+    mask = falses(length(wc.words))
+    mask[inds] .= 1
+    pin(fun, wc, mask)
 end
-function pin(fun, wc, ws::AbstractArray{<:AbstractString})
-    pin(fun, wc, Set(ws))
+function pin(fun, wc, ws)
+    pin(fun, wc, index(wc, ws))
 end
