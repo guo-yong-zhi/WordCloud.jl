@@ -1,4 +1,4 @@
-#md# The elements in the output image don't have to be text, and shapes are OK
+#md# The [engine](https://github.com/guo-yong-zhi/Stuffing.jl)) is designed for general purpose, so the outputs don't have to be text, and shapes are OK
 using WordCloud
 
 sc = WordCloud.randomscheme()
@@ -12,11 +12,15 @@ wc = wordcloud(
 #md# * style arguments like `colors`, `angles` and `density` have no effect  
 #md# 
 #md# And, you should manually initialize images for the placeholders, instead of calling `initimages!`  
+
+dens = 0.6
+sz = 3expm1.(rand(l)) .+ 1
+sz ./= √(sum(π * (sz ./ 2).^2 ./ dens) / prod(size(wc.mask))) # set a proper size according to the density
 ## svg version
-#shapes = [shape(ellipse, repeat([floor(20expm1(rand())+5)],2)..., color=rand(sc)) for i in 1:l]
+#shapes = [shape(ellipse, round(sz[i]), round(sz[i]), color=rand(sc)) for i in 1:l]
 #setsvgimages!(wc, :, shapes)
 ## bitmap version
-shapes = WordCloud.svg2bitmap.([shape(ellipse, repeat([floor(15expm1(rand())+5)],2)..., color=rand(sc)) for i in 1:l])
+shapes = WordCloud.svg2bitmap.([shape(ellipse, round(sz[i]), round(sz[i]), color=rand(sc)) for i in 1:l])
 setimages!(wc, :, shapes)
 
 setstate!(wc, :initimages!) #set the state flag after manual initialization

@@ -11,7 +11,7 @@ wc = wordcloud(
 setwords!(wc, "Alice", "Alice in Wonderland") # replace the word 'Alice' with 'Alice in Wonderland'
 setangles!(wc, "Alice in Wonderland", 0) # make it horizontal
 setcolors!(wc, "Alice in Wonderland", "purple");
-setfontsizes!(wc, "Alice in Wonderland", 2.1size(wc.mask, 2)/length("Alice in Wonderland")) # set a big font size
+setfontsizes!(wc, "Alice in Wonderland", 2.05size(wc.mask, 2)/length("Alice in Wonderland")) # set a big font size
 initimage!(wc, "Alice in Wonderland") # init it after adjust it's style
 setpositions!(wc, "Alice in Wonderland", reverse(size(wc.mask)) .÷ 2, type=setcenter!) # center it
 
