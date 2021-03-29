@@ -111,7 +111,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
             break
         end
     end
-    println("$ep epochs, $nc collections")
+    println("$ep epochs, $nc collisions")
     if nc == 0
         wc.params[:state] = nameof(generate!)
         # @assert isempty(outofbounds(wc.maskqtree, wc.qtrees))
