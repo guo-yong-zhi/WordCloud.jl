@@ -61,5 +61,8 @@ include("test_textprocessing.jl")
     setsvgimages!(wc, 1, wc.svgs[6])
     setsvgimages!(wc, 6, wc.svgs[6]) #the results of setsvgimages! and initimage! may not be identical
     @test wc.imgs[1] == wc.imgs[6]
+
+    #utils
+    wc.qtrees[1][1]|>imageof
 end
 
