@@ -31,7 +31,7 @@ wc = wordcloud(
     mask = loadmask(pkgdir(WordCloud)*"/res/alice_mask.png", color="#faeef8"),
     colors = :Set1_5,
     angles = (0, 90),
-    density = 0.7) |> generate!
+    density = 0.55) |> generate!
 paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", linewidth=1))
 ```
 *Run the command `runexample(:alice)` or `showexample(:alice)` to get the result.*  
