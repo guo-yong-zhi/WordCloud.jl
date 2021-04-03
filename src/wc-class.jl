@@ -22,7 +22,7 @@ Positional arguments are used to specify words and weights, and can be in differ
 * colors = "black" #all same color  
 * colors = ("black", (0.5,0.5,0.7), "yellow", "#ff0000", 0.2) #choose entries randomly  
 * colors = ["black", (0.5,0.5,0.7), "yellow", "red", (0.5,0.5,0.7), 0.2, ......] #use entries sequentially in cycle  
-* colors = :seaborn_dark #using a preset scheme. see `WordCloud.colorschemes` for all supported Symbol
+* colors = :seaborn_dark #using a preset scheme. see `WordCloud.colorschemes` for all supported Symbol. and `WordCloud.displayschemes() may be helpful.`
 * angles = 0 #all same angle  
 * angles = (0, 90, 45) #choose entries randomly  
 * angles = 0:180 #choose entries randomly  
