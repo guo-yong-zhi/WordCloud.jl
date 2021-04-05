@@ -16,12 +16,15 @@ function boxoccupied(imgs::AbstractVector, border=0)
     return sum(p->boxoccupied(p, border), imgs)
 end
 function feelingoccupied(imgs, border=0, bgvalue=imgs[1][1])
-    s = boxoccupied.(imgs, border)
-    th = 10quantile(s, 0.1)
-    bigind = findall(x->x>th, s)
+    bs = boxoccupied.(imgs, border)
+    os = occupied.(imgs, bgvalue)
+    s = (0.8 * sum(bs) .+ 0.2 * sum(os)) / 0.93 #兼顾饱满字体（华文琥珀）和清瘦字体（仿宋）
+    # sum(os) ≈ 2/3 sum(bs), 故除以0.93还原到sum(bs)的大小
+    th = 10quantile(bs, 0.1)
+    bigind = findall(x->x>th, bs)
 #     @show length(bigind)
-    er = (sum(s[bigind]) - occupied(imgs[bigind], bgvalue)) * 0.25 #兼顾大字的内隙和小字的占据
-    sum(s) - er
+    er = (sum(bs[bigind]) - sum(os[bigind])) * 0.2 #兼顾大字的内隙和小字的占据
+    (s - er)
 end
 
 function textoccupied(words, fontsizes, fonts)
