@@ -27,7 +27,7 @@ for (i,wc) in enumerate(wcs)
         println("\n", i-1, "==== ", j, "/", length(ts), " ", nameof(t))
         placement!(wc)
         @time e = @elapsed generate!(wc, trainer=t, retry=1)
-        push!(es[i],nameof(t)=>e)
+        push!(es[i], string(nameof(t)) * (getstate(wc)==:generate! ? " ✔" : " ✘")=>e)
     end
 end
 println("SUMMARY")
