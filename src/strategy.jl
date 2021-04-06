@@ -64,6 +64,13 @@ function cal_weight_scale(words, fontsizes, fonts, target, initialscale)
     return output, sqrt(target/output) * input# 假设output=k*input^2
 end
 
+function scalestep(x₀, y₀, x₁, y₁, y)
+    x₀ = x₀ ^ 2
+    x₁ = x₁ ^ 2
+    x = ((x₁-x₀)*y + x₀*y₁ - x₁*y₀) / (y₁-y₀) # 假设y=k*x^2+b
+    √x
+end
+
 function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, error=0.05)
     ground_size = wc.params[:groundoccupied]
     words = wc.words
@@ -73,26 +80,34 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, erro
     @assert sum(wc.weights.^2 .* length.(words)) / length(wc.weights) ≈ 1.0
     target_lower = (density - error) * ground_size
     target_upper = (density + error) * ground_size
+    target = density * ground_size
     step = 0
-    sc = initialscale
+    sc1 = initialscale
     fonts = getfonts(wc, words)
+    sc0 = 0.
+    tg0 = 0.
     while true
         step = step + 1
         if step > maxiter
             @warn "find_weight_scale reach maxiter. This may be caused by too small background image or too many words or too big `minfontsize`."
             break
         end
-        wc.params[:scale] = sc
-        tg, sc = cal_weight_scale(words, getfontsizes(wc, words), fonts, density*ground_size, sc)
-        println("scale=$(wc.params[:scale]), density=$(tg/ground_size)")
-        @assert sc < 50initialscale #防止全空白words的输入，计算出sc过大渲染字体耗尽内存
-        if target_lower <= tg <= target_upper
+        wc.params[:scale] = sc1
+        tg1 = textoccupied(words, getfontsizes(wc, words), fonts)
+        dens = tg1 / ground_size
+        println("scale=$(wc.params[:scale]), density=$dens\t", dens>density ? "↑" : "↓")
+        sc2 = scalestep(sc0, tg0, sc1, tg1, target)
+        tg0 = tg1
+        sc0 = sc1
+        sc1 = sc2
+        @assert sc1 < 50initialscale #防止全空白words的输入，计算出sc过大渲染字体耗尽内存
+        if target_lower <= tg1 <= target_upper
             break
         end
         
     end
 #     @show textoccupied(words, weights, sc, radius=border)
-    wc.params[:scale] = sc
-    return sc
+    wc.params[:scale] = sc1
+    return sc1
 end
 
