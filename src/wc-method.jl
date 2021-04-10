@@ -100,6 +100,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
     for r in 1:retry
         if r != 1
             rescale!(wc, 0.97)
+            qtrees = [wc.maskqtree, wc.qtrees...]
             dens = textoccupied(getwords(wc), getfontsizes(wc), getfonts(wc))/wc.params[:groundoccupied]
             println("#$r. try scale = $(wc.params[:scale]). The density is reduced to $dens")
         else
