@@ -8,10 +8,11 @@ function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[
 end
 initqtree!(wc, i; kargs...) = initqtree!.(wc, index(wc, i); kargs...)
 "Initialize word's images and other resources with specified style"
-function initimage!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[:border])
-    params = wc.params
-    img, svg = prepareword(wc.words[i], getfontsizes(wc, i), params[:colors][i], params[:angles][i],
-        font=getfonts(wc, i), backgroundcolor=backgroundcolor, border=border)
+function initimage!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[:border],
+                    fontsize=getfontsizes(wc, i), color=wc.params[:colors][i],
+                    angle = wc.params[:angles][i], font=getfonts(wc, i))
+    img, svg = prepareword(wc.words[i], fontsize, color, angle,
+        font=font, backgroundcolor=backgroundcolor, border=border)
     wc.imgs[i] = img
     wc.svgs[i] = svg
     initqtree!(wc, i, backgroundcolor=backgroundcolor, border=border)
@@ -82,6 +83,74 @@ function rescale!(wc::WC, ratio::Real)
     wc
 end
 
+recolor_reset!(wc, i::Integer) = initimage!(wc, i)
+recolor_reset!(wc, w=:; kargs...) = recolor_reset!.(wc, index(wc, w); kargs...)
+
+function recolor_average!(wc, i::Integer; background=getmask(wc))
+    bg = background
+    img = getimages(wc, i)
+    x,y = getpositions(wc, i)
+    bg, img = Render.overlappingarea(bg, img, x, y)
+    m = wordmask(img, (0,0,0,0),0)
+    bkv = @view bg[m]
+    c = sum(bkv) / length(bkv)
+    initimage!(wc, i, color=c)
+end
+recolor_average!(wc, w=:; kargs...) = recolor_average!.(wc, index(wc, w); kargs...)
+
+function recolor_blending!(wc, i::Integer; alpha=0.5, background=getmask(wc))
+    bg = background
+    img = getimages(wc, i)
+    x,y = getpositions(wc, i)
+    bg, img = Render.overlappingarea(bg, img, x, y)
+    m = wordmask(img, (0,0,0,0), 0)
+    bg = @view bg[m]
+    img = @view img[m]
+    alphas = Colors.alpha.(img)
+    img .= Render.overlay.(img, convert.(eltype(img), Colors.alphacolor.(bg, alpha)))
+    img .= Colors.alphacolor.(img, alphas)
+    nothing
+end
+recolor_blending!(wc, w=:; kargs...) = recolor_blending!.(wc, index(wc, w); kargs...)
+
+function recolor_clipping!(wc, i::Integer; background=getmask(wc))
+    bg = background
+    img = getimages(wc, i)
+    x,y = getpositions(wc, i)
+    bg, img = Render.overlappingarea(bg, img, x, y)
+    m = wordmask(img, (0,0,0,0), 0)
+    bg = @view bg[m]
+    img = @view img[m]
+    img .= convert.(eltype(img), Colors.alphacolor.(bg, Colors.alpha.(img)))
+    nothing
+end
+recolor_clipping!(wc, w=:; kargs...) = recolor_clipping!.(wc, index(wc, w); kargs...)
+"""
+recolor the words in `wc` in different styles with the background picture.
+The styles supported are `:average`, `:clipping`, `:blending`, and :reset (to undo all effects of others).
+e.g.  
+* recolor!(wc, style=:average) # `background` is optional
+* recolor!(wc, style=:clipping, background=blur(getmask(wc))) # `background` is optional
+* recolor!(wc, style=:blending, alpha=0.3) # `background` and `alpha` are optional
+* recolor!(wc, style=:reset)
+
+The effects of `:average` and `:clipping` are only determined by the `background`. But the effect of `:blending` is also affected by the previous word color. Therefore, `:blending` can also be used in combination with others
+The results of `clipping` and `blending` can not be exported as SVG files, use PNG instead. 
+"""
+function recolor!(wc, args...; style=:average, kargs...)
+    if style == :average
+        recolor_average!(wc, args...; kargs...)
+    elseif style == :blending
+        recolor_blending!(wc, args...; kargs...)
+    elseif style == :clipping
+        recolor_clipping!(wc, args...; kargs...)
+    elseif style == :reset
+        recolor_reset!(wc, args...; kargs...)
+    else
+        error("unknown style $style")
+    end
+    nothing
+end
 """
 # Positional Args
 * wc: the wordcloud to train

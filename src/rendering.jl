@@ -171,6 +171,15 @@ function padding(img, r=0.1; color=img[1])
     overlay!(r, img, reverse(p)...)
 end
 
+"return the overlapping view of img1 and img2 when img2's top left corner at img1's (x, y)"
+function overlappingarea(img1, img2, x=1, y=1)
+    h1, w1 = size(img1)
+    h2, w2 = size(img2)
+    img1v = @view img1[max(1,y):min(h1,y+h2-1), max(1,x):min(w1,x+w2-1)]
+    img2v = @view img2[max(1,-y+2):min(h2,-y+h1+1), max(1,-x+2):min(w2,-x+w1+1)]
+    img1v, img2v
+end
+                        
 function overlay(color1::T, color2::T) where {T}
 #     @show color1, color2
     a2 = Colors.alpha(color2)
@@ -188,8 +197,7 @@ end
 function overlay!(img1::AbstractMatrix, img2::AbstractMatrix, x=1, y=1)#左上角重合时(x=1,y=1)
     h1, w1 = size(img1)
     h2, w2 = size(img2)
-    img1v = @view img1[max(1,y):min(h1,y+h2-1), max(1,x):min(w1,x+w2-1)]
-    img2v = @view img2[max(1,-y+2):min(h2,-y+h1+1), max(1,-x+2):min(w2,-x+w1+1)]
+    img1v, img2v = overlappingarea(img1, img2, x, y)
 #     @show (h1, w1),(h2, w2),(x,y)
     img1v .= overlay.(img1v, img2v)
     img1

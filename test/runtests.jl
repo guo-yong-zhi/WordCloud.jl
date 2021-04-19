@@ -62,6 +62,10 @@ include("test_textprocessing.jl")
     setsvgimages!(wc, 6, wc.svgs[6]) #the results of setsvgimages! and initimage! may not be identical
     @test wc.imgs[1] == wc.imgs[6]
 
+    for s = [:reset, :average, :clipping, :blending, :reset]
+        recolor!(wc, style=s)
+    end
+
     #utils
     wc.qtrees[1][1]|>imageof
 end

@@ -57,7 +57,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     colors = colors isa Symbol ? (colorschemes[colors].colors..., ) : colors
     colors_o = colors
     colors = Iterators.take(iter_expand(colors), length(words)) |> collect
-    params[:colors] = colors
+    params[:colors] = Any[colors...]
 
     angles = Iterators.take(iter_expand(angles), length(words)) |> collect
     params[:angles] = angles
