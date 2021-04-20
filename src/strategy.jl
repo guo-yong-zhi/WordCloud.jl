@@ -40,10 +40,10 @@ end
 
 ## prepare
 function preparebackground(img, bgcolor)
-    bgcolor = convert(eltype(img), parsecolor(bgcolor))
-    maskqt = maskqtree(img, background=bgcolor)
+    mask = backgroundmask(img, bgcolor)
+    maskqt = maskqtree(mask)
     groundsize = size(maskqt[1], 1)
-    groundoccupied = occupied(img, bgcolor)
+    groundoccupied = occupied(mask, false)
     @assert groundoccupied==occupied(QTree.kernel(maskqt[1]), QTree.FULL)
     return img, maskqt, groundsize, groundoccupied
 end
@@ -53,6 +53,24 @@ function prepareword(word, fontsize, color, angle; backgroundcolor=(0,0,0,0), fo
         angle=angle, border=border, font=font, type=:both)
 end
 
+function torgba(c)
+    c = Colors.RGBA{Colors.N0f8}(c)
+    rgba = (Colors.red(c), Colors.green(c), Colors.blue(c), Colors.alpha(c))
+    reinterpret.(UInt8, rgba)
+end
+torgba(img::AbstractArray) = torgba.(img)
+
+backgroundmask(img::AbstractArray{Bool,2}) = img
+function backgroundmask(img, istransparent::Function)
+    .! istransparent.(torgba.(img))
+end
+function backgroundmask(img, transparentcolor=:auto)
+    if transparentcolor === nothing
+        return trues(size(img))
+    end
+    transparentcolor = transparentcolor==:auto ? img[1] : parsecolor(transparentcolor)
+    img .!= convert(eltype(img), transparentcolor)    
+end
 wordmask(img, bgcolor, border) = dilate(img.!=img[1], border)
 #use `img[1]` instead of `convert(eltype(img), parsecolor(bgcolor))`
 #https://github.com/JuliaGraphics/Luxor.jl/issues/107

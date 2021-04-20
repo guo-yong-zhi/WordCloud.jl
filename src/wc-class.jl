@@ -34,6 +34,8 @@ Positional arguments are used to specify words and weights, and can be in differ
 * mask = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
 * mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #see doc of `shape`  
 * transparentcolor = (1,0,0) #set the transparent color in mask  
+* transparentcolor = nothing #no transparent color  
+* transparentcolor = c->(c[1]+c[2]+c[3])/3*(c[4]/255)>128) #set transparentcolor with a Function. `c` is a (r,g,b,a) Tuple.
 ### other keyword arguments
 The keyword argument `run` is a function. It will be called after the `wordcloud` object constructed.
 * run = placement! #default setting, will initialize word's position

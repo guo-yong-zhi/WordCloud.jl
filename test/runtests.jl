@@ -68,5 +68,11 @@ include("test_textprocessing.jl")
 
     #utils
     wc.qtrees[1][1]|>imageof
+    bg = getmask(wc)
+    istrans = c->maximum(c[1:3])<128
+    mask = WordCloud.backgroundmask(bg, istrans)
+    s = showmask(bg, mask)
+    @test all(bg[mask] .== s[mask])
+    @test all(bg[.!mask] .!= s[.!mask])
 end
 

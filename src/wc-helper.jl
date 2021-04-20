@@ -62,13 +62,14 @@ load a img as mask, recolor, or resize, etc
 * loadmask("res/heart.jpg", 256, 256) #resize to 256*256  
 * loadmask("res/heart.jpg", ratio=0.3) #scale 0.3  
 * loadmask("res/heart.jpg", color="red", ratio=2) #set forecolor  
+* loadmask("res/heart.jpg", transparentcolor=rgba->maximum(rgba[1:3])*(rgba[4]/255)>128) #set transparentcolor with a Function 
 * loadmask("res/heart.jpg", color="red", transparentcolor=(1,1,1)) #set forecolor and transparentcolor  
 """
 function loadmask(img::AbstractMatrix, args...; color=:original, backgroundcolor=:original, transparentcolor=:auto, kargs...)
     if color!=:original || backgroundcolor!=:original
         img = ARGB.(img)
         transparentcolor = transparentcolor==:auto ? img[1] : parsecolor(transparentcolor)
-        mask = img .!= convert(eltype(img), transparentcolor)
+        mask = backgroundmask(img, transparentcolor)
         if color!=:original
             color = parsecolor(color)
             m = @view img[mask]
