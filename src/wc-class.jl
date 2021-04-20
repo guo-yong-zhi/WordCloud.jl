@@ -101,6 +101,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:indsmap] = nothing
     params[:custom] = Dict(:fontsize=>Dict(), :font=>Dict())
     params[:scale] = -1
+    params[:wordids] = collect(1:length(words))
     l = length(words)
     wc = WC(words, float.(weights), Vector(undef, l), Vector{SVGImageType}(undef, l), 
     mask, svgmask, Vector(undef, l), maskqtree, params)
@@ -125,6 +126,8 @@ end
 index(wc::WC, w::AbstractVector) = index.(wc, w)
 index(wc::WC, i::Colon) = eachindex(wc.words)
 index(wc::WC, i) = i
+wordid(wc, i::Integer) = wc.params[:wordids][i]
+wordid(wc, w) = wordid.(wc, index(wc, w))
 getdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index and ignored to return all."
 setdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index, the 3rd arg is the value to assign."
 @doc getdoc getcolors(wc::WC, w=:) = wc.params[:colors][index(wc, w)]
@@ -161,28 +164,28 @@ end
 
 @doc getdoc
 function getfontsizes(wc::WC, w=:)
-    words = getwords(wc, w)
-    Broadcast.broadcast(words) do word
+    inds = index(wc, w)
+    ids = wordid(wc, inds)
+    Broadcast.broadcast(inds, ids) do ind, id
         cf = wc.params[:custom][:fontsize]
-        if word in keys(cf)
-            return cf[word]
+        if id in keys(cf)
+            return cf[id]
         else
-            return max(wc.params[:minfontsize], getweights(wc, word)*wc.params[:scale])
+            return max(wc.params[:minfontsize], getweights(wc, ind)*wc.params[:scale])
         end
     end
 end
 @doc setdoc
 function setfontsizes!(wc::WC, w, v::Union{Number, AbstractVector{<:Number}})
-    push!.(Ref(wc.params[:custom][:fontsize]), w .=> v)
+    push!.(Ref(wc.params[:custom][:fontsize]), wordid(wc, w) .=> v)
 end
 @doc getdoc
 function getfonts(wc::WC, w=:)
-    words = getwords(wc, w)
-    get.(Ref(wc.params[:custom][:font]), words, wc.params[:font])
+    get.(Ref(wc.params[:custom][:font]), wordid(wc, w), wc.params[:font])
 end
 @doc setdoc
 function setfonts!(wc::WC, w, v::Union{AbstractString, AbstractVector{<:AbstractString}})
-    push!.(Ref(wc.params[:custom][:font]), w .=> v)
+    push!.(Ref(wc.params[:custom][:font]), wordid(wc, w) .=> v)
 end
 getmask(wc::WC) = wc.mask
 getsvgmask(wc::WC) = wc.svgmask

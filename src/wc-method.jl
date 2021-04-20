@@ -34,7 +34,7 @@ function initimage!(wc::WC; maxiter=5, error=0.02)
     wc.params[:indsmap] = nothing
 
     scale = find_weight_scale!(wc, density=params[:density], maxiter=maxiter, error=error)
-    println("density set to $(params[:density]), with scale=$scale, font minimum is $(getfontsizes(wc, wc.words[end]))")
+    println("density set to $(params[:density]), with scale=$scale, font minimum is $(getfontsizes(wc, length(wc.words)))")
     initimage!.(wc, 1:length(words))
     params[:state] = nameof(initimages!)
     wc
@@ -184,7 +184,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
     println("$ep epochs, $nc collisions")
     if nc == 0
         wc.params[:state] = nameof(generate!)
-        # @assert isempty(outofbounds(wc.maskqtree, wc.qtrees))
+        # @assert isempty(outofkernelbounds(wc.maskqtree, wc.qtrees))
         # colllist = first.(batchcollision(qtrees))
         # @assert length(colllist) == 0
     else #check
@@ -223,7 +223,7 @@ keep some words and ignore the others, then execute the function. It's the oppos
 """
 function keep(fun, wc::WC, mask::AbstractArray{Bool})
     mem = [wc.words, wc.weights, wc.imgs, wc.svgs, wc.qtrees, 
-            wc.params[:colors], wc.params[:angles], wc.params[:indsmap]]
+            wc.params[:colors], wc.params[:angles], wc.params[:wordids], wc.params[:indsmap]]
     wc.words = @view wc.words[mask]
     wc.weights = @view wc.weights[mask]
     wc.imgs = @view wc.imgs[mask]
@@ -231,6 +231,7 @@ function keep(fun, wc::WC, mask::AbstractArray{Bool})
     wc.qtrees = @view wc.qtrees[mask]
     wc.params[:colors] = @view wc.params[:colors][mask]
     wc.params[:angles] = @view wc.params[:angles][mask]
+    wc.params[:wordids] = @view wc.params[:wordids][mask]
     wc.params[:indsmap] = nothing
     r = nothing
     try
@@ -243,7 +244,8 @@ function keep(fun, wc::WC, mask::AbstractArray{Bool})
         wc.qtrees = mem[5]
         wc.params[:colors] = mem[6]
         wc.params[:angles] = mem[7]
-        wc.params[:indsmap] = mem[8]
+        wc.params[:wordids] = mem[8]
+        wc.params[:indsmap] = mem[9]
     end
     r
 end
