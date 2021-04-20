@@ -23,8 +23,8 @@ pin(wc, "Alice in Wonderland") do
     generate!(wc)
 end
 
-println("results are saved to specifiedstyle.svg")
-paint(wc, "specifiedstyle.svg")
+println("results are saved to custom.svg")
+paint(wc, "custom.svg")
 wc
-#eval# runexample(:specifiedstyle)
-#md# ![](specifiedstyle.svg)  
+#eval# runexample(:custom)
+#md# ![](custom.svg)  
