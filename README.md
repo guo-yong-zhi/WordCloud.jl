@@ -35,20 +35,20 @@ wc = wordcloud(
 paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", linewidth=1))
 ```
 *Run the command `runexample(:alice)` or `showexample(:alice)` to get the result.*  
-![alice](res/alice.png)
+[![alice](res/alice.png)](./examples/alice.jl)
 
 # More Examples
 ## Training animation
-![animation](res/animation.gif)  
-[Training animation](./examples/animation.jl)  
+[![animation](res/animation.gif)](./examples/animation.jl)  
 *Run the command `runexample(:animation)` or `showexample(:animation)` to get the result.* 
 ## Gathering style
-![gathering](res/gathering.png)  
-[gathering style](./examples/gathering.jl)  
+[![gathering](res/gathering.png)](./examples/gathering.jl)  
 *Run the command `runexample(:gathering)` or `showexample(:gathering)` to get the result.* 
+## Recolor
+[![recolor](res/recolor.png)](./examples/recolor.jl)![recolor](res/butterfly.png)  
+*Run the command `runexample(:recolor)` or `showexample(:recolor)` to get the result.* 
 ## Comparison
-![compare](res/compare.png)  
-[Comparison of Obama's and Trump's inaugural address](./examples/compare.jl)  
+[![compare](res/compare.png)](./examples/compare.jl)  
 *Run the command `runexample(:compare)` or `showexample(:compare)` to get the result.* 
 
 *The variable `WordCloud.examples` holds all available examples.* 
