@@ -8,7 +8,7 @@ function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[
 end
 initqtree!(wc, i; kargs...) = initqtree!.(wc, index(wc, i); kargs...)
 "Initialize word's images and other resources with specified style"
-function initimage!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[:border],
+function initimages!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[:border],
                     fontsize=getfontsizes(wc, i), color=wc.params[:colors][i],
                     angle = wc.params[:angles][i], font=getfonts(wc, i))
     img, svg = prepareword(wc.words[i], fontsize, color, angle,
@@ -18,8 +18,8 @@ function initimage!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[
     initqtree!(wc, i, backgroundcolor=backgroundcolor, border=border)
     nothing
 end
-initimage!(wc, i; kargs...) = initimage!.(wc, index(wc, i); kargs...)
-function initimage!(wc::WC; maxiter=5, error=0.02)
+initimages!(wc, i; kargs...) = initimage!.(wc, index(wc, i); kargs...)
+function initimages!(wc::WC; maxiter=5, error=0.02)
     params = wc.params
     mask = wc.mask
     
@@ -36,10 +36,10 @@ function initimage!(wc::WC; maxiter=5, error=0.02)
     scale = find_weight_scale!(wc, density=params[:density], maxiter=maxiter, error=error)
     println("density set to $(params[:density]), with scale=$scale, font minimum is $(getfontsizes(wc, length(wc.words)))")
     initimage!.(wc, 1:length(words))
-    params[:state] = nameof(initimages!)
+    setstate!(wc, nameof(initimages!))
     wc
 end
-initimages! = initimage!
+initimage! = initimages!
 """
 * placement!(wc)
 * placement!(wc, style=:uniform)
@@ -50,7 +50,7 @@ p=1 produces a rhombus, p=2 produces an ellipse, p>2 produces a rectangle with r
 When you have set `style=:gathering`, you should disable teleporting in `generate!` at the same time(`generate!(wc, patient=-1)`).
 """
 function placement!(wc::WC; style=:uniform, kargs...)
-    if getstate(wc) == nameof(wordcloud)
+    if STATEIDS[getstate(wc)] < STATEIDS[:initimages!]
         initimages!(wc)
     end
     @assert style in [:uniform, :gathering]
@@ -69,7 +69,7 @@ function placement!(wc::WC; style=:uniform, kargs...)
         end
         if ind === nothing error("no room for placement") end
     end
-    wc.params[:state] = nameof(placement!)
+    setstate!(wc, nameof(placement!))
     wc
 end
 
@@ -151,6 +151,30 @@ function recolor!(wc, args...; style=:average, kargs...)
     end
     nothing
 end
+
+function fit!(wc, args...; krags...)
+    if STATEIDS[getstate(wc)] < STATEIDS[:placement!]
+        placement!(wc)
+    end
+    qtrees = [wc.maskqtree, wc.qtrees...]
+    ep, nc = train!(qtrees, args...; krags...)
+    wc.params[:epoch] += ep
+    if nc == 0
+        setstate!(wc, nameof(fit!))
+    end
+    wc
+end
+function printcollisions(wc)
+    qtrees = [wc.maskqtree, wc.qtrees...]
+    colllist = first.(batchcollision(qtrees))
+    get_text(i) = i>1 ? wc.words[i-1] : "#MASK#"
+    collwords = [(get_text(i), get_text(j)) for (i,j) in colllist]
+    if length(colllist) > 0
+        println("have $(length(colllist)) collisions.",
+        " try setting a larger `nepoch` and `retry`, or lower `density` in `wordcloud` to fix that")
+        println("$collwords")
+    end
+end
 """
 # Positional Args
 * wc: the wordcloud to train
@@ -161,10 +185,9 @@ end
 * trainer: appoint a training engine
 """
 function generate!(wc::WC, args...; retry=3, krags...)
-    if getstate(wc) != nameof(placement!) && getstate(wc) != nameof(generate!)
+    if STATEIDS[getstate(wc)] < STATEIDS[:placement!]
         placement!(wc)
     end
-    qtrees = [wc.maskqtree, wc.qtrees...]
     ep, nc = -1, -1
     for r in 1:retry
         if r != 1
@@ -175,28 +198,19 @@ function generate!(wc::WC, args...; retry=3, krags...)
         else
             println("#$r. scale = $(wc.params[:scale])")
         end
-        ep, nc = train!(qtrees, args...; krags...)
-        wc.params[:epoch] += ep
-        if nc == 0
+        fit!(wc, args...; krags...)
+        if getstate(wc) == :fit!
             break
         end
     end
-    println("$ep epochs, $nc collisions")
-    if nc == 0
-        wc.params[:state] = nameof(generate!)
+    if STATEIDS[getstate(wc)] >= STATEIDS[:fit!]
+        println("$(wc.params[:epoch]) epochs")
+        setstate!(wc, nameof(generate!))
         # @assert isempty(outofkernelbounds(wc.maskqtree, wc.qtrees))
         # colllist = first.(batchcollision(qtrees))
         # @assert length(colllist) == 0
     else #check
-        colllist = first.(batchcollision(qtrees))
-        get_text(i) = i>1 ? wc.words[i-1] : "#MASK#"
-        collwords = [(get_text(i), get_text(j)) for (i,j) in colllist]
-        if length(colllist) > 0
-            wc.params[:completed] = false
-            println("have $(length(colllist)) collisions.",
-            " try setting a larger `nepoch` and `retry`, or lower `density` in `wordcloud` to fix that")
-            println("$collwords")
-        end
+        printcollisions(wc)
     end
     wc
 end
@@ -212,6 +226,10 @@ function generate_animation!(wc::WC, args...; outputdir="gifresult", overwrite=o
     Render.generate(gif)
     re
 end
+
+STATES = nameof.([wordcloud, initimages!, placement!, fit!, generate!])
+STATEIDS = Dict([s=>i for (i,s) in enumerate(STATES)])
+
 
 """
 keep some words and ignore the others, then execute the function. It's the opposite of `ignore`.

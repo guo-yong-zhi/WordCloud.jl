@@ -45,7 +45,7 @@ paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", li
 [![gathering](res/gathering.png)](./examples/gathering.jl)  
 *Run the command `runexample(:gathering)` or `showexample(:gathering)` to get the result.* 
 ## Recolor
-[![recolor](res/recolor.png)](./examples/recolor.jl)![recolor](res/butterfly.png)  
+[![recolor](res/recolor.png)](./examples/recolor.jl)  
 *Run the command `runexample(:recolor)` or `showexample(:recolor)` to get the result.* 
 ## Comparison
 [![compare](res/compare.png)](./examples/compare.jl)  
