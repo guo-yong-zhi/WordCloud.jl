@@ -1,7 +1,7 @@
 name = "WordCloud"
 uuid = "6385f0a0-cb03-45b6-9089-4e0acc74b26b"
 authors = ["guoyongzhi <momoshanghan@163.com>"]
-version = "0.6.8"
+version = "0.6.9"
 
 [deps]
 ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
@@ -20,4 +20,4 @@ ImageMagick = "1"
 ImageTransformations = "0.5, 0.6, 0.7, 0.8"
 Luxor = "2.8"
 julia = "1.2"
-Stuffing = "0.1, 0.2, 0.3"
+Stuffing = "0.3"
