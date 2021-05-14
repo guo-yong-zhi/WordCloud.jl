@@ -36,9 +36,9 @@ function load(fn)
 end
 
 function svg2bitmap(svg::Drawing)
-    d = Drawing(svg.width, svg.height, :image)
+    Drawing(svg.width, svg.height, :image)
     placeimage(svg)
-    m=image_as_matrix()
+    m = image_as_matrix()
     finish()
     m
 end
@@ -195,8 +195,6 @@ function overlay(color1::T, color2::T) where {T}
 end
 "put img2 on img1 at (x, y)"
 function overlay!(img1::AbstractMatrix, img2::AbstractMatrix, x=1, y=1)#左上角重合时(x=1,y=1)
-    h1, w1 = size(img1)
-    h2, w2 = size(img2)
     img1v, img2v = overlappingarea(img1, img2, x, y)
 #     @show (h1, w1),(h2, w2),(x,y)
     img1v .= overlay.(img1v, img2v)

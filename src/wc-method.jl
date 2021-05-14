@@ -21,7 +21,6 @@ end
 initimages!(wc, i; kargs...) = initimage!.(wc, index(wc, i); kargs...)
 function initimages!(wc::WC; maxiter=5, error=0.02)
     params = wc.params
-    mask = wc.mask
     
     si = sortperm(wc.weights, rev=true)
     words = wc.words[si]
@@ -151,7 +150,14 @@ function recolor!(wc, args...; style=:average, kargs...)
     end
     nothing
 end
-
+"""
+# Positional Args
+* wc: the wordcloud to fit
+* nepoch: training epoch nums
+# Keyword Args
+* patient: number of epochs before teleporting, set to `-1` to disable teleporting
+* trainer: appoint a training engine
+"""
 function fit!(wc, args...; krags...)
     if STATEIDS[getstate(wc)] < STATEIDS[:placement!]
         placement!(wc)
@@ -161,6 +167,8 @@ function fit!(wc, args...; krags...)
     wc.params[:epoch] += ep
     if nc == 0
         setstate!(wc, nameof(fit!))
+    else
+        setstate!(wc, nameof(placement!))
     end
     wc
 end
@@ -177,7 +185,7 @@ function printcollisions(wc)
 end
 """
 # Positional Args
-* wc: the wordcloud to train
+* wc: the wordcloud to fit
 * nepoch: training epoch nums
 # Keyword Args
 * retry: shrink & retrain times, defaults to 3, set to `1` to disable shrinking
@@ -188,11 +196,9 @@ function generate!(wc::WC, args...; retry=3, krags...)
     if STATEIDS[getstate(wc)] < STATEIDS[:placement!]
         placement!(wc)
     end
-    ep, nc = -1, -1
     for r in 1:retry
         if r != 1
             rescale!(wc, 0.97)
-            qtrees = [wc.maskqtree, wc.qtrees...]
             dens = textoccupied(getwords(wc), getfontsizes(wc), getfonts(wc))/wc.params[:groundoccupied]
             println("#$r. try scale = $(wc.params[:scale]). The density is reduced to $dens")
         else
