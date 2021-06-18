@@ -2,7 +2,7 @@
     text = "So dim, so dark, So dense, so dull, So damp, so dank, so dead! The weather, now warm, now cold, Makes it harder Than ever to forget!"
     c = WordCloud.TextProcessing.countwords(text)
     @test c["so"] == 4
-    @test c["Make"] == 1
+    @test c["Makes"] == 1
     WordCloud.TextProcessing.casemerge!(c)
     @test "so" in keys(c)
     @test !("So" in keys(c)) #casemerge!
@@ -30,4 +30,8 @@
     @test lemmatize("loves") == "love"
     @test lemmatize("lives") in ("life", "live")
     @test lemmatize("中文") == "中文"
+    
+    @test lemmatize!(Dict("dog" => 1, "dogs" => 2)) == Dict("dog" => 3)
+    @test lemmatize!(Dict("cat" => 1, "dogs" => 2)) == Dict("dog" => 2, "cat" => 1)
+    @test length(processtext(Dict("cat" => 1, "dog" => 1, "dogs" => 3, "Dogs" => 2, "Dog" => 1))[1])==2
 end

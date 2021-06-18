@@ -1,6 +1,6 @@
 module TextProcessing
 export countwords, processtext, html2text, stopwords_en, stopwords_cn, stopwords, 
-lemmatize, casemerge!
+lemmatize, lemmatize!, casemerge!
 dir = @__DIR__
 stopwords_en = Set(readlines(dir * "/../res/stopwords_en.txt"))
 stopwords_cn = Set(readlines(dir * "/../res/stopwords_cn.txt"))
@@ -42,29 +42,15 @@ function splitwords(text::AbstractString, regexp=r"\w[\w']+")
 end
 
 function countwords(words::AbstractVector{<:AbstractString}; 
-    regexp=r"\w[\w']+", lemmatizer=lemmatize, counter=Dict{String,Int}())
-    if lemmatizer == false || lemmatizer === nothing
-        lemmatizer = x -> x
-    end
-    memo = Dict()
+    regexp=r"\w[\w']+", counter=Dict{String,Int}())
     for w in words
-        w0 = w
-        if !(w in keys(memo))
-            if regexp !== nothing
-                m = match(regexp, w)
-                if m !== nothing
-                    w = m.match
-                else
-                    w = nothing
-                end
+        if regexp !== nothing
+            m = match(regexp, w)
+            if m !== nothing
+                w = m.match
+                counter[w] = get!(counter, w, 0) + 1
             end
-            if w !== nothing
-                w = lemmatizer(w)
-            end
-            memo[w0] = w
-        end
-        w = memo[w0]
-        if w !== nothing
+        else
             counter[w] = get!(counter, w, 0) + 1
         end
     end
@@ -108,6 +94,20 @@ function casemerge!(d)
     d
 end
 
+function lemmatize!(d::AbstractDict)
+    for w in keys(d)
+        lw = lemmatize(w)
+        if lw != w
+            if !(lw in keys(d))
+                d[lw] = 0
+            end
+            d[lw] += d[w]
+            pop!(d, w)
+        end
+    end
+    d
+end
+
 """
 processtext the text, filter the words, and adjust the weights. return words vector and weights vector.
 ## Positional Arguments
@@ -119,15 +119,17 @@ processtext the text, filter the words, and adjust the weights. return words vec
 * minfrequency: minimum frequency of a word to be included
 * maxnum: maximum number of words
 * minweight, maxweight: within 0 ~ 1, set to adjust extreme weight
-* counterprocessor: a function to process word counter at the end, default is `casemerge!`
+* counterprocessor: a function to process word counter, default is `casemerge!∘lemmatize!`
 """
-function processtext(counter::Dict{<:AbstractString, <:Number}; 
+function processtext(counter::AbstractDict{<:AbstractString, <:Number}; 
     stopwords=stopwords,
     minlength=2, maxlength=30,
     minfrequency=0,
     maxnum=500,
-    minweight=1/maxnum, maxweight=minweight*20)
+    minweight=1/maxnum, maxweight=minweight*20,
+    counterprocessor=casemerge!∘lemmatize!)
     stopwords = Set(stopwords)
+    counter = counterprocessor(counter)
     println("$(sum(values(counter))) words")
     println("$(length(counter)) different words")
     for (w, c) in counter
@@ -162,10 +164,9 @@ function processtext(counter::Dict{<:AbstractString, <:Number};
     words, weights
 end
 
-function processtext(text; regexp=r"\w[\w']+", lemmatizer=lemmatize, 
-    counter=Dict{String,Int}(), counterprocessor=casemerge!, kargs...)
+function processtext(text; regexp=r"\w[\w']+", counter=Dict{String,Int}(), kargs...)
     processtext(
-        countwords(text, regexp=regexp, lemmatizer=lemmatizer, counter=counter) |>counterprocessor;
+        countwords(text, regexp=regexp, counter=counter);
         kargs...)
 end
 processtext(fun::Function; kargs...) = processtext(fun(); kargs...)
