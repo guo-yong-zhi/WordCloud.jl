@@ -98,10 +98,7 @@ function lemmatize!(d::AbstractDict)
     for w in keys(d)
         lw = lemmatize(w)
         if lw != w
-            if !(lw in keys(d))
-                d[lw] = 0
-            end
-            d[lw] += d[w]
+            d[lw] = get(d, lw, 0) + d[w]
             pop!(d, w)
         end
     end
@@ -161,10 +158,17 @@ function processtext(text; regexp=r"\w[\w']+", counter=Dict{String,Int}(), kargs
         kargs...)
 end
 processtext(fun::Function; kargs...) = processtext(fun(); kargs...)
-processtext(words::AbstractVector, weights::AbstractVector; kargs...) = processtext(Dict(zip(words, weights)); kargs...)
+function processtext(words::AbstractVector{T}, weights::AbstractVector{W}; kargs...) where {T, W}
+    dict = Dict{T, W}()
+    for (word, weight) in zip(words, weights)
+        dict[word] = get(dict, word, 0) + weight
+    end
+    processtext(dict; kargs...)
+end
 processtext(wordsweights::Tuple; kargs...) = processtext(wordsweights...; kargs...)
-processtext(counter::AbstractVector{<:Union{Pair, Tuple, AbstractVector}}; kargs...) = processtext(Dict(counter); kargs...)
-
+function processtext(counter::AbstractVector{<:Union{Pair, Tuple, AbstractVector}}; kargs...)
+    processtext(first.(counter), [v[2] for v in counter]; kargs...)
+end
 function html2text(content::AbstractString)
     patterns = [
         r"<[\s]*?script[^>]*?>[\s\S]*?<[\s]*?/[\s]*?script[\s]*?>"=>" ",
