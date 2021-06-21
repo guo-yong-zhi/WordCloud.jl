@@ -112,30 +112,30 @@ end
 processtext the text, filter the words, and adjust the weights. return words vector and weights vector.
 ## Positional Arguments
 * text: string, a vector of words, or a opend file(IO)
-* Or, a counter::Dict{<:AbstractString, <:Number}
+* Or counter, a Dict{<:String, <:Real}, a Vector{Pair}, a Vector{Tuple}, or two Vectors
 ## Optional Keyword Arguments
 * stopwords: a words Set
 * minlength, maxlength: min and max length of a word to be included
 * minfrequency: minimum frequency of a word to be included
 * maxnum: maximum number of words
 * minweight, maxweight: within 0 ~ 1, set to adjust extreme weight
-* counterprocessor: a function to process word counter, default is `casemerge!∘lemmatize!`
+* process: a function to process word counter, defaults to `casemerge!∘lemmatize!`
 """
-function processtext(counter::AbstractDict{<:AbstractString, <:Number}; 
+function processtext(counter::AbstractDict{<:AbstractString, <:Real}; 
     stopwords=stopwords,
-    minlength=2, maxlength=30,
+    minlength=1, maxlength=30,
     minfrequency=0,
     maxnum=500,
     minweight=1/maxnum, maxweight=minweight*20,
-    counterprocessor=casemerge!∘lemmatize!)
-    stopwords = Set(stopwords)
-    counter = counterprocessor(counter)
+    process=casemerge!∘lemmatize!)
+    stopwords = stopwords isa AbstractSet ? stopwords : Set(stopwords)
+    counter = process(counter)
     println("$(sum(values(counter))) words")
     println("$(length(counter)) different words")
     for (w, c) in counter
         if (c < minfrequency 
             || length(w) < minlength || length(w) > maxlength 
-            || lowercase(w) in stopwords || w in stopwords)
+            || w in stopwords || lowercase(w) in stopwords)
             delete!(counter, w)
         end
     end
@@ -147,16 +147,7 @@ function processtext(counter::AbstractDict{<:AbstractString, <:Number};
     words = words[inds]
     weights = weights[inds]
     @assert !isempty(weights)
-#     weights = sqrt.(weights)
     weights = weights ./ sum(weights)
-#     min_i = findfirst(x->x<minweight, weights)
-#     if min_i !== nothing
-#         min_i = max(1, min_i-1)
-#         words = words[1:min_i]
-#         weights = weights[1:min_i]
-#         weights = weights ./ sum(weights)
-#     end
-#     println("$(length(words)) non-tiny words")
     m = weights .> maxweight
     weights[m] .= log1p.(weights[m] .- maxweight)./10 .+ maxweight
     weights .+= minweight
@@ -170,6 +161,9 @@ function processtext(text; regexp=r"\w[\w']+", counter=Dict{String,Int}(), kargs
         kargs...)
 end
 processtext(fun::Function; kargs...) = processtext(fun(); kargs...)
+processtext(words::AbstractVector, weights::AbstractVector; kargs...) = processtext(Dict(zip(words, weights)); kargs...)
+processtext(wordsweights::Tuple; kargs...) = processtext(wordsweights...; kargs...)
+processtext(counter::AbstractVector{<:Union{Pair, Tuple, AbstractVector}}; kargs...) = processtext(Dict(counter); kargs...)
 
 function html2text(content::AbstractString)
     patterns = [
