@@ -1,6 +1,6 @@
 name = "WordCloud"
 uuid = "6385f0a0-cb03-45b6-9089-4e0acc74b26b"
-authors = ["guoyongzhi <momoshanghan@163.com>"]
+authors = ["guoyongzhi <guo-yong-zhi@outlook.com>"]
 version = "0.6.11"
 
 [deps]
