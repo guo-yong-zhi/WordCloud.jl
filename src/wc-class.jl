@@ -28,7 +28,8 @@ Positional arguments are used to specify words and weights, and can be in differ
 * angles = 0:180 #choose entries randomly  
 * angles = [0, 22, 4, 1, 100, 10, ......] #use entries sequentially in cycle  
 * density = 0.55 #default 0.5  
-* border = 1  
+* spacing = 1  #minimum spacing between words
+
 ### mask keyword arguments
 * mask = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
 * mask = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
@@ -92,7 +93,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
         @show groundoccupied length(words)
         params[:minfontsize] = minfontsize
     end
-    get!(params, :border, 1)
+    get!(params, :spacing, 1)
     get!(params, :density, 0.5)
     get!(params, :font, "")
     
@@ -150,7 +151,7 @@ end
 @doc getdoc getsvgimages(wc::WC, w=:) = wc.svgs[index(wc, w)]
 
 @doc setdoc 
-function setimages!(wc::WC, w, v::AbstractMatrix; backgroundcolor=v[1], border=wc.params[:border])
+function setimages!(wc::WC, w, v::AbstractMatrix)
     @view(wc.imgs[index(wc, w)]) .= Ref(v)
     initqtree!(wc, w)
     v

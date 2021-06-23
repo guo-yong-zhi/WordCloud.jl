@@ -9,7 +9,7 @@ using WordCloud
 #md#     density = 0.7) |> generate!
 #md# paint(wc, "highdensity.png")
 #md# ```
-#md# But you may find that doesn't work. That is because there should be at least 1 pixel gap between two words, which is controlled by the `border` parameter (default 1) in `wordcloud`. While, when the picture is small, 1 pixel is expensive. So, that can be done as follows:
+#md# But you may find that doesn't work. That is because there should be at least 1 pixel gap between two words, which is controlled by the `spacing` parameter (default 1) in `wordcloud`. While, when the picture is small, 1 pixel is expensive. So, that can be done as follows:
 wc = wordcloud(
     processtext(open(pkgdir(WordCloud)*"/res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
     mask = shape(box, 400*2, 300*2, 10*2),

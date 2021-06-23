@@ -1,6 +1,6 @@
-function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[:border])
+function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=wc.params[:spacing])
     img = wc.imgs[i]
-    mimg = wordmask(img, backgroundcolor, border)
+    mimg = wordmask(img, backgroundcolor, spacing)
     t = qtree(mimg, wc.params[:groundsize])
     c = isassigned(wc.qtrees, i) ? getcenter(wc.qtrees[i]) : wc.params[:groundsize] ÷ 2
     setcenter!(t, c)
@@ -8,14 +8,14 @@ function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[
 end
 initqtree!(wc, i; kargs...) = initqtree!.(wc, index(wc, i); kargs...)
 "Initialize word's images and other resources with specified style"
-function initimages!(wc, i::Integer; backgroundcolor=(0,0,0,0), border=wc.params[:border],
+function initimages!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=wc.params[:spacing],
                     fontsize=getfontsizes(wc, i), color=wc.params[:colors][i],
                     angle = wc.params[:angles][i], font=getfonts(wc, i))
     img, svg = prepareword(wc.words[i], fontsize, color, angle,
-        font=font, backgroundcolor=backgroundcolor, border=border)
+        font=font, backgroundcolor=backgroundcolor, border=spacing)
     wc.imgs[i] = img
     wc.svgs[i] = svg
-    initqtree!(wc, i, backgroundcolor=backgroundcolor, border=border)
+    initqtree!(wc, i, backgroundcolor=backgroundcolor, spacing=spacing)
     nothing
 end
 initimages!(wc, i; kargs...) = initimage!.(wc, index(wc, i); kargs...)
