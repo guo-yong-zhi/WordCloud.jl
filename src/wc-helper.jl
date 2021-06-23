@@ -22,17 +22,35 @@ function randomscheme()
     @show (scheme, length(colors))
     (colors...,)
 end
-function randommask(color, sz=800)
+function randommask(color="white", sz=800)
     s = sz * sz * (0.5+rand()/2)
     ratio = (0.5+rand()/2)
     ratio = ratio>0.9 ? 1.0 : ratio
     h = round(Int, sqrt(s*ratio))
     w = round(Int, h/ratio)
-    println("mask size is $((h, w))")
-    if rand() > 0.5
-        return shape(box, w, h, round(Int, h*(0.05+rand()/5)), color=color, backgroundcolor=ARGB(1, 1, 1, 0))
+    ran = rand()
+    if ran < 2/10
+        r = rand() * 0.45
+        r = r < 0.05 ? 0. : r
+        r = round(Int, h*r)
+        println("shape(box, $w, $h, $r, color=$(repr(color)))")
+        return shape(box, w, h, r, color=color)
+    elseif ran < 7/10
+        if rand()<0.8
+            rt = rand()
+        else
+            ran = rand()
+            if ran < 0.5
+                rt = 2
+            else
+                rt = 1 + 1.5rand()
+            end
+        end
+        println("shape(squircle, $w, $h, rt=$rt, color=$(repr(color)))")
+        return shape(squircle, w, h, rt=rt, color=color)
     else
-        return shape(ellipse, w, h, color=color, backgroundcolor=ARGB(1, 1, 1, 0))
+        println("shape(ellipse, $w, $h, color=$(repr(color)))")
+        return shape(ellipse, w, h, color=color)
     end
 end
 function randomangles()
@@ -68,7 +86,6 @@ load a img as mask, recolor, or resize, etc
 function loadmask(img::AbstractMatrix, args...; color=:original, backgroundcolor=:original, transparentcolor=:auto, kargs...)
     if color!=:original || backgroundcolor!=:original
         img = ARGB.(img)
-        transparentcolor = transparentcolor==:auto ? img[1] : parsecolor(transparentcolor)
         mask = backgroundmask(img, transparentcolor)
         if color!=:original
             color = parsecolor(color)

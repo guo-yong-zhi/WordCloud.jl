@@ -1,5 +1,5 @@
 module Render
-export rendertext, overlay!, shape, ellipse, box, GIF, generate, parsecolor, rendertextoutlines,
+export rendertext, overlay!, shape, ellipse, box, squircle, GIF, generate, parsecolor, rendertextoutlines,
     colorschemes, schemes, outline, padding, dilate, imresize
 export issvg, save, load, svg2bitmap, SVGImageType, svgstring
 using Luxor
@@ -230,21 +230,26 @@ schemes_colorbrewer =  filter(s -> (occursin("Accent", String(s))
 schemes_seaborn = filter(s -> occursin("seaborn", colorschemes[s].category), collect(keys(colorschemes)))
 schemes = [schemes_colorbrewer..., schemes_seaborn...]
 
+function squircle(pos, w, h, args...; kargs...)
+    Luxor.squircle(pos, w/2, h/2, args...; kargs...)
+end
+
 """
-get a box or ellipse svg image
+get a box, ellipse or squircle svg image
 ## Examples
 * shape(box, 80, 50) #80*50 box
 * shape(box, 80, 50, 4) #box with cornerradius=4
+* shape(squircle, 80, 50, rt=0.7) #squircle or superellipse. rt=0, rectangle; rt=1, ellipse; rt=2, rhombus.
 * shape(ellipse, 80, 50, color="red") #80*50 red ellipse
 * shape(box, 80, 50, backgroundcolor=(0,1,0), backgroundsize=(100, 100)) #80*50 box on 100*100 green background
 """
-function shape(shape_, width, height, args...; color="white", backgroundcolor=(0,0,0,0), backgroundsize=(width, height))
+function shape(shape_, width, height, args...; color="white", backgroundcolor=(0,0,0,0), backgroundsize=(width, height), kargs...)
     d = Drawing(backgroundsize..., :svg)
     origin()
     bgcolor = parsecolor(backgroundcolor)
     background(bgcolor)
     setcolor(parsecolor(color))
-    shape_(Point(0,0), width, height, args..., :fill)
+    shape_(Point(0,0), width, height, args..., :fill; kargs...)
     finish()
     d
 end

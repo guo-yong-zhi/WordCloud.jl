@@ -65,11 +65,17 @@ function backgroundmask(img, istransparent::Function)
     .! istransparent.(torgba.(img))
 end
 function backgroundmask(img, transparentcolor=:auto)
+    if transparentcolor==:auto
+        if img[1]==img[end] && any(c->c!=img[1], img)
+            transparentcolor = img[1]
+        else
+            transparentcolor = nothing
+        end
+    end
     if transparentcolor === nothing
         return trues(size(img))
     end
-    transparentcolor = transparentcolor==:auto ? img[1] : parsecolor(transparentcolor)
-    img .!= convert(eltype(img), transparentcolor)    
+    img .!= convert(eltype(img), parsecolor(transparentcolor))    
 end
 wordmask(img, bgcolor, border) = dilate(img.!=img[1], border)
 #use `img[1]` instead of `convert(eltype(img), parsecolor(bgcolor))`

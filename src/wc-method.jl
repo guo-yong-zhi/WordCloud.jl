@@ -44,24 +44,24 @@ initimage! = initimages!
 * placement!(wc, style=:uniform)
 * placement!(wc, style=:gathering)
 * placement!(wc, style=:gathering, level=5) #`level` controls the intensity of gathering, typically between 4 and 6, defaults to 5.
-* placement!(wc, style=:gathering, level=6, p=4) #`p` refers to p-norm (Minkowski distance), defaults to 2. 
-p=1 produces a rhombus, p=2 produces an ellipse, p>2 produces a rectangle with rounded corners. 
+* placement!(wc, style=:gathering, level=6, rt=0) #rt=0, rectangle; rt=1, ellipse; rt=2, rhombus. defaults to 1.  
 When you have set `style=:gathering`, you should disable teleporting in `generate!` at the same time(`generate!(wc, patient=-1)`).
 """
-function placement!(wc::WC; style=:uniform, kargs...)
+function placement!(wc::WC; style=:uniform, rt=1, kargs...)
     if STATEIDS[getstate(wc)] < STATEIDS[:initimages!]
         initimages!(wc)
     end
     @assert style in [:uniform, :gathering]
     if length(wc.qtrees) > 0
         if style == :gathering
+            p = min(50, 2 / rt)
             if wc.maskqtree[1][(wc.params[:groundsize].÷2)] == QTree.EMPTY && (length(wc.qtrees)<2 
                 || (length(wc.qtrees)>=2 && prod(kernelsize(wc.qtrees[2]))/prod(kernelsize(wc.qtrees[1])) < 0.5))
                 setcenter!(wc.qtrees[1],  wc.params[:groundsize] .÷ 2)
                 ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees, 2:length(wc.qtrees)|>collect; 
-                    roomfinder=findroom_gathering, kargs...)
+                    roomfinder=findroom_gathering, p=p, kargs...)
             else
-                ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees; roomfinder=findroom_gathering, kargs...)
+                ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees; roomfinder=findroom_gathering, p=p, kargs...)
             end
         else
             ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees; roomfinder=findroom_uniform, kargs...)

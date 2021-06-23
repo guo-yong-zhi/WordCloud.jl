@@ -67,9 +67,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     
     if !haskey(params, :mask)
         maskcolor = chooseabgcolor(colors_o)
-        @show maskcolor
         mask = randommask(maskcolor)
-        transparentcolor = get(params, :transparentcolor, ARGB(1, 1, 1, 0))
     else
         mask = params[:mask]
     end
@@ -78,7 +76,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
         svgmask = mask
         mask = svg2bitmap(mask)
     end
-    transparentcolor = get(params, :transparentcolor, mask[1])
+    transparentcolor = get(params, :transparentcolor, :auto)
     mask, maskqtree, groundsize, groundoccupied = preparebackground(mask, transparentcolor)
     params[:groundsize] = groundsize
     params[:groundoccupied] = groundoccupied
