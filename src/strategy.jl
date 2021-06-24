@@ -54,7 +54,7 @@ function prepareword(word, fontsize, color, angle; backgroundcolor=(0,0,0,0), fo
 end
 
 function torgba(c)
-    c = Colors.RGBA{Colors.N0f8}(c)
+    c = Colors.RGBA{Colors.N0f8}(parsecolor(c))
     rgba = (Colors.red(c), Colors.green(c), Colors.blue(c), Colors.alpha(c))
     reinterpret.(UInt8, rgba)
 end

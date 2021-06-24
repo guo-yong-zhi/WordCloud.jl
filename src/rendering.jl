@@ -235,19 +235,27 @@ function squircle(pos, w, h, args...; kargs...)
 end
 
 """
-get a box, ellipse or squircle svg image
+generate a box, ellipse or squircle svg image
 ## Examples
 * shape(box, 80, 50) #80*50 box
 * shape(box, 80, 50, 4) #box with cornerradius=4
 * shape(squircle, 80, 50, rt=0.7) #squircle or superellipse. rt=0, rectangle; rt=1, ellipse; rt=2, rhombus.
 * shape(ellipse, 80, 50, color="red") #80*50 red ellipse
 * shape(box, 80, 50, backgroundcolor=(0,1,0), backgroundsize=(100, 100)) #80*50 box on 100*100 green background
+* shape(squircle, 80, 50, outline=3, linecolor="red", backgroundcolor="gray") #add a red outline to the squircle
 """
-function shape(shape_, width, height, args...; color="white", backgroundcolor=(0,0,0,0), backgroundsize=(width, height), kargs...)
+function shape(shape_, width, height, args...; 
+    outline=0, linecolor="black",
+    color="white", backgroundcolor=(0,0,0,0), backgroundsize=(width+2outline, height+2outline), 
+    kargs...)
     d = Drawing(backgroundsize..., :svg)
     origin()
-    bgcolor = parsecolor(backgroundcolor)
-    background(bgcolor)
+    background(parsecolor(backgroundcolor))
+    if outline>0
+        setline(2outline)
+        setcolor(parsecolor(linecolor))
+        shape_(Point(0,0), width, height, args..., :stroke; kargs...)
+    end
     setcolor(parsecolor(color))
     shape_(Point(0,0), width, height, args..., :fill; kargs...)
     finish()
