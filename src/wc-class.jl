@@ -200,5 +200,12 @@ function setpositions!(wc::WC, w, x_y; type=setshift!)
 end
 
 Base.show(io::IO, m::MIME"image/png", wc::WC) = Base.show(io, m, paint(wc::WC))
+Base.show(io::IO, m::MIME"image/svg+xml", wc::WC) = Base.show(io, m, paintsvg(wc::WC))
 Base.show(io::IO, m::MIME"text/plain", wc::WC) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")
-# Base.show(io::IO, wc::WC) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")
+function Base.showable(::MIME"image/png", wc::WC)
+    STATEIDS[getstate(wc)] >= STATEIDS[:initimages!] && showable("image/png", zeros(ARGB32,(1,1)))
+end
+function Base.showable(::MIME"image/svg+xml", wc::WC)
+    STATEIDS[getstate(wc)] >= STATEIDS[:initimages!] && (wc.svgmask !== nothing || !showable("image/png", wc))
+end
+Base.show(io::IO, wc::WC) = Base.show(io, "text/plain", wc)
