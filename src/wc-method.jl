@@ -30,6 +30,7 @@ function initimages!(wc::WC; maxiter=5, error=0.02)
     wc.weights .= weights
     wc.params[:colors] .= wc.params[:colors][si]
     wc.params[:angles] .= wc.params[:angles][si]
+    wc.params[:wordids] .= wc.params[:wordids][si]
     wc.params[:indsmap] = nothing
 
     scale = find_weight_scale!(wc, density=params[:density], maxiter=maxiter, error=error)
