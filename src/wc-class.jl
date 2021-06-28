@@ -52,31 +52,25 @@ wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter)|>collect, v
 wordcloud(counter::AbstractVector{<:Union{Pair, Tuple, AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
 
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
-                colors=randomscheme(), angles=randomangles(), run=placement!, kargs...)
+                colors=randomscheme(), angles=randomangles(), 
+                mask=randommask(color=randommaskcolor(colors)), transparentcolor=:auto,
+                minfontsize=:auto, spacing=1, density=0.5, font="",
+                run=placement!)
     
     @assert length(words) == length(weights) > 0
-    params = Dict{Symbol, Any}(kargs...)
-#     @show params
+    params = Dict{Symbol, Any}()
     colors = colors isa Symbol ? (colorschemes[colors].colors..., ) : colors
-    colors_o = colors
     colors = Iterators.take(iter_expand(colors), length(words)) |> collect
     params[:colors] = Any[colors...]
 
     angles = Iterators.take(iter_expand(angles), length(words)) |> collect
     params[:angles] = angles
-    
-    if !haskey(params, :mask)
-        maskcolor = chooseabgcolor(colors_o)
-        mask = randommask(maskcolor)
-    else
-        mask = params[:mask]
-    end
+    params[:transparentcolor] = transparentcolor
     svgmask = nothing
     if issvg(mask)
         svgmask = mask
         mask = svg2bitmap(mask)
     end
-    transparentcolor = get(params, :transparentcolor, :auto)
     mask, maskqtree, groundsize, groundoccupied = preparebackground(mask, transparentcolor)
     params[:groundsize] = groundsize
     params[:groundoccupied] = groundoccupied
@@ -84,16 +78,15 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
         error("Have you set the right `transparentcolor`? e.g. `transparentcolor=mask[1,1]`")
     end
     @assert groundoccupied > 0
-    minfontsize = get(params, :minfontsize, :auto)
     if minfontsize==:auto
         minfontsize = min(8, sqrt(groundoccupied/length(words)/8))
         println("set minfontsize to $minfontsize")
         @show groundoccupied length(words)
-        params[:minfontsize] = minfontsize
     end
-    get!(params, :spacing, 1)
-    get!(params, :density, 0.5)
-    get!(params, :font, "")
+    params[:minfontsize] = minfontsize
+    params[:spacing] = spacing
+    params[:density] = density
+    params[:font] = font
     
     params[:state] = nameof(wordcloud)
     params[:epoch] = 0

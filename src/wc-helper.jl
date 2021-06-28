@@ -22,7 +22,7 @@ function randomscheme()
     @show (scheme, length(colors))
     (colors...,)
 end
-function randommask(color="white", sz=800)
+function randommask(sz=800; kargs...)
     s = sz * sz * (0.5+rand()/2)
     ratio = (0.5+rand()/2)
     ratio = ratio>0.9 ? 1.0 : ratio
@@ -33,8 +33,8 @@ function randommask(color="white", sz=800)
         r = rand() * 0.45
         r = r < 0.05 ? 0. : r
         r = round(Int, h*r)
-        println("shape(box, $w, $h, $r, color=$(repr(color)))")
-        return shape(box, w, h, r, color=color)
+        println("shape(box, $w, $h, $r", join([", $k=$(repr(v))" for (k,v) in kargs]), ")")
+        return shape(box, w, h, r; kargs...)
     elseif ran < 7/10
         if rand()<0.8
             rt = rand()
@@ -46,11 +46,11 @@ function randommask(color="white", sz=800)
                 rt = 1 + 1.5rand()
             end
         end
-        println("shape(squircle, $w, $h, rt=$rt, color=$(repr(color)))")
-        return shape(squircle, w, h, rt=rt, color=color)
+        println("shape(squircle, $w, $h, rt=$rt", join([", $k=$(repr(v))" for (k,v) in kargs]), ")")
+        return shape(squircle, w, h, rt=rt; kargs...)
     else
-        println("shape(ellipse, $w, $h, color=$(repr(color)))")
-        return shape(ellipse, w, h, color=color)
+        println("shape(ellipse, $w, $h", join([", $k=$(repr(v))" for (k,v) in kargs]), ")")
+        return shape(ellipse, w, h; kargs...)
     end
 end
 function randomangles()
@@ -58,8 +58,7 @@ function randomangles()
     println("angles = ", a)
     a
 end
-function chooseabgcolor(colors)
-    bgcolor = "white"
+function randommaskcolor(colors)
     try
         #RGB(1,1,1) - RGB(sum(colors)/length(colors)) #补色
         if sum(Gray.(parsecolor.(colors)))/length(colors)<0.7 #黑白
@@ -67,11 +66,11 @@ function chooseabgcolor(colors)
         else
             bgcolor = rand((0.0, (rand(0.0:0.01:0.2), rand(0.0:0.01:0.2), rand(0.0:0.01:0.2))))
         end
+        return bgcolor
     catch
         @show "colors sum failed",colors
-        bgcolor = "black"
+        return "white"
     end
-    bgcolor
 end
 """
 load a img as mask, recolor, or resize, etc

@@ -28,9 +28,9 @@ include("test_textprocessing.jl")
     end
 
     # wordcloud factory
-    wc = wordcloud(["singleword"=>12], maskimg=shape(box, 200, 150, 40, color=0.15), density=0.45, run=generate!) #singleword & Pair
+    wc = wordcloud(["singleword"=>12], mask=shape(box, 200, 150, 40, color=0.15), density=0.45, run=generate!) #singleword & Pair
     wc = wordcloud(processtext("giving a single word is ok. giving several words is ok too"), 
-            maskimg=shape(box, 20, 15, 0, color=0.15), density=0.45, transparentcolor=(1,1,1,0)) #String & small mask
+            mask=shape(squircle, 200, 150, color=0.15, rt=2.2), density=0.45, transparentcolor=(1,1,1,0)) #String & small mask
     @test_throws AssertionError wordcloud(["1"],[2,3], density=0.1)|>generate! #length unmatch
     @test_throws AssertionError wordcloud(String[],Int[], density=0.1)|>generate! #empty inputs
     @test_throws AssertionError wordcloud([" ", " "],[2.0, 1], density=0.1) #blank words

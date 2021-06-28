@@ -30,7 +30,7 @@ embedded = tsne(hcat(values(wordvec)...)', 2)
 sc = WordCloud.randomscheme()
 wc = wordcloud(
     words_weights,
-    mask = shape(ellipse, 1000, 1000, backgroundcolor=(0,0,0,0), color=WordCloud.chooseabgcolor(sc)),
+    mask = shape(ellipse, 1000, 1000, backgroundcolor=(0,0,0,0), color=WordCloud.randommaskcolor(sc)),
     colors = sc,
     run = initimages!
 )

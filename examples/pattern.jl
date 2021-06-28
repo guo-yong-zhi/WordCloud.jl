@@ -5,7 +5,7 @@ sc = WordCloud.randomscheme()
 l = 200
 wc = wordcloud(
     repeat(["placeholder"], l), repeat([1], l), 
-    mask = shape(box, 400, 300, color=WordCloud.chooseabgcolor(sc)),
+    mask = shape(box, 400, 300, color=WordCloud.randommaskcolor(sc)),
     run=x->x)
 #md# * `words` & `weights` are just placeholders  
 #md# * style arguments like `colors`, `angles` and `density` have no effect  
