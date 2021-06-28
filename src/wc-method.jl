@@ -19,7 +19,7 @@ function initimages!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=wc.param
     nothing
 end
 initimages!(wc, i; kargs...) = initimage!.(wc, index(wc, i); kargs...)
-function initimages!(wc::WC; maxiter=5, error=0.02)
+function initimages!(wc::WC; maxiter=5, tolerance=0.02)
     params = wc.params
     
     si = sortperm(wc.weights, rev=true)
@@ -33,7 +33,7 @@ function initimages!(wc::WC; maxiter=5, error=0.02)
     wc.params[:wordids] .= wc.params[:wordids][si]
     wc.params[:indsmap] = nothing
 
-    scale = find_weight_scale!(wc, density=params[:density], maxiter=maxiter, error=error)
+    scale = find_weight_scale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
     println("density set to $(params[:density]), with scale=$scale, font minimum is $(getfontsizes(wc, length(wc.words)))")
     initimage!.(wc, 1:length(words))
     setstate!(wc, nameof(initimages!))

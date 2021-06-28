@@ -3,7 +3,6 @@ import Statistics.quantile
 function occupied(img::AbstractMatrix, bgvalue=img[1])
     return sum(img .!= bgvalue)
 end
-
 function occupied(imgs::AbstractVector, bgvalue=imgs[1][1])
     if isempty(imgs) return 0 end
     return sum(p->occupied(p, bgvalue), imgs)
@@ -82,20 +81,14 @@ wordmask(img, bgcolor, border) = dilate(img.!=img[1], border)
 #https://github.com/JuliaGraphics/Luxor.jl/issues/107
 
 ## weight_scale
-function cal_weight_scale(words, fontsizes, fonts, target, initialscale)
-    input = initialscale
-    output = textoccupied(words, fontsizes, fonts)
-    return output, sqrt(target/output) * input# 假设output=k*input^2
-end
-
 function scalestep(x₀, y₀, x₁, y₁, y)
     x₀ = x₀ ^ 2
     x₁ = x₁ ^ 2
     x = ((x₁-x₀)*y + x₀*y₁ - x₁*y₀) / (y₁-y₀) # 假设y=k*x^2+b
-    √x
+    x > 0 ? √x : (√min(x₀, x₁))/2
 end
 
-function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, error=0.05)
+function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tolerance=0.05)
     ground_size = wc.params[:groundoccupied]
     words = wc.words
     if initialscale <= 0
@@ -103,8 +96,8 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, erro
     end
     @assert sum(wc.weights.^2 .* length.(words)) / length(wc.weights) ≈ 1.0
     target = density * ground_size
-    target_lower = (density - error) * ground_size
-    target_upper = (density + error) * ground_size
+    target_lower = (density - tolerance) * ground_size
+    target_upper = (density + tolerance) * ground_size
     target = density * ground_size
     best_tar_H = Inf
     best_tar_L = -Inf
@@ -148,7 +141,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, erro
                 sc2 = sc2_
 #                 @show best_scale_L best_scale_H
             else
-                Base.error("scalestep failed!")
+                error("find_weight_scale! failed")
             end
         end
         # next iter init
