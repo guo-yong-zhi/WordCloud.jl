@@ -13,6 +13,7 @@ save = Luxor.FileIO.save
 parsecolor(c) = parse(Colorant, c)
 parsecolor(tp::Tuple) = ARGB32(tp...)
 parsecolor(gray::Real) = Gray(gray)
+parsecolor(sc::Symbol) = parsecolor.(colorschemes[sc].colors)
 
 issvg(d) = d isa Drawing && d.surfacetype==:svg
 const SVGImageType = Drawing

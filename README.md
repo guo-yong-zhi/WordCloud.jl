@@ -15,15 +15,15 @@ import Pkg; Pkg.add("WordCloud")
 # Basic Usage 
 ```julia
 using WordCloud
-words = "天地玄黄宇宙洪荒日月盈昃辰宿列张寒来暑往秋收冬藏闰余成岁律吕调阳云腾致雨露结为霜金生丽水玉出昆冈剑号巨阙珠称夜光果珍李柰菜重芥姜海咸河淡鳞潜羽翔龙师火帝鸟官人皇始制文字乃服衣裳推位让国有虞陶唐吊民伐罪周发殷汤坐朝问道垂拱平章"
-words = [string(c) for c in words]
-weights = rand(length(words)) .^ 2 .* 100 .+ 30
+using Random
+words = [randstring(rand(1:8)) for i in 1:300]
+weights = randexp(length(words)) .* 1000 .+ rand(10:100, length(words))
 wc = wordcloud(words, weights)
 generate!(wc)
-paint(wc, "qianziwen.svg")
+paint(wc, "random.svg")
 ```
-*Run the command `runexample(:qianziwen)` or `showexample(:qianziwen)` to get the result.*  
-# More Complex Usage
+*Run the command `runexample(:random)` or `showexample(:random)` to get the result.*  
+# More Advanced Usage
 ```julia
 using WordCloud
 wc = wordcloud(

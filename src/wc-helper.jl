@@ -59,9 +59,10 @@ function randomangles()
     a
 end
 function randommaskcolor(colors)
+    colors = parsecolor.(colors)
     try
         #RGB(1,1,1) - RGB(sum(colors)/length(colors)) #补色
-        if sum(Gray.(parsecolor.(colors)))/length(colors)<0.7 #黑白
+        if sum(Gray.(colors))/length(colors)<0.7 #黑白
             bgcolor = rand((1.0, (rand(0.9:0.01:1.0), rand(0.9:0.01:1.0), rand(0.9:0.01:1.0))))
         else
             bgcolor = rand((0.0, (rand(0.0:0.01:0.2), rand(0.0:0.01:0.2), rand(0.0:0.01:0.2))))
@@ -180,8 +181,8 @@ function record(wc::WC, label::AbstractString, gif_callback=x->x)
 end
 
 
-runexample(example=:alice) = evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
-showexample(example=:alice) = read(pkgdir(WordCloud)*"/examples/$(example).jl", String)|>print
+runexample(example=:random) = evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
+showexample(example=:random) = read(pkgdir(WordCloud)*"/examples/$(example).jl", String)|>print
 examples = [e[1:prevind(e, end, 3)] for e in basename.(readdir(pkgdir(WordCloud)*"/examples")) if endswith(e, ".jl")]
 @doc "Available values: [" * join(":".*examples, ", ") * "]" runexample
 @doc "Available values: [" * join(":".*examples, ", ") * "]" showexample
