@@ -52,8 +52,8 @@ wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter)|>collect, v
 wordcloud(counter::AbstractVector{<:Union{Pair, Tuple, AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
 
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
-                colors=randomscheme(), angles=randomangles(), 
-                mask=randommask(color=randommaskcolor(colors)), transparentcolor=:auto,
+                colors=randomscheme(), angles=randomangles(), sizehint=800, colorhint=randommaskcolor(colors),
+                mask=randommask(sizehint, color=colorhint), transparentcolor=:auto,
                 minfontsize=:auto, spacing=1, density=0.5, font="",
                 run=placement!)
     

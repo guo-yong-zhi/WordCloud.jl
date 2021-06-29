@@ -61,14 +61,22 @@ end
 function randommaskcolor(colors)
     colors = parsecolor.(colors)
     try
-        #RGB(1,1,1) - RGB(sum(colors)/length(colors)) #补色
-        if sum(Gray.(colors))/length(colors)<0.7 #黑白
-            bgcolor = rand((1.0, (rand(0.9:0.01:1.0), rand(0.9:0.01:1.0), rand(0.9:0.01:1.0))))
-        else
-            bgcolor = rand((0.0, (rand(0.0:0.01:0.2), rand(0.0:0.01:0.2), rand(0.0:0.01:0.2))))
+        g = Gray.(colors)
+        m = minimum(g)
+        M = maximum(g)
+        if sum(g)/length(g) < 0.7 && M < 0.9 #明亮
+            th1 = max(min(1.0, M+0.15), rand(0.85:0.001:1.0))
+            th2 = min(1.0, th1+0.1)
+            default = 1.0
+        else    #黑暗
+            th2 = min(max(0.0, m-0.15), rand(0.0:0.001:0.2)) #对深色不敏感，+0.05
+            th1 = max(0.0, th2-0.15)
+            default = 0.0
         end
+        bgcolor = rand((default, (rand(th1:0.001:th2), rand(th1:0.001:th2), rand(th1:0.001:th2))))
         return bgcolor
-    catch
+    catch e
+        @show e
         @show "colors sum failed",colors
         return "white"
     end
