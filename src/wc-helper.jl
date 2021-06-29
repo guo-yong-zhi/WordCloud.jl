@@ -22,20 +22,38 @@ function randomscheme()
     @show (scheme, length(colors))
     (colors...,)
 end
-function randommask(sz=800; kargs...)
+function randommask(sz::Number=800; kargs...)
     s = sz * sz * (0.5+rand()/2)
     ratio = (0.5+rand()/2)
     ratio = ratio>0.9 ? 1.0 : ratio
     h = round(Int, sqrt(s*ratio))
     w = round(Int, h/ratio)
-    ran = rand()
-    if ran < 2/10
+    randommask(w, h; kargs...)
+end
+function randommask(sz; kargs...)
+    randommask(sz...; kargs...)
+end
+function randommask(w, h, args...; maskshape=:rand, kargs...)
+    ran = Dict(box=>0.2, squircle=>0.7, ellipse=>1, :rand=>rand())[maskshape]
+    if ran <= 0.2
+        return randombox(w, h, args...; kargs...)
+    elseif ran <= 0.7
+        return randomsquircle(w, h, args...; kargs...)
+    else
+        return randomellipse(w, h, args...; kargs...)
+    end
+end
+function randombox(w, h, r=:rand; kargs...)
+    if r == :rand
         r = rand() * 0.45
         r = r < 0.05 ? 0. : r
         r = round(Int, h*r)
-        println("shape(box, $w, $h, $r", join([", $k=$(repr(v))" for (k,v) in kargs]), ")")
-        return shape(box, w, h, r; kargs...)
-    elseif ran < 7/10
+    end
+    println("shape(box, $w, $h, $r", join([", $k=$(repr(v))" for (k,v) in kargs]), ")")
+    return shape(box, w, h, r; kargs...)
+end
+function randomsquircle(w, h; rt=:rand, kargs...)
+    if rt == :rand
         if rand()<0.8
             rt = rand()
         else
@@ -46,12 +64,13 @@ function randommask(sz=800; kargs...)
                 rt = 1 + 1.5rand()
             end
         end
-        println("shape(squircle, $w, $h, rt=$rt", join([", $k=$(repr(v))" for (k,v) in kargs]), ")")
-        return shape(squircle, w, h, rt=rt; kargs...)
-    else
-        println("shape(ellipse, $w, $h", join([", $k=$(repr(v))" for (k,v) in kargs]), ")")
-        return shape(ellipse, w, h; kargs...)
     end
+    println("shape(squircle, $w, $h, rt=$rt", join([", $k=$(repr(v))" for (k,v) in kargs]), ")")
+    return shape(squircle, w, h, rt=rt; kargs...)
+end
+function randomellipse(w, h; kargs...)
+    println("shape(ellipse, $w, $h", join([", $k=$(repr(v))" for (k,v) in kargs]), ")")
+    return shape(ellipse, w, h; kargs...)
 end
 function randomangles()
     a = rand((-1, 1)) .* rand((0, (0,90), (0,90,45), (0,90,45,-45), (0,45,-45), (45,-45), -90:90))

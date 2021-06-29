@@ -27,11 +27,10 @@ for k in keys(words_weights)
 end
 embedded = tsne(hcat(values(wordvec)...)', 2)
 #md# ### WordCloud
-sc = WordCloud.randomscheme()
 wc = wordcloud(
     words_weights,
-    mask = shape(ellipse, 1000, 1000, backgroundcolor=(0,0,0,0), color=WordCloud.randommaskcolor(sc)),
-    colors = sc,
+    maskshape = ellipse,
+    masksize = (1000, 1000),
     run = initimages!
 )
 

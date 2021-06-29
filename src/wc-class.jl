@@ -33,17 +33,24 @@ Positional arguments are used to specify words and weights, and can be in differ
 ### mask keyword arguments
 * mask = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
 * mask = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
-* mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #see doc of `shape`  
+* mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #see doc of `shape`
+* maskshape: `box`, `ellipse`, or `squircle`.  See `shape`. 
+* masksize: Can be a tuple `(width, height)`, tuple `(width, height, cornerradius)` (for `box` only) or just a single number as hint. 
+* maskcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2
+* outline, linecolor, backgroundcolor: See `shape`. 
 * transparentcolor = (1,0,0) #set the transparent color in mask  
 * transparentcolor = nothing #no transparent color  
 * transparentcolor = c->(c[1]+c[2]+c[3])/3*(c[4]/255)>128) #set transparentcolor with a Function. `c` is a (r,g,b,a) Tuple.
+---NOTE
+Some arguments take effect only when the `mask` argument is not given, they are: `maskshape`, `masksize`, `maskcolor`, `outline`, `linecolor`, `backgroundcolor`.
+
 ### other keyword arguments
 The keyword argument `run` is a function. It will be called after the `wordcloud` object constructed.
 * run = placement! #default setting, will initialize word's position
 * run = generate! #get result directly
 * run = initimages! #only initialize resources, such as rendering word images
 * run = x->nothing #do nothing
----
+---NOTE
 * After getting the `wordcloud` object, these steps are needed to get the result picture: initimages! -> placement! -> generate! -> paint
 * You can skip `placement!` and/or `initimages!`, and the default action will be performed
 """
@@ -52,12 +59,15 @@ wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter)|>collect, v
 wordcloud(counter::AbstractVector{<:Union{Pair, Tuple, AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
 
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
-                colors=randomscheme(), angles=randomangles(), sizehint=800, colorhint=randommaskcolor(colors),
-                mask=randommask(sizehint, color=colorhint), transparentcolor=:auto,
+                colors=randomscheme(), angles=randomangles(), 
+                masksize=800, maskcolor=randommaskcolor(colors),
+                mask=:rand, transparentcolor=:auto,
                 minfontsize=:auto, spacing=1, density=0.5, font="",
-                run=placement!)
-    
+                run=placement!, kargs...)
     @assert length(words) == length(weights) > 0
+    if mask == :rand
+        mask = randommask(masksize, color=maskcolor; kargs...)
+    end
     params = Dict{Symbol, Any}()
     colors = colors isa Symbol ? (colorschemes[colors].colors..., ) : colors
     colors = Iterators.take(iter_expand(colors), length(words)) |> collect
