@@ -34,7 +34,7 @@ function initimages!(wc::WC; maxiter=5, tolerance=0.02)
     wc.params[:indsmap] = nothing
 
     scale = find_weight_scale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
-    println("density set to $(params[:density]), with scale=$scale, font minimum is $(getfontsizes(wc, length(wc.words)))")
+    println("The density is set to $(params[:density]), with scale=$scale. The actural font minimum is $(getfontsizes(wc, length(wc.words))).")
     initimage!.(wc, 1:length(words))
     setstate!(wc, nameof(initimages!))
     wc
@@ -200,7 +200,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
     for r in 1:retry
         if r != 1
             rescale!(wc, 0.97)
-            dens = textoccupied(getwords(wc), getfontsizes(wc), getfonts(wc))/wc.params[:groundoccupied]
+            dens = textoccupying(getwords(wc), getfontsizes(wc), getfonts(wc))/wc.params[:maskoccupying]
             println("#$r. try scale = $(wc.params[:scale]). The density is reduced to $dens")
         else
             println("#$r. scale = $(wc.params[:scale])")
@@ -286,21 +286,21 @@ pin some words as if they were part of the background, then execute the function
 function pin(fun, wc::WC, mask::AbstractArray{Bool})
     maskqtree = wc.maskqtree
     wcmask = wc.mask
-    groundoccupied = wc.params[:groundoccupied]
+    maskoccupying = wc.params[:maskoccupying]
     
     maskqtree2 = deepcopy(maskqtree)
     Stuffing.overlap!(maskqtree2, wc.qtrees[mask])
     wc.maskqtree = maskqtree2
     resultpic = convert.(ARGB32, wc.mask)
     wc.mask = overlay!(resultpic, wc.imgs[mask], getpositions(wc, mask))
-    wc.params[:groundoccupied] = occupied(QTree.kernel(wc.maskqtree[1]), QTree.FULL)
+    wc.params[:maskoccupying] = occupying(QTree.kernel(wc.maskqtree[1]), QTree.FULL)
     r = nothing
     try
         r = ignore(fun, wc, mask)
     finally
         wc.maskqtree = maskqtree
         wc.mask = wcmask
-        wc.params[:groundoccupied] = groundoccupied
+        wc.params[:maskoccupying] = maskoccupying
     end
     r
 end

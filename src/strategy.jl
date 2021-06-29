@@ -1,22 +1,22 @@
-## occupied
+## occupying
 import Statistics.quantile
-function occupied(img::AbstractMatrix, bgvalue=img[1])
+function occupying(img::AbstractMatrix, bgvalue=img[1])
     return sum(img .!= bgvalue)
 end
-function occupied(imgs::AbstractVector, bgvalue=imgs[1][1])
+function occupying(imgs::AbstractVector, bgvalue=imgs[1][1])
     if isempty(imgs) return 0 end
-    return sum(p->occupied(p, bgvalue), imgs)
+    return sum(p->occupying(p, bgvalue), imgs)
 end
-function boxoccupied(img::AbstractMatrix, border=0)
+function boxoccupying(img::AbstractMatrix, border=0)
     return (size(img, 1)-2border) * (size(img, 2)-2border)
 end
-function boxoccupied(imgs::AbstractVector, border=0)
+function boxoccupying(imgs::AbstractVector, border=0)
     if isempty(imgs) return 0 end
-    return sum(p->boxoccupied(p, border), imgs)
+    return sum(p->boxoccupying(p, border), imgs)
 end
-function feelingoccupied(imgs, border=0, bgvalue=imgs[1][1])
-    bs = boxoccupied.(imgs, border)
-    os = occupied.(imgs, bgvalue)
+function feelingoccupying(imgs, border=0, bgvalue=imgs[1][1])
+    bs = boxoccupying.(imgs, border)
+    os = occupying.(imgs, bgvalue)
     s = (0.8 * sum(bs) + 0.2 * sum(os)) / 0.93 #兼顾饱满字体（华文琥珀）和清瘦字体（仿宋）
     # sum(os) ≈ 2/3 sum(bs), 故除以0.93还原到sum(bs)的大小
     th = 10quantile(bs, 0.1)
@@ -26,7 +26,7 @@ function feelingoccupied(imgs, border=0, bgvalue=imgs[1][1])
     (s - er)
 end
 
-function textoccupied(words, fontsizes, fonts)
+function textoccupying(words, fontsizes, fonts)
     border=1
     imgs = []
     for (c, sz, ft) in zip(words, fontsizes, fonts)
@@ -34,17 +34,17 @@ function textoccupied(words, fontsizes, fonts)
         img = Render.rendertext(string(c), sz, backgroundcolor=(0,0,0,0), font=ft, border=border)
         push!(imgs, img)
     end
-    feelingoccupied(imgs, border) #border>0 以获取背景色imgs[1]
+    feelingoccupying(imgs, border) #border>0 以获取背景色imgs[1]
 end
 
 ## prepare
-function preparebackground(img, bgcolor)
+function preparemask(img, bgcolor)
     mask = backgroundmask(img, bgcolor)
     maskqt = maskqtree(mask)
     groundsize = size(maskqt[1], 1)
-    groundoccupied = occupied(mask, false)
-    @assert groundoccupied==occupied(QTree.kernel(maskqt[1]), QTree.FULL)
-    return img, maskqt, groundsize, groundoccupied
+    maskoccupying = occupying(mask, false)
+    @assert maskoccupying==occupying(QTree.kernel(maskqt[1]), QTree.FULL)
+    return img, maskqt, groundsize, maskoccupying
 end
 
 function prepareword(word, fontsize, color, angle; backgroundcolor=(0,0,0,0), font="", border=0)
@@ -89,7 +89,7 @@ function scalestep(x₀, y₀, x₁, y₁, y)
 end
 
 function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tolerance=0.05)
-    ground_size = wc.params[:groundoccupied]
+    ground_size = wc.params[:maskoccupying]
     words = wc.words
     if initialscale <= 0
         initialscale = √(ground_size/length(words)/0.45*density) #初始值假设字符的字面框面积占正方格比率为0.45（低估了汉字）
@@ -117,7 +117,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
         # cal tg1
         @assert sc1 < 50initialscale #防止全空白words的输入，计算出sc过大渲染字体耗尽内存
         wc.params[:scale] = sc1
-        tg1 = textoccupied(words, getfontsizes(wc), fonts)
+        tg1 = textoccupying(words, getfontsizes(wc), fonts)
         dens = tg1 / ground_size
         println("scale=$(wc.params[:scale]), density=$dens\t", dens>density ? "↑" : "↓")
         if tg1 > target

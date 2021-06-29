@@ -37,12 +37,12 @@ Positional arguments are used to specify words and weights, and can be in differ
 * maskshape: `box`, `ellipse`, or `squircle`.  See `shape`. 
 * masksize: Can be a tuple `(width, height)`, tuple `(width, height, cornerradius)` (for `box` only) or just a single number as hint. 
 * maskcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2
-* outline, linecolor, backgroundcolor: See `shape`. 
+* outline, linecolor, backgroundcolor, backgroundsize: See `shape`. 
 * transparentcolor = (1,0,0) #set the transparent color in mask  
 * transparentcolor = nothing #no transparent color  
 * transparentcolor = c->(c[1]+c[2]+c[3])/3*(c[4]/255)>128) #set transparentcolor with a Function. `c` is a (r,g,b,a) Tuple.
 ---NOTE
-Some arguments take effect only when the `mask` argument is not given, they are: `maskshape`, `masksize`, `maskcolor`, `outline`, `linecolor`, `backgroundcolor`.
+Some arguments take effect only when the `mask` argument is not given, they are: `maskshape`, `masksize`, `maskcolor`, `outline`, `linecolor`, `backgroundcolor`, backgroundsize.
 
 ### other keyword arguments
 The keyword argument `run` is a function. It will be called after the `wordcloud` object constructed.
@@ -81,17 +81,17 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
         svgmask = mask
         mask = svg2bitmap(mask)
     end
-    mask, maskqtree, groundsize, groundoccupied = preparebackground(mask, transparentcolor)
+    mask, maskqtree, groundsize, maskoccupying = preparemask(mask, transparentcolor)
     params[:groundsize] = groundsize
-    params[:groundoccupied] = groundoccupied
-    if groundoccupied == 0
+    params[:maskoccupying] = maskoccupying
+    if maskoccupying == 0
         error("Have you set the right `transparentcolor`? e.g. `transparentcolor=mask[1,1]`")
     end
-    @assert groundoccupied > 0
+    @assert maskoccupying > 0
     if minfontsize==:auto
-        minfontsize = min(8, sqrt(groundoccupied/length(words)/8))
-        println("set minfontsize to $minfontsize")
-        @show groundoccupied length(words)
+        minfontsize = min(8, sqrt(maskoccupying/length(words)/8))
+        println("set minfontsize = $minfontsize")
+        @show maskoccupying length(words)
     end
     params[:minfontsize] = minfontsize
     params[:spacing] = spacing

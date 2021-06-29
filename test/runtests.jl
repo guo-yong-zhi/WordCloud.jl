@@ -15,15 +15,15 @@ include("test_textprocessing.jl")
     paint(wc)
     paint(wc, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2), ratio=0.5)
     paint(wc, "test.svg")
-    @test wc.params[:groundoccupied] == WordCloud.occupied(WordCloud.QTree.kernel(wc.maskqtree[1]), WordCloud.QTree.FULL)
-    @test wc.params[:groundoccupied] == WordCloud.occupied(wc.mask .!= wc.mask[1])
+    @test wc.params[:maskoccupying] == WordCloud.occupying(WordCloud.QTree.kernel(wc.maskqtree[1]), WordCloud.QTree.FULL)
+    @test wc.params[:maskoccupying] == WordCloud.occupying(wc.mask .!= wc.mask[1])
     
     # placement!
     placement!(wc, style=:gathering)
     words = ["." for i in 1:500]
     weights = [1 for i in 1:length(words)]
     @test_throws ErrorException begin #no room
-        wc = wordcloud(words, weights, mask=shape(ellipse, 5, 5, color=0.95, backgroundsize=(10,10)), density=1000, angles=0)
+        wc = wordcloud(words, weights, maskshape=ellipse, masksize=(5,5), backgroundsize=(10,10), density=1000, angles=0)
         placement!(wc)
     end
 

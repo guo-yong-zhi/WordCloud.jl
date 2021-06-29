@@ -45,8 +45,8 @@ function randommask(w, h, args...; maskshape=:rand, kargs...)
 end
 function randombox(w, h, r=:rand; kargs...)
     if r == :rand
-        r = rand() * 0.45
-        r = r < 0.05 ? 0. : r
+        r = rand() * 0.5 - 0.05 # up to 0.45
+        r = r < 0. ? 0. : r # 10% for 0.
         r = round(Int, h*r)
     end
     println("shape(box, $w, $h, $r", join([", $k=$(repr(v))" for (k,v) in kargs]), ")")
@@ -214,7 +214,7 @@ examples = [e[1:prevind(e, end, 3)] for e in basename.(readdir(pkgdir(WordCloud)
 @doc "Available values: [" * join(":".*examples, ", ") * "]" runexample
 @doc "Available values: [" * join(":".*examples, ", ") * "]" showexample
 function runexamples(examples=examples)
-    println("examples: ", examples)
+    println(length(examples), " examples: ", examples)
     for (i,e) in enumerate(examples)
         println("="^20, "\n# ",i,"/",length(examples), "\t", e, "\n", "="^20)
         @time runexample(e)
