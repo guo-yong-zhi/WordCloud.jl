@@ -6,8 +6,10 @@ wc = wordcloud(
     angles=0, density=0.55,
     maskshape=squircle, rt=rt,
     run = initimages!)
-placement!(wc, style=:gathering, level=5, rt=rt)
-generate!(wc, patient=-1)
+placement!(wc, style=:gathering, level=5, rt=rt, centerlargestword=true)
+pin(wc, "Alice") do #keep "Alice" in the center
+    generate!(wc, patient=-1)
+end
 println("results are saved to gathering.svg")
 paint(wc, "gathering.svg")
 wc

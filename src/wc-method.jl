@@ -46,26 +46,39 @@ initimage! = initimages!
 * placement!(wc, style=:gathering)
 * placement!(wc, style=:gathering, level=5) #`level` controls the intensity of gathering, typically between 4 and 6, defaults to 5.
 * placement!(wc, style=:gathering, level=6, rt=0) #rt=0, rectangle; rt=1, ellipse; rt=2, rhombus. defaults to 1.  
+There is also a bool keyword argument `centerlargestword`, which can be set to center the largest word.
 When you have set `style=:gathering`, you should disable teleporting in `generate!` at the same time(`generate!(wc, patient=-1)`).
 """
-function placement!(wc::WC; style=:uniform, rt=1, kargs...)
+function placement!(wc::WC; style=:uniform, rt=1, centerlargestword=:auto, kargs...)
     if STATEIDS[getstate(wc)] < STATEIDS[:initimages!]
         initimages!(wc)
     end
     @assert style in [:uniform, :gathering]
-    if length(wc.qtrees) > 0
+    if centerlargestword == :auto
+        c = wc.params[:groundsize] ÷ 2 #can't wc.maskqtree[1][end÷2]. 1D index goes wrong.
+        kernelsize = Stuffing.kernelsize
+        centerlargestword = wc.maskqtree[1][c, c] == QTree.EMPTY && (
+            length(wc.qtrees) < 2 
+            || (length(wc.qtrees) >= 2 
+                && wc.weights[2]/wc.weights[1] < 0.5 
+                && prod(kernelsize(wc.qtrees[2]))/prod(kernelsize(wc.qtrees[1])) < 0.5))
+        if centerlargestword
+            println("Center the largest word $(repr(getwords(wc, 1)))")
+        end
+    end
+    arg = ()
+    if centerlargestword
+        setcenter!(wc.qtrees[1],  wc.params[:groundsize] .÷ 2)
+        arg = (2:length(wc.qtrees)|>collect, )
+    end
+    if length(wc.qtrees) > 0 + centerlargestword
         if style == :gathering
             p = min(50, 2 / rt)
-            if wc.maskqtree[1][(wc.params[:groundsize].÷2)] == QTree.EMPTY && (length(wc.qtrees)<2 
-                || (length(wc.qtrees)>=2 && prod(kernelsize(wc.qtrees[2]))/prod(kernelsize(wc.qtrees[1])) < 0.5))
-                setcenter!(wc.qtrees[1],  wc.params[:groundsize] .÷ 2)
-                ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees, 2:length(wc.qtrees)|>collect; 
+            ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees, arg...; 
                     roomfinder=findroom_gathering, p=p, kargs...)
-            else
-                ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees; roomfinder=findroom_gathering, p=p, kargs...)
-            end
         else
-            ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees; roomfinder=findroom_uniform, kargs...)
+            ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees, arg...;
+                    roomfinder=findroom_uniform, kargs...)
         end
         if ind === nothing error("no room for placement") end
     end
