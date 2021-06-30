@@ -47,7 +47,7 @@ initimage! = initimages!
 * placement!(wc, style=:gathering, level=5) #`level` controls the intensity of gathering, typically between 4 and 6, defaults to 5.
 * placement!(wc, style=:gathering, level=6, rt=0) #rt=0, rectangle; rt=1, ellipse; rt=2, rhombus. defaults to 1.  
 There is also a bool keyword argument `centerlargestword`, which can be set to center the largest word.
-When you have set `style=:gathering`, you should disable teleporting in `generate!` at the same time(`generate!(wc, patient=-1)`).
+When you have set `style=:gathering`, you should disable teleporting in `generate!` at the same time, especially for big words. e.g. `generate!(wc, teleporting=0.7)`.
 """
 function placement!(wc::WC; style=:uniform, rt=1, centerlargestword=:auto, kargs...)
     if STATEIDS[getstate(wc)] < STATEIDS[:initimages!]
@@ -169,15 +169,17 @@ end
 * wc: the wordcloud to fit
 * nepoch: training epoch nums
 # Keyword Args
-* patient: number of epochs before teleporting, set to `-1` to disable teleporting
+* patient: number of epochs before teleporting
+* teleport: a Bool value to turn on/off teleport, a Float number `p` between 0~1 indicating the teleporting ratio (Minimum `p`), a Int number `n` equivalent to `i -> i >= n`, a Function index::Int -> doteleport::Boll, or a white list collision.
 * trainer: appoint a training engine
 """
-function fit!(wc, args...; krags...)
+function fit!(wc, args...; teleporting=true, krags...)
+    teleporton = teleporting isa Union{Function, Number} ? teleporting : index(wc, teleporting) #Bool <: Number
     if STATEIDS[getstate(wc)] < STATEIDS[:placement!]
         placement!(wc)
     end
     qtrees = [wc.maskqtree, wc.qtrees...]
-    ep, nc = train!(qtrees, args...; krags...)
+    ep, nc = train!(qtrees, args...; teleporting=teleporton, krags...)
     wc.params[:epoch] += ep
     if nc == 0
         setstate!(wc, nameof(fit!))
@@ -203,7 +205,8 @@ end
 * nepoch: training epoch nums
 # Keyword Args
 * retry: shrink & retrain times, defaults to 3, set to `1` to disable shrinking
-* patient: number of epochs before teleporting, set to `-1` to disable teleporting
+* patient: number of epochs before teleporting
+* teleport: a Bool value to turn on/off teleport, a Float number `p` between 0~1 indicating the teleporting ratio (Minimum `p`), a Int number `n` equivalent to `i -> i >= n`, a Function index::Int -> doteleport::Boll, or a white list collision.
 * trainer: appoint a training engine
 """
 function generate!(wc::WC, args...; retry=3, krags...)
