@@ -43,7 +43,7 @@ pos = round.(Int, pos .* sz .+ sz ./ 2)
 
 setpositions!(wc, keys(wordvec)|>collect, eachrow(pos), type=setcenter!)
 setstate!(wc, :placement!)
-generate!(wc, patient=-1)
+generate!(wc, teleport=false)
 println("results are saved to embedding.png")
 paint(wc, "embedding.png")
 wc

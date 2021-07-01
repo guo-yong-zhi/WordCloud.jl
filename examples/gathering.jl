@@ -8,7 +8,7 @@ wc = wordcloud(
     run = initimages!)
 placement!(wc, style=:gathering, level=5, rt=rt, centerlargestword=true)
 pin(wc, "Alice") do #keep "Alice" in the center
-    generate!(wc, patient=-1)
+    generate!(wc, teleport=0.7) #don't teleport largest 30% words
 end
 println("results are saved to gathering.svg")
 paint(wc, "gathering.svg")

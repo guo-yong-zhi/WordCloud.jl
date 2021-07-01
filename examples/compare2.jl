@@ -24,6 +24,9 @@ wcb = wordcloud(
 #md# ### Make the same words the same style
 samewords = getwords(wca) ∩ getwords(wcb)
 println(length(samewords), " same words")
+wca.params[:uniquewords] = setdiff(getwords(wca), samewords)
+wcb.params[:uniquewords] = setdiff(getwords(wcb), samewords)
+setdiff(getwords(wcb), samewords)
 for w in samewords
     setcolors!(wcb, w, getcolors(wca, w))
     setangles!(wcb, w, getangles(wca, w))
@@ -33,7 +36,7 @@ initimages!(wca)
 initimages!(wcb)
 keep(wca, samewords) do
     placement!(wca)
-    fit!(wca, 1000) #patient=-1 means no teleport; retry=1 means no rescale
+    fit!(wca, 1000)
 end
 pin(wca, samewords) do
     placement!(wca) #place other words
@@ -56,7 +59,7 @@ function pinfit!(wc, samewords, ep1, ep2)
     pin(wc, samewords) do
         fit!(wc, ep1)
     end
-    fit!(wc, ep2, patient=-1) #patient=-1 means no teleport
+    fit!(wc, ep2, teleport=wc.params[:uniquewords]) #only teleport the unique words
 end
 pos = getpositions(wca, samewords, type=getcenter)
 while wca.params[:epoch] < 2000
