@@ -37,7 +37,7 @@ keep(wcb, samewords) do
     centers = getpositions(wca, samewords, type=getcenter)
     setpositions!(wcb, samewords, centers, type=setcenter!) #manually initialize the position,
     setstate!(wcb, :placement!) #and set the state flag
-    generate!(wcb, 1000, patient=-1, retry=1) #patient=-1 means no teleport; retry=1 means no rescale
+    generate!(wcb, 1000, teleporting=false, retry=1) #turn off the teleporting; retry=1 means no rescale
 end
 
 println("=pin same words=")
@@ -48,7 +48,7 @@ end
 
 if getstate(wcb) != :generate!
     println("=overall tuning=")
-    generate!(wcb, 1000, patient=-1, retry=2) #allow rescale but don‘t allow teleport
+    generate!(wcb, 1000, teleporting=setdiff(getwords(wcb), samewords), retry=2) #only teleport the unique words
 end
 
 ma = paint(wca)
