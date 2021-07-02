@@ -1,12 +1,11 @@
 #md# Big words will be placed closer to the center
 using WordCloud
-rt = 2.5 * rand()
 wc = wordcloud(
     processtext(open(pkgdir(WordCloud)*"/res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
     angles=0, density=0.55,
-    maskshape=squircle, rt=rt,
+    maskshape=squircle, rt=2.5 * rand(),
     run = initimages!)
-placement!(wc, style=:gathering, level=5, rt=rt, centerlargestword=true)
+placement!(wc, style=:gathering, level=5, centerlargestword=true)
 pin(wc, "Alice") do #keep "Alice" in the center
     generate!(wc, teleporting=0.7) #don't teleport largest 30% words
 end

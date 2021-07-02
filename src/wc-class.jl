@@ -65,17 +65,19 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
                 minfontsize=:auto, spacing=1, density=0.5, font="",
                 run=placement!, kargs...)
     @assert length(words) == length(weights) > 0
-    if mask == :rand
-        mask = randommask(masksize, color=maskcolor; kargs...)
-    end
-    params = Dict{Symbol, Any}()
+    params = Dict{Symbol, Any}(kargs)
+
     colors = colors isa Symbol ? (colorschemes[colors].colors..., ) : colors
     colors = Iterators.take(iter_expand(colors), length(words)) |> collect
     params[:colors] = Any[colors...]
-
     angles = Iterators.take(iter_expand(angles), length(words)) |> collect
     params[:angles] = angles
     params[:transparentcolor] = transparentcolor
+    if mask == :rand
+        mask = randommask(masksize, color=maskcolor; kargs...)
+    end
+    params[:masksize] = masksize
+    params[:maskcolor] = maskcolor
     svgmask = nothing
     if issvg(mask)
         svgmask = mask
@@ -130,6 +132,9 @@ index(wc::WC, i::Colon) = eachindex(wc.words)
 index(wc::WC, i) = i
 wordid(wc, i::Integer) = wc.params[:wordids][i]
 wordid(wc, w) = wordid.(wc, index(wc, w))
+getparameter(wc, args...) = getindex(wc.params, args...)
+setparameter!(wc, args...) = setindex!(wc.params, args...)
+hasparameter(wc, args...) = haskey(wc.params, args...)
 getdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index and ignored to return all."
 setdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index, the 3rd arg is the value to assign."
 @doc getdoc getcolors(wc::WC, w=:) = wc.params[:colors][index(wc, w)]

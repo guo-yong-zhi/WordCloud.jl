@@ -89,7 +89,7 @@ function scalestep(x₀, y₀, x₁, y₁, y)
 end
 
 function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tolerance=0.05)
-    ground_size = wc.params[:maskoccupying]
+    ground_size = getparameter(wc, :maskoccupying)
     words = wc.words
     if initialscale <= 0
         initialscale = √(ground_size/length(words)/0.45*density) #初始值假设字符的字面框面积占正方格比率为0.45（低估了汉字）
@@ -116,10 +116,10 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
         end
         # cal tg1
         @assert sc1 < 50initialscale #防止全空白words的输入，计算出sc过大渲染字体耗尽内存
-        wc.params[:scale] = sc1
+        setparameter!(wc, sc1, :scale)
         tg1 = textoccupying(words, getfontsizes(wc), fonts)
         dens = tg1 / ground_size
-        println("scale=$(wc.params[:scale]), density=$dens\t", dens>density ? "↑" : "↓")
+        println("scale=$(getparameter(wc, :scale)), density=$dens\t", dens>density ? "↑" : "↓")
         if tg1 > target
             if best_tar_H > tg1
                 best_tar_H = tg1
@@ -152,7 +152,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
             break
         end
     end
-    wc.params[:scale] = sc1
+    setparameter!(wc, sc1, :scale)
     return sc1
 end
 

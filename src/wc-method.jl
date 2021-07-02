@@ -1,4 +1,4 @@
-function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=wc.params[:spacing])
+function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=getparameter(wc,:spacing))
     img = wc.imgs[i]
     mimg = wordmask(img, backgroundcolor, spacing)
     t = qtree(mimg, wc.params[:groundsize])
@@ -8,7 +8,7 @@ function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=wc.params
 end
 initqtree!(wc, i; kargs...) = initqtree!.(wc, index(wc, i); kargs...)
 "Initialize word's images and other resources with specified style"
-function initimages!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=wc.params[:spacing],
+function initimages!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=getparameter(wc,:spacing),
                     fontsize=getfontsizes(wc, i), color=wc.params[:colors][i],
                     angle = wc.params[:angles][i], font=getfonts(wc, i))
     img, svg = prepareword(wc.words[i], fontsize, color, angle,
@@ -49,7 +49,7 @@ initimage! = initimages!
 There is also a bool keyword argument `centerlargestword`, which can be set to center the largest word.
 When you have set `style=:gathering`, you should disable teleporting in `generate!` at the same time, especially for big words. e.g. `generate!(wc, teleporting=0.7)`.
 """
-function placement!(wc::WC; style=:uniform, rt=1, centerlargestword=:auto, kargs...)
+function placement!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, kargs...)
     if STATEIDS[getstate(wc)] < STATEIDS[:initimages!]
         initimages!(wc)
     end
@@ -73,6 +73,15 @@ function placement!(wc::WC; style=:uniform, rt=1, centerlargestword=:auto, kargs
     end
     if length(wc.qtrees) > 0 + centerlargestword
         if style == :gathering
+            if rt == :auto
+                if hasparameter(wc, :rt)
+                    rt = getparameter(wc, :rt)
+                    println("use wordcloud's parameter `:rt=>$rt`")
+                else
+                    rt = 1
+                    println("rt = 1, ellipse")
+                end
+            end
             p = min(50, 2 / rt)
             ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees, arg...; 
                     roomfinder=findroom_gathering, p=p, kargs...)
@@ -83,6 +92,7 @@ function placement!(wc::WC; style=:uniform, rt=1, centerlargestword=:auto, kargs
         if ind === nothing error("no room for placement") end
     end
     setstate!(wc, nameof(placement!))
+    setparameter!(wc, 0, :epoch)
     wc
 end
 

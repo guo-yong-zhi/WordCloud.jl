@@ -4,9 +4,10 @@ export parsecolor, rendertext, shape, ellipse, box, squircle, loadmask, outline,
 export imageof, showmask, showmask!
 export record, placement!, rescale!, recolor!, take, keep, ignore, pin, runexample, showexample, 
     generate!, generate_animation!, fit!
-export getcolors, getangles, getwords, getweights, setcolors!, setangles!, setwords!, setweights!,
+export getparameter, setparameter!, hasparameter, getstate, setstate!,
+    getcolors, getangles, getwords, getweights, setcolors!, setangles!, setwords!, setweights!,
     getpositions, setpositions!, getimages, getsvgimages, setimages!, setsvgimages!, getmask, getsvgmask, 
-    getfontsizes, setfontsizes!, getfonts, setfonts!, getstate, setstate!, initimage!, initimages!
+    getfontsizes, setfontsizes!, getfonts, setfonts!, initimage!, initimages!
 export getshift, getcenter, setshift!, setcenter!
 
 using Stuffing

@@ -15,8 +15,8 @@ include("test_textprocessing.jl")
     paint(wc)
     paint(wc, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2), ratio=0.5)
     paint(wc, "test.svg")
-    @test wc.params[:maskoccupying] == WordCloud.occupying(WordCloud.QTree.kernel(wc.maskqtree[1]), WordCloud.QTree.FULL)
-    @test wc.params[:maskoccupying] == WordCloud.occupying(wc.mask .!= wc.mask[1])
+    @test getparameter(wc, :maskoccupying) == WordCloud.occupying(WordCloud.QTree.kernel(wc.maskqtree[1]), WordCloud.QTree.FULL)
+    @test getparameter(wc, :maskoccupying) == WordCloud.occupying(wc.mask .!= wc.mask[1])
     
     # placement!
     placement!(wc, style=:gathering)

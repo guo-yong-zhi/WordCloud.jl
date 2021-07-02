@@ -24,9 +24,10 @@ wcb = wordcloud(
 #md# ### Make the same words the same style
 samewords = getwords(wca) ∩ getwords(wcb)
 println(length(samewords), " same words")
-wca.params[:uniquewords] = setdiff(getwords(wca), samewords)
-wcb.params[:uniquewords] = setdiff(getwords(wcb), samewords)
-setdiff(getwords(wcb), samewords)
+@assert !hasparameter(wca, :uniquewords)
+@assert !hasparameter(wcb, :uniquewords)
+setparameter!(wca, setdiff(getwords(wca), samewords), :uniquewords)
+setparameter!(wcb, setdiff(getwords(wcb), samewords), :uniquewords)
 for w in samewords
     setcolors!(wcb, w, getcolors(wca, w))
     setangles!(wcb, w, getangles(wca, w))
@@ -59,10 +60,10 @@ function pinfit!(wc, samewords, ep1, ep2)
     pin(wc, samewords) do
         fit!(wc, ep1)
     end
-    fit!(wc, ep2, teleporting=wc.params[:uniquewords]) #only teleport the unique words
+    fit!(wc, ep2, teleporting=getparameter(wc, :uniquewords)) #only teleport the unique words
 end
 pos = getpositions(wca, samewords, type=getcenter)
-while wca.params[:epoch] < 2000
+while getparameter(wca, :epoch) < 2000 && getparameter(wcb, :epoch) < 2000
     global pos
     pinfit!(wca, samewords, 200, 50)
     pos = syncposition(samewords, pos, wca, wcb)
@@ -72,7 +73,7 @@ while wca.params[:epoch] < 2000
         break
     end
 end
-println("Takes $(wca.params[:epoch]) and $(wcb.params[:epoch]) epochs")
+println("Takes $(getparameter(wca, :epoch)) and $(getparameter(wca, :epoch)) epochs")
 WordCloud.printcollisions(wca)
 WordCloud.printcollisions(wcb)
 #md# 

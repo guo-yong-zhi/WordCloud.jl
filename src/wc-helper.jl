@@ -83,7 +83,7 @@ function randommaskcolor(colors)
         g = Gray.(colors)
         m = minimum(g)
         M = maximum(g)
-        if sum(g)/length(g) < 0.7 && M < 0.9 #明亮
+        if sum(g)/length(g) < 0.7 && (m+M)/2 < 0.7 #明亮
             th1 = max(min(1.0, M+0.15), rand(0.85:0.001:1.0))
             th2 = min(1.0, th1+0.1)
             default = 1.0
@@ -208,7 +208,7 @@ function record(wc::WC, label::AbstractString, gif_callback=x->x)
 end
 
 
-runexample(example=:random) = evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
+runexample(example=:random) = @time evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
 showexample(example=:random) = read(pkgdir(WordCloud)*"/examples/$(example).jl", String)|>print
 examples = [e[1:prevind(e, end, 3)] for e in basename.(readdir(pkgdir(WordCloud)*"/examples")) if endswith(e, ".jl")]
 @doc "Available values: [" * join(":".*examples, ", ") * "]" runexample
@@ -217,6 +217,6 @@ function runexamples(examples=examples)
     println(length(examples), " examples: ", examples)
     for (i,e) in enumerate(examples)
         println("="^20, "\n# ",i,"/",length(examples), "\t", e, "\n", "="^20)
-        @time runexample(e)
+        runexample(e)
     end
 end
