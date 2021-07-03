@@ -152,15 +152,13 @@ function dilate(mat, r)
     mat2
 end
 
-function dilate2(mat, r) #better and slower
+function dilate2(mat, r; smoothness=0.5) #better and slower
+    @assert smoothness >= 0
     m = zeros(size(mat) .+ 2)
     m[2:end-1, 2:end-1] .= mat
-    # s = 12 #平方
-    # o = 1 # ∞/s
-    # p = 1/s # 1/s
-    # q = 2p # 2/s
     #立方 ∫∫ x^2+y^2 dx dy
-    s = 171 * 0.6 # 13*4+7*4+91, 0.6是平滑系数，0-1，越大越圆但边缘越模糊，越小越方但边缘越清晰
+    s = max(7, 171 * smoothness) # 13*4+7*4+91, smoothness是平滑系数，0-1，越大越圆但边缘越模糊，越小越方但边缘越清晰
+    # s < 7 无意义，反而增加溢出风险
     #权重 1/1 : 1/13 : 1/7
     o = 91/s # 1 / ((0.5^3-(-0.5)^3) * 2)
     p = 7/s # 1 / ((1.5^3-0.5^3) * 2)
@@ -179,13 +177,22 @@ function dilate2(mat, r) #better and slower
     end
     return min.(1., m[2:end-1, 2:end-1])
 end
-function outline(img; transparentcolor=:auto, color="black", linewidth=5)
+"""
+img: a bitmap image
+linewidth: 0 <= linewidth
+color: line color
+transparentcolor: color of the background
+smoothness: 0 <= smoothness <= 1
+"""
+function outline(img; transparentcolor=:auto, color="black", linewidth=2, smoothness=0.5)
     @assert linewidth >= 0
     T = eltype(img)
     transparentcolor = transparentcolor==:auto ? img[1] : parsecolor(transparentcolor)
     mask = img .!== convert(T, transparentcolor)
-    mask2 = dilate2(mask, linewidth)
-    c = parsecolor(color)
+    r = 4 * linewidth * smoothness
+    # @show r
+    mask2 = dilate2(mask, max(linewidth, round(r)), smoothness=smoothness)
+    c = ARGB(parsecolor(color)) #https://github.com/JuliaGraphics/Colors.jl/issues/500
     bg = convert.(T, coloralpha.(c, mask2))
     @views bg[mask] .= overlay.(bg[mask], img[mask])
     bg

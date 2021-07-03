@@ -18,7 +18,7 @@ wc2 = wordcloud(
     words, weights,
     mask = bitmapmask,
 ) |> generate!
-paint(wc2, "outline.png", background=outline(bitmapmask, color="navy", linewidth=6))
+paint(wc2, "outline.png", background=outline(bitmapmask, color="navy", linewidth=3))
 println("results are saved to outline.png")
 #md# 
 wc1, wc2

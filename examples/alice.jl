@@ -6,7 +6,7 @@ wc = wordcloud(
     angles = (0, 90),
     density = 0.5) |> generate!
 println("results are saved to alice.png")
-paint(wc, "alice.png", background=outline(wc.mask, color="purple", linewidth=1))
+paint(wc, "alice.png", background=outline(wc.mask, color="purple", linewidth=2))
 wc
 #eval# runexample(:alice)
 #md# ![alice](alice.png)  

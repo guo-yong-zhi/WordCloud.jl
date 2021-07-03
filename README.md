@@ -32,7 +32,7 @@ wc = wordcloud(
     colors = :Set1_5,
     angles = (0, 90),
     density = 0.55) |> generate!
-paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", linewidth=1))
+paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", linewidth=2))
 ```
 *Run the command `runexample(:alice)` or `showexample(:alice)` to get the result.*  
 [![alice](res/alice.png)](./examples/alice.jl)
