@@ -13,12 +13,12 @@ paint(wc1, "outline.svg")
 println("results are saved to outline.svg")
 #md# ### Bitmap
 #md# If you already have a bitmap mask without outline, you can outline it before painting
-bitmapmask = WordCloud.svg2bitmap(shape(squircle, 300, 200, color="AliceBlue", backgroundsize=(306, 206)))
+bitmapmask = WordCloud.svg2bitmap(shape(squircle, 300, 200, color="AliceBlue", backgroundsize=(312, 212)))
 wc2 = wordcloud(
     words, weights,
     mask = bitmapmask,
 ) |> generate!
-paint(wc2, "outline.png", background=outline(bitmapmask, color="navy", linewidth=3))
+paint(wc2, "outline.png", background=outline(bitmapmask, color="navy", linewidth=6))
 println("results are saved to outline.png")
 #md# 
 wc1, wc2

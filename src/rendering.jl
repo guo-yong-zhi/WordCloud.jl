@@ -152,17 +152,43 @@ function dilate(mat, r)
     mat2
 end
 
-function outline(img; transparentcolor=:auto, color="black", linewidth=1)
-    img = deepcopy(img)
-    transparentcolor = transparentcolor==:auto ? img[1] : parsecolor(transparentcolor)
-    mask = img .!== convert(eltype(img), transparentcolor)
-    mask2 = dilate(mask, 1)
-    for r in 2:linewidth #ok with small linewidth
-        mask2 .|= dilate(mask, r)
+function dilate2(mat, r) #better and slower
+    m = zeros(size(mat) .+ 2)
+    m[2:end-1, 2:end-1] .= mat
+    # s = 12 #平方
+    # o = 1 # ∞/s
+    # p = 1/s # 1/s
+    # q = 2p # 2/s
+    #立方 ∫∫ x^2+y^2 dx dy
+    s = 171 * 0.6 # 13*4+7*4+91, 0.6是平滑系数，0-1，越大越圆但边缘越模糊，越小越方但边缘越清晰
+    #权重 1/1 : 1/13 : 1/7
+    o = 91/s # 1 / ((0.5^3-(-0.5)^3) * 2)
+    p = 7/s # 1 / ((1.5^3-0.5^3) * 2)
+    q = 13/s # 1 / ((1.5^3-0.5^3) + (0.5^3-(-0.5)^3))
+    
+    for _ in 1:r
+        @views m[2:end-1, 2:end-1] .= (
+            o*m[2:end-1, 2:end-1] .+ #中
+
+            q*m[1:end-2, 2:end-1] .+ q*m[3:end, 2:end-1] .+ #上下
+            q*m[2:end-1, 1:end-2] .+ q*m[2:end-1, 3:end] .+ #左右
+
+            p*m[1:end-2, 1:end-2] .+ p*m[3:end, 3:end] .+ #主对角
+            p*m[1:end-2, 3:end] .+ p*m[3:end, 1:end-2] #副对角
+        )
     end
-    border = mask2 .& (.!mask)
-    img[border] .= convert(eltype(img), parsecolor(color))
-    img
+    return min.(1., m[2:end-1, 2:end-1])
+end
+function outline(img; transparentcolor=:auto, color="black", linewidth=5)
+    @assert linewidth >= 0
+    T = eltype(img)
+    transparentcolor = transparentcolor==:auto ? img[1] : parsecolor(transparentcolor)
+    mask = img .!== convert(T, transparentcolor)
+    mask2 = dilate2(mask, linewidth)
+    c = parsecolor(color)
+    bg = convert.(T, coloralpha.(c, mask2))
+    @views bg[mask] .= overlay.(bg[mask], img[mask])
+    bg
 end
 
 function padding(img, r=0.1; color=img[1])
