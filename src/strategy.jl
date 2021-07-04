@@ -39,7 +39,7 @@ end
 
 ## prepare
 function preparemask(img, bgcolor)
-    mask = backgroundmask(img, bgcolor)
+    mask = imagemask(img, bgcolor)
     maskqt = maskqtree(mask)
     groundsize = size(maskqt[1], 1)
     maskoccupying = occupying(mask, false)
@@ -52,30 +52,6 @@ function prepareword(word, fontsize, color, angle; backgroundcolor=(0,0,0,0), fo
         angle=angle, border=border, font=font, type=:both)
 end
 
-function torgba(c)
-    c = Colors.RGBA{Colors.N0f8}(parsecolor(c))
-    rgba = (Colors.red(c), Colors.green(c), Colors.blue(c), Colors.alpha(c))
-    reinterpret.(UInt8, rgba)
-end
-torgba(img::AbstractArray) = torgba.(img)
-
-backgroundmask(img::AbstractArray{Bool,2}) = img
-function backgroundmask(img, istransparent::Function)
-    .! istransparent.(torgba.(img))
-end
-function backgroundmask(img, transparentcolor=:auto)
-    if transparentcolor==:auto
-        if img[1]==img[end] && any(c->c!=img[1], img)
-            transparentcolor = img[1]
-        else
-            transparentcolor = nothing
-        end
-    end
-    if transparentcolor === nothing
-        return trues(size(img))
-    end
-    img .!= convert(eltype(img), parsecolor(transparentcolor))    
-end
 wordmask(img, bgcolor, border) = dilate(img.!=img[1], border)
 #use `img[1]` instead of `convert(eltype(img), parsecolor(bgcolor))`
 #https://github.com/JuliaGraphics/Luxor.jl/issues/107

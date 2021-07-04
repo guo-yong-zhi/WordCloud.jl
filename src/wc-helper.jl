@@ -1,4 +1,5 @@
 using Colors
+DEFAULTSYMBOLS = [:original, :auto, :default]
 iter_expand(e) = Base.Iterators.repeated(e)
 iter_expand(l::Vector) = Base.Iterators.cycle(l)
 iter_expand(r::AbstractRange) = IterGen(st->rand(r))
@@ -92,8 +93,9 @@ function randommaskcolor(colors)
             th1 = max(0.0, th2-0.15)
             default = 0.0
         end
-        bgcolor = rand((default, (rand(th1:0.001:th2), rand(th1:0.001:th2), rand(th1:0.001:th2))))
-        return bgcolor
+        maskcolor = rand((default, (rand(th1:0.001:th2), rand(th1:0.001:th2), rand(th1:0.001:th2))))
+        # @show maskcolor
+        return maskcolor
     catch e
         @show e
         @show "colors sum failed",colors
@@ -103,43 +105,53 @@ end
 """
 load a img as mask, recolor, or resize, etc
 ## examples
-* loadmask("res/heart.jpg")  
-* loadmask("res/heart.jpg", 256, 256) #resize to 256*256  
+* loadmask(open("res/heart.jpg"), 256, 256) #resize to 256*256  
 * loadmask("res/heart.jpg", ratio=0.3) #scale 0.3  
 * loadmask("res/heart.jpg", color="red", ratio=2) #set forecolor  
 * loadmask("res/heart.jpg", transparentcolor=rgba->maximum(rgba[1:3])*(rgba[4]/255)>128) #set transparentcolor with a Function 
 * loadmask("res/heart.jpg", color="red", transparentcolor=(1,1,1)) #set forecolor and transparentcolor  
+* loadmask("res/heart.svg") #other arguments are not supported
+About orther keyword arguments like outline, linecolor, smoothness, see function `outline`.
 """
-function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...; color=:original, backgroundcolor=:original, transparentcolor=:auto, kargs...)
-    if color!=:original || backgroundcolor!=:original
-        mask = backgroundmask(img, transparentcolor)
-        if color != :original
+function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...; 
+    color=:auto, backgroundcolor=:auto, transparentcolor=:auto, 
+    outline=0,  linecolor="black", smoothness=0.5, kargs...)
+    copied = false
+    if !(isempty(args) && isempty(kargs))
+        img = imresize(img, args...; kargs...)
+        copied = true
+    end
+    if color ∉ DEFAULTSYMBOLS || backgroundcolor ∉ DEFAULTSYMBOLS
+        copied || (img = copy(img))
+        mask = imagemask(img, transparentcolor)
+        if color ∉ DEFAULTSYMBOLS
             color = parsecolor(color)
             m = @view img[mask]
             m .= convert.(eltype(img), Colors.alphacolor.(color, Colors.alpha.(m))) #保持透明度
         end
-        if backgroundcolor != :original
+        if backgroundcolor ∉ DEFAULTSYMBOLS
             backgroundcolor = parsecolor(backgroundcolor)
             m = @view img[.~mask]
-            m .= convert.(eltype(img), Colors.alphacolor.(backgroundcolor, Colors.alpha.(m))) #保持透明度
+            m .= convert.(eltype(img), backgroundcolor) #不保持透明度
         end
     end
-    if !(isempty(args) && isempty(kargs))
-        img = imresize(img, args...; kargs...)
+    if outline > 0
+        img = Render.outline(img, linewidth=outline, color=linecolor, smoothness=smoothness, 
+        transparentcolor=transparentcolor)
     end
     img
 end
 function loadmask(img::AbstractMatrix{<:Colorant}, args...; kargs...)
     loadmask(ARGB.(img), args...; kargs...)
 end
-function loadmask(path, args...; kargs...)
-    mask = Render.load(path)
-    if issvg(mask)
-        if !isempty(args) || !isempty(kargs) 
-            @warn "edit svg file is not supported"
-        end
-        return mask
+function loadmask(img::SVGImageType, args...; transparentcolor=:auto, kargs...)
+    if !isempty(args) || !isempty(v for v in values(values(kargs)) if v ∉ DEFAULTSYMBOLS)
+        @warn "editing svg file is not supported: $args $kargs"
     end
+    img
+end
+function loadmask(file, args...; kargs...)
+    mask = Render.load(file)
     loadmask(mask, args...; kargs...)
 end
 
@@ -180,6 +192,8 @@ function paint(wc::WC, args...; background=true, kargs...)
         background = copy(wc.mask)
     elseif background == false || background === nothing
         background = fill(ARGB(1,1,1,0), size(wc.mask))
+    else
+        background = copy(background)
     end
     overlay!(background, wc.imgs, getpositions(wc))
     if !(isempty(args) && isempty(kargs))

@@ -3,7 +3,7 @@ using Random
 
 background = loadmask(pkgdir(WordCloud)*"/res/butterfly.png")
 istrans = c->maximum(c[1:3])*(c[4]/255)<128
-mask = WordCloud.backgroundmask(background, istrans)
+mask = WordCloud.imagemask(background, istrans)
 showmask(background, mask, highlight=(1,0,0,0.7))
 #md# `showmask` might be helpful to find a proper `istrans` function
 words = [randstring(1) for i in 1:600]
@@ -43,7 +43,7 @@ mixstyleimg = paint(wc, background=loadmask(background, color=0.99))
 #md# 
 h, w = size(avgimg)
 lw = 21
-lc = eltype(avgimg)(0.1)
+lc = eltype(avgimg)(parsecolor(0.1))
 vbar = zeros(eltype(avgimg), (h, lw))
 hbar = zeros(eltype(avgimg), (lw, 2w+lw))
 vbar[:, lw÷2+1] .= lc

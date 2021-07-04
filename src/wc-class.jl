@@ -34,15 +34,16 @@ Positional arguments are used to specify words and weights, and can be in differ
 * mask = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
 * mask = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
 * mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #see doc of `shape`
-* maskshape: `box`, `ellipse`, or `squircle`.  See `shape`. 
+* maskshape: `box`, `ellipse`, or `squircle`.  See `shape`. Take effect only when the `mask` argument is not given.
 * masksize: Can be a tuple `(width, height)`, tuple `(width, height, cornerradius)` (for `box` only) or just a single number as hint. 
-* maskcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2
-* outline, linecolor, backgroundcolor, backgroundsize: See `shape`. 
+* backgroundsize: See `shape`. Take effect only when the `mask` argument is not given.
+* maskcolor, backgroundcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :auto (auto recolor the mask), :original (only when `mask` is given).
+* outline, linecolor, smoothness: See function `shape` and `outline`. 
 * transparentcolor = (1,0,0) #set the transparent color in mask  
 * transparentcolor = nothing #no transparent color  
 * transparentcolor = c->(c[1]+c[2]+c[3])/3*(c[4]/255)>128) #set transparentcolor with a Function. `c` is a (r,g,b,a) Tuple.
 ---NOTE
-Some arguments take effect only when the `mask` argument is not given, they are: `maskshape`, `masksize`, `maskcolor`, `outline`, `linecolor`, `backgroundcolor`, backgroundsize.
+Some arguments depend on whether or not the `mask` is given or the type of the `mask` given.
 
 ### other keyword arguments
 The keyword argument `run` is a function. It will be called after the `wordcloud` object constructed.
@@ -60,8 +61,8 @@ wordcloud(counter::AbstractVector{<:Union{Pair, Tuple, AbstractVector}}; kargs..
 wordcloud(text; kargs...) = wordcloud(processtext(text); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=randomscheme(), angles=randomangles(), 
-                masksize=:auto, maskcolor=:auto,
-                mask=:rand, transparentcolor=:auto,
+                masksize=:default, maskcolor=:default,
+                mask=:auto, transparentcolor=:auto,
                 minfontsize=:auto, spacing=1, density=0.5, font="",
                 run=placement!, kargs...)
     @assert length(words) == length(weights) > 0
@@ -72,16 +73,21 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:colors] = Any[colors...]
     angles = Iterators.take(iter_expand(angles), length(words)) |> collect
     params[:angles] = angles
-    if mask == :rand
-        maskcolor = maskcolor == :auto ? randommaskcolor(colors) : maskcolor
-        masksize = masksize == :auto ? 40*√length(words) : masksize
+    if mask == :auto
+        maskcolor = maskcolor in [:auto, :default] ? randommaskcolor(colors) : maskcolor
+        masksize = masksize in [:auto, :default] ? 40*√length(words) : masksize
         mask = randommask(masksize, color=maskcolor; kargs...)
+    else
+        ms = masksize in DEFAULTSYMBOLS ? () : masksize
+        if maskcolor == :auto && !issvg(loadmask(mask))
+            maskcolor = randommaskcolor(colors)
+            println("Recolor the mask with color $maskcolor.")
+        end
+        mask = loadmask(mask, ms...; color=maskcolor, transparentcolor=transparentcolor, kargs...)
     end
     if transparentcolor == :auto
-        if maskcolor != :auto
+        if maskcolor ∉ DEFAULTSYMBOLS
             transparentcolor = c->c!=WordCloud.torgba(maskcolor)
-        elseif :backgroundcolor in keys(params)
-            transparentcolor = params[:backgroundcolor]
         end
     end
     params[:transparentcolor] = transparentcolor
@@ -92,7 +98,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
         svgmask = mask
         mask = svg2bitmap(mask)
     end
-    mask, maskqtree, groundsize, maskoccupying = preparemask(loadmask(mask), transparentcolor)
+    mask, maskqtree, groundsize, maskoccupying = preparemask(mask, transparentcolor)
     println("mask size ", size(mask))
     params[:groundsize] = groundsize
     params[:maskoccupying] = maskoccupying

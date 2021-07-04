@@ -1,6 +1,6 @@
 module Render
 export rendertext, overlay!, shape, ellipse, box, squircle, GIF, generate, parsecolor, rendertextoutlines,
-    colorschemes, schemes, outline, padding, dilate, imresize
+    colorschemes, schemes, torgba, imagemask, outline, padding, dilate, imresize
 export issvg, save, load, svg2bitmap, SVGImageType, svgstring
 using Luxor
 using Colors
@@ -20,22 +20,29 @@ const SVGImageType = Drawing
 Base.broadcastable(s::SVGImageType) = Ref(s)
 svgstring(d) = String(copy(d.bufferdata))
 
-function loadsvg(fn)
-    p = readsvg(fn)
+function loadsvg(svg)
+    p = readsvg(svg)
     d = Drawing(p.width, p.height, :svg)
     placeimage(p)
     finish()
     d
 end
 
-function load(fn)
+function load(fn::AbstractString)
     if endswith(fn, r".svg|.SVG")
         loadsvg(fn)
     else
         ImageMagick.load(fn)
     end
 end
-
+function load(file::IO)
+    try
+        ImageMagick.load(file)
+    catch
+        seekstart(file)
+        loadsvg(read(file, String))
+    end
+end
 function svg2bitmap(svg::Drawing)
     Drawing(svg.width, svg.height, :image)
     placeimage(svg)
@@ -138,6 +145,31 @@ function rendertextoutlines(str::AbstractString, size::Real; color="black", bgco
     mat = clipbitmap(mat, boundbox(mat, mat[1])...)
 end
 
+function torgba(c)
+    c = Colors.RGBA{Colors.N0f8}(parsecolor(c))
+    rgba = (Colors.red(c), Colors.green(c), Colors.blue(c), Colors.alpha(c))
+    reinterpret.(UInt8, rgba)
+end
+torgba(img::AbstractArray) = torgba.(img)
+
+imagemask(img::AbstractArray{Bool,2}) = img
+function imagemask(img, istransparent::Function)
+    .! istransparent.(torgba.(img))
+end
+function imagemask(img, transparentcolor=:auto)
+    if transparentcolor==:auto
+        if img[1]==img[end] && any(c->c!=img[1], img)
+            transparentcolor = img[1]
+        else
+            transparentcolor = nothing
+        end
+    end
+    if transparentcolor === nothing
+        return trues(size(img))
+    end
+    img .!= convert(eltype(img), parsecolor(transparentcolor))    
+end
+
 function dilate(mat, r)
     mat2 = copy(mat)
     mat2[1:end-r, :] .|= mat[1+r:end, :]
@@ -186,14 +218,13 @@ smoothness: 0 <= smoothness <= 1
 """
 function outline(img; transparentcolor=:auto, color="black", linewidth=2, smoothness=0.5)
     @assert linewidth >= 0
-    T = eltype(img)
-    transparentcolor = transparentcolor==:auto ? img[1] : parsecolor(transparentcolor)
-    mask = img .!== convert(T, transparentcolor)
+    mask = imagemask(img, transparentcolor)
     r = 4 * linewidth * smoothness
     # @show r
     mask2 = dilate2(mask, max(linewidth, round(r)), smoothness=smoothness)
     c = ARGB(parsecolor(color)) #https://github.com/JuliaGraphics/Colors.jl/issues/500
-    bg = convert.(T, coloralpha.(c, mask2))
+    bg = convert.(eltype(img), coloralpha.(c, mask2))
+    bg = overlay!(copy(img), bg)
     @views bg[mask] .= overlay.(bg[mask], img[mask])
     bg
 end

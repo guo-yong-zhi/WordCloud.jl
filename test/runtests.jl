@@ -32,11 +32,17 @@ include("test_textprocessing.jl")
             mask=shape(squircle, 200, 150, color=0.15, rt=2.2), density=0.45, transparentcolor=(1,1,1,0)) #String & small mask
     @test_throws AssertionError wordcloud(["1"],[2,3], density=0.1)|>generate! #length unmatch
     @test_throws AssertionError wordcloud(String[],Int[], density=0.1)|>generate! #empty inputs
-
+    svgfile = "test.svg"
+    wordcloud(["test"], [1], colors="#DE2910", mask=svgfile, maskcolor=:original)
+    wordcloud(["test"], [1], mask=open(svgfile))
+    pngfile = pkgdir(WordCloud)*"/res/heart_mask.png"
+    wordcloud(["test"], [1], colors="#DE2910", mask=pngfile, maskcolor=:original)
+    wordcloud(["test"], [1], mask=open(pngfile), maskcolor="yellow", ratio=0.5)
+    wordcloud(["test"], [1], mask=pngfile, outline=3, linecolor="red", smoothness=0.7, backgroundcolor="green")
     # get&set
     wc = wordcloud(
             processtext(open("../res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxnum=300), 
-            mask = loadmask("../res/alice_mask.png", color="#faeef8", backgroundcolor=0.97),
+            mask = "../res/alice_mask.png", maskcolor = "#faeef8", backgroundcolor = 0.97,
             colors = (WordCloud.colorschemes[:Set1_5].colors..., ),
             angles = (0, 90));
     rescale!(wc, 1.23)
@@ -68,7 +74,7 @@ include("test_textprocessing.jl")
     wc.qtrees[1][1]|>imageof
     bg = getmask(wc)
     istrans = c->maximum(c[1:3])<128
-    mask = WordCloud.backgroundmask(bg, istrans)
+    mask = WordCloud.imagemask(bg, istrans)
     s = showmask(bg, mask)
     @test all(bg[mask] .== s[mask])
     @test all(bg[.!mask] .!= s[.!mask])
