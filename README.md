@@ -18,11 +18,13 @@ using WordCloud
 using Random
 words = [randstring(rand(1:8)) for i in 1:300]
 weights = randexp(length(words)) .* 1000 .+ rand(10:100, length(words))
-wc = wordcloud(words, weights)
-generate!(wc)
-paint(wc, "random.svg")
+wc1 = wordcloud(words, weights)
+generate!(wc1)
+paint(wc1, "random.svg")
+#Or it could be
+wc2 = wordcloud("It's easy to generate word clouds") |> generate!
+wc3 = wordcloud(open(pkgdir(WordCloud)*"/res/alice.txt")) |> generate!
 ```
-*Run the command `runexample(:random)` or `showexample(:random)` to get the result.*  
 # More Advanced Usage
 ```julia
 using WordCloud

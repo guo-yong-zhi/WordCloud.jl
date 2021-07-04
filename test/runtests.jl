@@ -16,7 +16,6 @@ include("test_textprocessing.jl")
     paint(wc, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2), ratio=0.5)
     paint(wc, "test.svg")
     @test getparameter(wc, :maskoccupying) == WordCloud.occupying(WordCloud.QTree.kernel(wc.maskqtree[1]), WordCloud.QTree.FULL)
-    @test getparameter(wc, :maskoccupying) == WordCloud.occupying(wc.mask .!= wc.mask[1])
     
     # placement!
     placement!(wc, style=:gathering)
@@ -29,11 +28,10 @@ include("test_textprocessing.jl")
 
     # wordcloud factory
     wc = wordcloud(["singleword"=>12], mask=shape(box, 200, 150, 40, color=0.15), density=0.45, run=generate!) #singleword & Pair
-    wc = wordcloud(processtext("giving a single word is ok. giving several words is ok too"), 
+    wc = wordcloud("giving a single word is ok. giving several words is ok too", 
             mask=shape(squircle, 200, 150, color=0.15, rt=2.2), density=0.45, transparentcolor=(1,1,1,0)) #String & small mask
     @test_throws AssertionError wordcloud(["1"],[2,3], density=0.1)|>generate! #length unmatch
     @test_throws AssertionError wordcloud(String[],Int[], density=0.1)|>generate! #empty inputs
-    @test_throws AssertionError wordcloud([" ", " "],[2.0, 1], density=0.1) #blank words
 
     # get&set
     wc = wordcloud(

@@ -57,10 +57,10 @@ The keyword argument `run` is a function. It will be called after the `wordcloud
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter)|>collect, values(counter)|>collect; kargs...)
 wordcloud(counter::AbstractVector{<:Union{Pair, Tuple, AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
-
+wordcloud(text; kargs...) = wordcloud(processtext(text); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=randomscheme(), angles=randomangles(), 
-                masksize=800, maskcolor=randommaskcolor(colors),
+                masksize=:auto, maskcolor=:auto,
                 mask=:rand, transparentcolor=:auto,
                 minfontsize=:auto, spacing=1, density=0.5, font="",
                 run=placement!, kargs...)
@@ -72,10 +72,19 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:colors] = Any[colors...]
     angles = Iterators.take(iter_expand(angles), length(words)) |> collect
     params[:angles] = angles
-    params[:transparentcolor] = transparentcolor
     if mask == :rand
+        maskcolor = maskcolor == :auto ? randommaskcolor(colors) : maskcolor
+        masksize = masksize == :auto ? 40*√length(words) : masksize
         mask = randommask(masksize, color=maskcolor; kargs...)
     end
+    if transparentcolor == :auto
+        if maskcolor != :auto
+            transparentcolor = c->c!=WordCloud.torgba(maskcolor)
+        elseif :backgroundcolor in keys(params)
+            transparentcolor = params[:backgroundcolor]
+        end
+    end
+    params[:transparentcolor] = transparentcolor
     params[:masksize] = masksize
     params[:maskcolor] = maskcolor
     svgmask = nothing

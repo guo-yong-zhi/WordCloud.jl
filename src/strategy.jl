@@ -111,7 +111,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
     while true
         step = step + 1
         if step > maxiter
-            @warn "find_weight_scale reach maxiter. This may be caused by too small background or too many words or too big `minfontsize`."
+            @warn "find_weight_scale reach the `maxiter`. The `density` may be inaccurate. This may be caused by too small background, too many words or too big `minfontsize`."
             break
         end
         # cal tg1
@@ -137,9 +137,17 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
         if !(best_scale_L < sc2 < best_scale_H)
             if isfinite(best_tar_H + best_tar_L)
                 sc2_ = √((best_scale_H^2 + best_scale_L^2)/2.)
-                println("bisection takes effect: scale $sc2 -> $sc2_")
+                println("bisection search takes effect: scale $sc2 -> $sc2_")
                 sc2 = sc2_
 #                 @show best_scale_L best_scale_H
+            elseif isfinite(best_tar_H)
+                sc2_ = sc1 * 0.95
+                println("one-way search takes effect: scale $sc2 -> $sc2_")
+                sc2 = sc2_
+            elseif isfinite(best_tar_L)
+                sc2_ = sc1 / 0.95
+                println("one-way search takes effect: scale $sc2 -> $sc2_")
+                sc2 = sc2_
             else
                 error("find_weight_scale! failed")
             end
