@@ -317,7 +317,7 @@ function pin(fun, wc::WC, mask::AbstractArray{Bool})
     maskqtree2 = deepcopy(maskqtree)
     Stuffing.overlap!(maskqtree2, wc.qtrees[mask])
     wc.maskqtree = maskqtree2
-    resultpic = convert.(ARGB32, wc.mask)
+    resultpic = copy(wc.mask)
     wc.mask = overlay!(resultpic, wc.imgs[mask], getpositions(wc, mask))
     wc.params[:maskoccupying] = occupying(QTree.kernel(wc.maskqtree[1]), QTree.FULL)
     r = nothing

@@ -11,7 +11,7 @@ import ImageTransformations.imresize
 save = Luxor.FileIO.save
 
 parsecolor(c) = parse(Colorant, c)
-parsecolor(tp::Tuple) = ARGB32(tp...)
+parsecolor(tp::Tuple) = ARGB(tp...)
 parsecolor(gray::Real) = Gray(gray)
 parsecolor(sc::Symbol) = parsecolor.(colorschemes[sc].colors)
 
@@ -123,7 +123,7 @@ function rendertextoutlines(str::AbstractString, size::Real; color="black", bgco
     origin()
     bgcolor = parsecolor(bgcolor)
     bgcolor = background(bgcolor)
-    bgcolor = Luxor.ARGB32(bgcolor...)
+    # bgcolor = Luxor.ARGB32(bgcolor...)
     setcolor(parsecolor(color))
 #     setfont(font, size)
     fontface(font)
@@ -214,7 +214,7 @@ function overlappingarea(img1, img2, x=1, y=1)
     img1v, img2v
 end
                         
-function overlay(color1::T, color2::T) where {T}
+function overlay(color1::TransparentRGB, color2::TransparentRGB)
 #     @show color1, color2
     a2 = Colors.alpha(color2)
     if a2 == 0 return color1 end
@@ -225,7 +225,7 @@ function overlay(color1::T, color2::T) where {T}
     a = a1 + a2 - a1 * a2
     c = (c1 .* a1 .* (1-a2) .+ c2 .* a2) ./ (a>0 ? a : 1)
 #     @show c, a
-    T(min.(1, c)..., min(1, a))
+    typeof(color1)(min.(1, c)..., min(1, a))
 end
 "put img2 on img1 at (x, y)"
 function overlay!(img1::AbstractMatrix, img2::AbstractMatrix, x=1, y=1)#左上角重合时(x=1,y=1)
@@ -244,7 +244,7 @@ end
 
 function overlay(imgs::AbstractVector{Drawing}, poss; background=false, size=size(background))
     d = Drawing(size..., :svg)
-    bgcolor = Luxor.background(ARGB32(1,1,1,0))
+    bgcolor = Luxor.background(1, 1, 1, 0)
     if !(background == false || background === nothing)
         placeimage(background)
     end

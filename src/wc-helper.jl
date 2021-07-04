@@ -110,16 +110,15 @@ load a img as mask, recolor, or resize, etc
 * loadmask("res/heart.jpg", transparentcolor=rgba->maximum(rgba[1:3])*(rgba[4]/255)>128) #set transparentcolor with a Function 
 * loadmask("res/heart.jpg", color="red", transparentcolor=(1,1,1)) #set forecolor and transparentcolor  
 """
-function loadmask(img::AbstractMatrix, args...; color=:original, backgroundcolor=:original, transparentcolor=:auto, kargs...)
+function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...; color=:original, backgroundcolor=:original, transparentcolor=:auto, kargs...)
     if color!=:original || backgroundcolor!=:original
-        img = ARGB.(img)
         mask = backgroundmask(img, transparentcolor)
-        if color!=:original
+        if color != :original
             color = parsecolor(color)
             m = @view img[mask]
             m .= convert.(eltype(img), Colors.alphacolor.(color, Colors.alpha.(m))) #保持透明度
         end
-        if backgroundcolor!=:original
+        if backgroundcolor != :original
             backgroundcolor = parsecolor(backgroundcolor)
             m = @view img[.~mask]
             m .= convert.(eltype(img), Colors.alphacolor.(backgroundcolor, Colors.alpha.(m))) #保持透明度
@@ -128,8 +127,10 @@ function loadmask(img::AbstractMatrix, args...; color=:original, backgroundcolor
     if !(isempty(args) && isempty(kargs))
         img = imresize(img, args...; kargs...)
     end
-    println("mask size ", size(img))
     img
+end
+function loadmask(img::AbstractMatrix{<:Colorant}, args...; kargs...)
+    loadmask(ARGB.(img), args...; kargs...)
 end
 function loadmask(path, args...; kargs...)
     mask = Render.load(path)
@@ -139,7 +140,7 @@ function loadmask(path, args...; kargs...)
         end
         return mask
     end
-    loadmask(mask,  args...; kargs...)
+    loadmask(mask, args...; kargs...)
 end
 
 "like `paint` but export svg"
@@ -176,18 +177,16 @@ end
 """
 function paint(wc::WC, args...; background=true, kargs...)
     if background == true
-        background = wc.mask
+        background = copy(wc.mask)
     elseif background == false || background === nothing
-        background = fill(ARGB32(1,1,1,0), size(wc.mask))
+        background = fill(ARGB(1,1,1,0), size(wc.mask))
     end
-    resultpic = convert.(ARGB32, background)#.|>ARGB32
-    imgs = [convert.(ARGB32, i) for i in wc.imgs]
-    overlay!(resultpic, imgs, getpositions(wc))
+    overlay!(background, wc.imgs, getpositions(wc))
     if !(isempty(args) && isempty(kargs))
-        resultpic = convert.(ARGB{Colors.N0f8}, resultpic)
-        resultpic = imresize(resultpic, args...; kargs...)
+        background = ARGB.(background) #https://github.com/JuliaImages/ImageTransformations.jl/issues/97
+        background = imresize(background, args...; kargs...)
     end
-    resultpic
+    background
 end
 
 function paint(wc::WC, file, args...; kargs...)

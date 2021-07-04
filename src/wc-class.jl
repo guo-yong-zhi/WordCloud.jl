@@ -83,7 +83,8 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
         svgmask = mask
         mask = svg2bitmap(mask)
     end
-    mask, maskqtree, groundsize, maskoccupying = preparemask(mask, transparentcolor)
+    mask, maskqtree, groundsize, maskoccupying = preparemask(loadmask(mask), transparentcolor)
+    println("mask size ", size(mask))
     params[:groundsize] = groundsize
     params[:maskoccupying] = maskoccupying
     if maskoccupying == 0
@@ -211,7 +212,7 @@ Base.show(io::IO, m::MIME"image/png", wc::WC) = Base.show(io, m, paint(wc::WC))
 Base.show(io::IO, m::MIME"image/svg+xml", wc::WC) = Base.show(io, m, paintsvg(wc::WC))
 Base.show(io::IO, m::MIME"text/plain", wc::WC) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")
 function Base.showable(::MIME"image/png", wc::WC)
-    STATEIDS[getstate(wc)] >= STATEIDS[:initimages!] && showable("image/png", zeros(ARGB32,(1,1)))
+    STATEIDS[getstate(wc)] >= STATEIDS[:initimages!] && showable("image/png", zeros(ARGB,(1,1)))
 end
 function Base.showable(::MIME"image/svg+xml", wc::WC)
     STATEIDS[getstate(wc)] >= STATEIDS[:initimages!] && (wc.svgmask !== nothing || !showable("image/png", wc))
