@@ -1,6 +1,6 @@
 module Render
 export rendertext, overlay!, shape, ellipse, box, squircle, GIF, generate, parsecolor, rendertextoutlines,
-    colorschemes, schemes, torgba, imagemask, outline, padding, dilate, imresize, recolor!, recolor
+    colorschemes, torgba, imagemask, outline, padding, dilate, imresize, recolor!, recolor
 export issvg, save, load, svg2bitmap, SVGImageType, svgstring
 using Luxor
 using Colors
@@ -290,17 +290,6 @@ function recolor(img::AbstractArray, color)
     c = parsecolor(color)
     convert.(eltype(img), Colors.alphacolor.(c, Colors.alpha.(img)))
 end
-
-schemes_colorbrewer = filter(s -> occursin("colorbrewer", colorschemes[s].category), collect(keys(colorschemes)))
-schemes_colorbrewer =  filter(s -> (occursin("Accent", String(s)) 
-        || occursin("Dark", String(s))
-        || occursin("Paired", String(s))
-        || occursin("Pastel", String(s))
-        || occursin("Set", String(s))
-        || occursin("Spectral", String(s))
-        ), schemes_colorbrewer)
-schemes_seaborn = filter(s -> occursin("seaborn", colorschemes[s].category), collect(keys(colorschemes)))
-schemes = [schemes_colorbrewer..., schemes_seaborn...]
 
 function squircle(pos, w, h, args...; kargs...)
     Luxor.squircle(pos, w/2, h/2, args...; kargs...)

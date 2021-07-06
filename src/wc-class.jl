@@ -64,7 +64,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
                 colors=randomscheme(), angles=randomangles(), 
                 masksize=:default, maskcolor=:default, backgroundcolor=:default,
                 mask=:auto, transparent=:auto,
-                minfontsize=:auto, spacing=1, density=0.5, font="",
+                minfontsize=:auto, spacing=1, density=0.5, font=randomfont(),
                 run=placement!, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol, Any}(kargs)
