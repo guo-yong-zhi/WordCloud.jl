@@ -22,6 +22,7 @@ wcb = wordcloud(
     density = dens,
     backgroundcolor = :maskcolor,
     maskcolor = getmaskcolor(wca),
+    font = getparameter(wca, :font),
     run = x->nothing, 
 )
 #md# ### Make the same words the same style

@@ -31,6 +31,7 @@ wc = wordcloud(
     words_weights,
     maskshape = box,
     masksize = (1000, 1000, 0),
+    density=0.3,
     run = initimages!
 )
 

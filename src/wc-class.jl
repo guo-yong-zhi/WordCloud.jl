@@ -185,7 +185,7 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
         svgmask = mask
         mask = svg2bitmap(mask)
         if maskcolor ∉ DEFAULTSYMBOLS && (:outline ∉ keys(params) || params[:outline] <= 0)
-            Render.recolor!(mask, maskcolor) #svg2bitmap后有杂色
+            Render.recolor!(mask, maskcolor) #svg2bitmap后有杂色 https://github.com/JuliaGraphics/Luxor.jl/issues/160
         end
     end
     font = font in DEFAULTSYMBOLS ? randomfont() : font

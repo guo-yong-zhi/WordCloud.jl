@@ -23,6 +23,7 @@ wcb = wordcloud(
     density = dens,
     backgroundcolor = :maskcolor,
     maskcolor = getmaskcolor(wca),
+    font = getparameter(wca, :font),
     run = x->nothing, #turn off the useless initimage! and placement! in advance
 )
 #md# Follow these steps to generate a wordcloud: initimage! -> placement! -> generate!

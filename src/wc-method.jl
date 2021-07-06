@@ -76,7 +76,7 @@ function placement!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, k
             if rt == :auto
                 if hasparameter(wc, :rt)
                     rt = getparameter(wc, :rt)
-                    println("use wordcloud's parameter `:rt=>$rt`")
+                    println("use wordcloud's parameter `:rt=>$rt` to place words")
                 else
                     rt = 1
                     println("rt = 1, ellipse")
