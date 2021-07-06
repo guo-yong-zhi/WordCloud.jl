@@ -1,3 +1,4 @@
+using Random
 SansSerifFonts = ["Trebuchet MS", "Heiti TC", "微軟正黑體", "Arial Unicode MS", "Droid Fallback Sans", "sans-serif", "Helvetica", "Verdana", "Hei",
 "Arial", "Tahoma", "Trebuchet MS", "Microsoft Yahei", "Comic Sans MS", "Impact", "Segoe Script", "STHeiti", "Apple LiGothic", "MingLiU", "Ubuntu", 
 "Segoe UI", "DejaVu Sans", "DejaVu Sans Mono", "Noto Sans CJK"]
@@ -38,9 +39,14 @@ Schemes_colorbrewer =  filter(s -> (occursin("Accent", String(s))
         || occursin("Pastel", String(s))
         || occursin("Set", String(s))
         || occursin("Spectral", String(s))
+        || occursin("BuPu", String(s))
+        || occursin("PuOr", String(s))
+        || occursin("RdPu", String(s))
         ), Schemes_colorbrewer)
 Schemes_seaborn = filter(s -> occursin("seaborn", colorschemes[s].category), collect(keys(colorschemes)))
-Schemes = [Schemes_colorbrewer..., Schemes_seaborn...]
+Schemes_tableau = filter(s -> occursin("tableau", colorschemes[s].category), collect(keys(colorschemes)))
+Schemes_cvd = filter(s -> occursin("cvd", colorschemes[s].category), collect(keys(colorschemes)))
+Schemes = [Schemes_colorbrewer..., Schemes_seaborn..., Schemes_tableau..., Schemes_cvd...]
 
 function displayschemes()
     for scheme in Schemes
@@ -50,9 +56,16 @@ function displayschemes()
     end
 end
 function randomscheme()
-    scheme = rand(Schemes)
-    colors = Render.colorschemes[scheme].colors
-    @show (scheme, length(colors))
+    if rand() < 0.9
+        scheme = rand(Schemes)
+        c = Render.colorschemes[scheme].colors
+        colors = randsubseq(c, rand())
+        colors = isempty(colors) ? c : colors
+        @show (scheme, length(colors))
+    else
+        colors = rand((0, 1, 0, 1, (0,1), rand(), (rand(), rand())))
+        @show colors
+    end
     (colors...,)
 end
 function randommask(sz::Number=800; kargs...)
@@ -111,18 +124,32 @@ function randomangles()
     a
 end
 function randommaskcolor(colors)
-    colors = parsecolor.(colors)
+    colors = parsecolor.(unique(colors))
     try
-        g = Gray.(colors)
-        m = minimum(g)
-        M = maximum(g)
-        if sum(g)/length(g) < 0.7 && (m+M)/2 < 0.7 #明亮
-            th1 = max(min(1.0, M+0.15), rand(0.85:0.001:1.0))
-            th2 = min(1.0, th1+0.1)
+        g = Gray.(colors) |> sort
+        m = g[1]
+        M = g[end]
+        if length(g) > 1
+            d = diff(g)
+            I = maximum(d)
+            i = findlast(isequal(I), d)
+        else
+            I = 0
+            i = -1
+        end
+        # @show I, m, M
+        if I > 3(1 - M) && I > 3m
+            middle = (g[i]+g[i+1])/2
+            th1 = clamp(max(g[i]+0.15, middle-rand(0:0.001:0.05)), 0, middle)
+            th2 = clamp(min(g[i+1]-0.15, middle+rand(0:0.001:0.05)), middle, 1)
+            default = middle
+        elseif sum(g)/length(g) < 0.7 && (m+M)/2 < 0.7 && !(m>2(1-M))#明亮
+            th1 = clamp(max(M+0.15, rand(0.85:0.001:1.0)), 0, 1)
+            th2 = clamp(th1+0.1, 0, 1)
             default = 1.0
         else    #黑暗
-            th2 = min(max(0.0, m-0.15), rand(0.0:0.001:0.2)) #对深色不敏感，+0.05
-            th1 = max(0.0, th2-0.15)
+            th2 = clamp(min(m-0.15, rand(0.0:0.001:0.2)), 0, 1) #对深色不敏感，+0.05
+            th1 = clamp(th2-0.15, 0, 1)
             default = 0.0
         end
         maskcolor = rand((default, (rand(th1:0.001:th2), rand(th1:0.001:th2), rand(th1:0.001:th2))))
@@ -134,9 +161,9 @@ function randommaskcolor(colors)
         return "white"
     end
 end
-function randomlinecolor(colors0, colors, maskcolor, backgroundcolor)
+function randomlinecolor(colors)
     if rand() < 0.8
-        linecolor = rand((colors[1], rand(colors0)))
+        linecolor = rand((colors[1], colors[1], rand(colors)))
     else
         linecolor = (rand(), rand(), rand(), min(1., 0.5+rand()/2))
     end

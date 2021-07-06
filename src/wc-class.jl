@@ -111,7 +111,6 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
     angles = angles in DEFAULTSYMBOLS ? randomangles() : angles
     maskcolor0 = maskcolor
     backgroundcolor0 = backgroundcolor
-    colors0 = colors
     colors = colors isa Symbol ? (colorschemes[colors].colors..., ) : colors
     colors = Iterators.take(iter_expand(colors), lengthwords) |> collect
     angles = Iterators.take(iter_expand(angles), lengthwords) |> collect
@@ -137,7 +136,7 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
             outline != 0 && @show outline
         end
         if linecolor in DEFAULTSYMBOLS && outline != 0
-            linecolor = randomlinecolor(colors0, colors, maskcolor, backgroundcolor)
+            linecolor = randomlinecolor(colors)
         end
         mask = randommask(masksize, color=maskcolor; outline=outline, linecolor=linecolor, kargs...)
     else
