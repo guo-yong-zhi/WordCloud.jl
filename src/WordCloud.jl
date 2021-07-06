@@ -22,5 +22,6 @@ include("wc-class.jl")
 include("wc-method.jl")
 include("wc-helper.jl")
 include("strategy.jl") 
+include("artist.jl") 
 include("utils.jl")
 end
