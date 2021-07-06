@@ -53,8 +53,8 @@ end
 function loadmask(img::AbstractMatrix{<:Colorant}, args...; kargs...)
     loadmask(ARGB.(img), args...; kargs...)
 end
-function loadmask(img::SVGImageType, args...; transparent=:auto, kargs...)
-    if !isempty(args) || !isempty(v for v in values(values(kargs)) if v ∉ DEFAULTSYMBOLS)
+function loadmask(img::SVGImageType, args...; transparent=:auto, outline=0, linecolor=:auto, kargs...)
+    if !isempty(args) || !isempty(v for v in values(values(kargs)) if v ∉ DEFAULTSYMBOLS) || outline != 0
         @warn "editing svg file is not supported: $args $kargs"
     end
     img

@@ -37,6 +37,10 @@ include("test_textprocessing.jl")
     @test WordCloud.alpha(parsecolor(getbackgroundcolor(wc))) == 0
     wc = wordcloud(["test"], [1], backgroundcolor="blue", outline=5)
     @test parsecolor(getmaskcolor(wc)) == parsecolor("blue")
+    wc = wordcloud(["test"], [1], maskcolor="green")
+    @test getparameter(wc, :outline) == 0
+    wc = wordcloud(["test"], [1], backgroundcolor="blue")
+    @test getparameter(wc, :outline) == 0
     svgfile = "test.svg"
     wordcloud(["test"], [1], colors="#DE2910", mask=svgfile, maskcolor=:original)
     wordcloud(["test"], [1], mask=open(svgfile))
@@ -57,6 +61,10 @@ include("test_textprocessing.jl")
     wordcloud(["test"], [1], mask=pngfile, maskcolor="#faeef8", backgroundcolor=:maskcolor)
     wordcloud(["test"], [1], mask=pngfile, maskcolor="#faeef8", backgroundcolor=:maskcolor, outline=3)
     wordcloud(["test"], [1], mask=pngfile, backgroundcolor=:maskcolor, outline=3, smoothness=0.7)
+    wc = wordcloud(["test"], [1], mask=open(pngfile), backgroundcolor=:auto)
+    @test getmaskcolor(wc) == getbackgroundcolor(wc)
+    wc = wordcloud(["test"], [1], mask=open(pngfile), maskcolor=:auto)
+    @test getbackgroundcolor(wc) == :default
     # get&set
     wc = wordcloud(
             processtext(open("../res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxnum=300), 

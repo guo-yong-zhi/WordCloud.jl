@@ -63,18 +63,20 @@ wordcloud(text; kargs...) = wordcloud(processtext(text); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=randomscheme(), angles=randomangles(), 
                 masksize=:default, maskcolor=:default, backgroundcolor=:default,
+                outline=:default, linecolor=:auto,
                 mask=:auto, transparent=:auto,
                 minfontsize=:auto, spacing=1, density=0.5, font=randomfont(),
                 run=placement!, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol, Any}(kargs)
-
+    maskcolor0 = maskcolor
+    backgroundcolor0 = backgroundcolor
+    colors0 = colors
     colors = colors isa Symbol ? (colorschemes[colors].colors..., ) : colors
     colors = Iterators.take(iter_expand(colors), length(words)) |> collect
     params[:colors] = Any[colors...]
     angles = Iterators.take(iter_expand(angles), length(words)) |> collect
     params[:angles] = angles
-    maskcolor0 = maskcolor
     if mask == :auto
         if maskcolor in DEFAULTSYMBOLS
             if backgroundcolor in DEFAULTSYMBOLS || backgroundcolor == :maskcolor
@@ -84,30 +86,52 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
             end
         end
         masksize = masksize in DEFAULTSYMBOLS ? 40*√length(words) : masksize
-        mask = randommask(masksize, color=maskcolor; kargs...)
         if backgroundcolor in DEFAULTSYMBOLS
             backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1,1,1,0), :maskcolor)) : (1, 1, 1, 0)
         end
         backgroundcolor == :maskcolor && @show backgroundcolor
+        if outline in DEFAULTSYMBOLS
+            if maskcolor0 in DEFAULTSYMBOLS && backgroundcolor0 in DEFAULTSYMBOLS
+                outline = randomoutline()
+            else
+                outline = 0
+            end
+            outline != 0 && @show outline
+        end
+        if linecolor in DEFAULTSYMBOLS && outline != 0
+            linecolor = randomlinecolor(colors0, colors, maskcolor, backgroundcolor)
+        end
+        mask = randommask(masksize, color=maskcolor; outline=outline, linecolor=linecolor, kargs...)
     else
         ms = masksize in DEFAULTSYMBOLS ? () : masksize
         if maskcolor == :auto && !issvg(loadmask(mask))
-            if backgroundcolor in DEFAULTSYMBOLS || backgroundcolor == :maskcolor
-                maskcolor = randommaskcolor(colors)
-            else
-                maskcolor = backgroundcolor
-            end
+            maskcolor = randommaskcolor(colors)
             println("Recolor the mask with color $maskcolor.")
         end
         if backgroundcolor == :auto
-            backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1,1,1,0), :maskcolor, :original)) : (1, 1, 1, 0)
+            if maskcolor == :default
+                backgroundcolor = randommaskcolor(colors)
+                maskcolor = backgroundcolor
+            else
+                backgroundcolor = rand(((1,1,1,0), :maskcolor, :original))
+            end
         end
         bc = backgroundcolor
         if backgroundcolor ∉ [:default, :original]
             @show backgroundcolor
             bc = (1,1,1,0) #to remove the original background in mask
         end
-        mask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, kargs...)
+        if outline == :auto
+            outline = randomoutline()
+            outline != 0 && @show outline
+        else
+            outline = 0
+        end
+        if linecolor in DEFAULTSYMBOLS && outline != 0
+            linecolor = randomlinecolor(colors0, colors, maskcolor, backgroundcolor)
+        end
+        mask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, 
+            outline=outline, linecolor=linecolor, kargs...)
     end
     if transparent == :auto
         if maskcolor ∉ DEFAULTSYMBOLS
@@ -118,6 +142,8 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:masksize] = masksize
     params[:maskcolor] = maskcolor
     params[:backgroundcolor] = backgroundcolor
+    params[:outline] = outline
+    params[:linecolor] = linecolor
     svgmask = nothing
     if issvg(mask)
         svgmask = mask
