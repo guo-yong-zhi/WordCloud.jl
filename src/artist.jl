@@ -136,10 +136,12 @@ function randommaskcolor(colors)
 end
 function randomlinecolor(colors0, colors, maskcolor, backgroundcolor)
     if rand() < 0.8
-        rand((colors[1], rand(colors0)))
+        linecolor = rand((colors[1], rand(colors0)))
     else
-        (rand(), rand(), rand(), min(1., 0.5+rand()/2))
+        linecolor = (rand(), rand(), rand(), min(1., 0.5+rand()/2))
     end
+    @show linecolor
+    linecolor
 end
 randomoutline() = rand((0, 0, 0, rand((1,2,3,4,5))))
 function randomfont()

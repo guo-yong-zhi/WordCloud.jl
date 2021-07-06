@@ -61,22 +61,60 @@ wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter)|>collect, v
 wordcloud(counter::AbstractVector{<:Union{Pair, Tuple, AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
 wordcloud(text; kargs...) = wordcloud(processtext(text); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
-                colors=randomscheme(), angles=randomangles(), 
-                masksize=:default, maskcolor=:default, backgroundcolor=:default,
-                outline=:default, linecolor=:auto,
-                mask=:auto, transparent=:auto,
-                minfontsize=:auto, spacing=1, density=0.5, font=randomfont(),
+                colors=:auto, angles=:auto, 
+                mask=:auto, font=:auto,
+                transparent=:auto, minfontsize=:auto, spacing=1, density=0.5,
                 run=placement!, kargs...)
     @assert length(words) == length(weights) > 0
-    params = Dict{Symbol, Any}(kargs)
+    params = Dict{Symbol, Any}()
+    colors, angles, mask, svgmask, font, transparent = getstylescheme(length(words); colors=colors, angles=angles, 
+                                                    mask=mask, font=font, transparent=transparent, params=params, kargs...)
+    params[:colors] = Any[colors...]
+    params[:angles] = angles
+    params[:transparent] = transparent
+    mask, maskqtree, groundsize, maskoccupying = preparemask(mask, transparent)
+    println("mask size ", size(mask))
+    params[:groundsize] = groundsize
+    params[:maskoccupying] = maskoccupying
+    if maskoccupying == 0
+        error("Have you set the right `transparent`? e.g. `transparent=mask[1,1]`")
+    end
+    @assert maskoccupying > 0
+    if minfontsize==:auto
+        minfontsize = min(8, sqrt(maskoccupying/length(words)/8))
+        println("set minfontsize = $minfontsize")
+        @show maskoccupying length(words)
+    end
+    params[:minfontsize] = minfontsize
+    params[:spacing] = spacing
+    params[:density] = density
+    params[:font] = font
+    
+    params[:state] = nameof(wordcloud)
+    params[:epoch] = 0
+    params[:indsmap] = nothing
+    params[:custom] = Dict(:fontsize=>Dict(), :font=>Dict())
+    params[:scale] = -1
+    params[:wordids] = collect(1:length(words))
+    l = length(words)
+    wc = WC(copy(words), float.(weights), Vector(undef, l), Vector{SVGImageType}(undef, l), 
+    mask, svgmask, Vector(undef, l), maskqtree, params)
+    run(wc)
+    wc
+end
+function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
+                masksize=:default, maskcolor=:default, backgroundcolor=:default,
+                outline=:default, linecolor=:auto, font=:auto,
+                transparent=:auto, params=Dict{Symbol, Any}(), kargs...)
+    merge!(params, kargs)
+    colors = colors in DEFAULTSYMBOLS ? randomscheme() : colors
+    angles = angles in DEFAULTSYMBOLS ? randomangles() : angles
     maskcolor0 = maskcolor
     backgroundcolor0 = backgroundcolor
     colors0 = colors
     colors = colors isa Symbol ? (colorschemes[colors].colors..., ) : colors
-    colors = Iterators.take(iter_expand(colors), length(words)) |> collect
-    params[:colors] = Any[colors...]
-    angles = Iterators.take(iter_expand(angles), length(words)) |> collect
-    params[:angles] = angles
+    colors = Iterators.take(iter_expand(colors), lengthwords) |> collect
+    angles = Iterators.take(iter_expand(angles), lengthwords) |> collect
     if mask == :auto
         if maskcolor in DEFAULTSYMBOLS
             if backgroundcolor in DEFAULTSYMBOLS || backgroundcolor == :maskcolor
@@ -85,7 +123,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
                 maskcolor = backgroundcolor
             end
         end
-        masksize = masksize in DEFAULTSYMBOLS ? 40*√length(words) : masksize
+        masksize = masksize in DEFAULTSYMBOLS ? 40*√lengthwords : masksize
         if backgroundcolor in DEFAULTSYMBOLS
             backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1,1,1,0), :maskcolor)) : (1, 1, 1, 0)
         end
@@ -138,7 +176,6 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
             transparent = c->c!=WordCloud.torgba(maskcolor)
         end
     end
-    params[:transparent] = transparent
     params[:masksize] = masksize
     params[:maskcolor] = maskcolor
     params[:backgroundcolor] = backgroundcolor
@@ -152,37 +189,9 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
             Render.recolor!(mask, maskcolor) #svg2bitmap后有杂色
         end
     end
-    mask, maskqtree, groundsize, maskoccupying = preparemask(mask, transparent)
-    println("mask size ", size(mask))
-    params[:groundsize] = groundsize
-    params[:maskoccupying] = maskoccupying
-    if maskoccupying == 0
-        error("Have you set the right `transparent`? e.g. `transparent=mask[1,1]`")
-    end
-    @assert maskoccupying > 0
-    if minfontsize==:auto
-        minfontsize = min(8, sqrt(maskoccupying/length(words)/8))
-        println("set minfontsize = $minfontsize")
-        @show maskoccupying length(words)
-    end
-    params[:minfontsize] = minfontsize
-    params[:spacing] = spacing
-    params[:density] = density
-    params[:font] = font
-    
-    params[:state] = nameof(wordcloud)
-    params[:epoch] = 0
-    params[:indsmap] = nothing
-    params[:custom] = Dict(:fontsize=>Dict(), :font=>Dict())
-    params[:scale] = -1
-    params[:wordids] = collect(1:length(words))
-    l = length(words)
-    wc = WC(copy(words), float.(weights), Vector(undef, l), Vector{SVGImageType}(undef, l), 
-    mask, svgmask, Vector(undef, l), maskqtree, params)
-    run(wc)
-    wc
+    font = font in DEFAULTSYMBOLS ? randomfont() : font
+    colors, angles, mask, svgmask, font, transparent
 end
-
 Base.getindex(wc::WC, inds...) = wc.words[inds...]=>wc.weights[inds...]
 Base.lastindex(wc::WC) = lastindex(wc.words)
 Base.broadcastable(wc::WC) = Ref(wc)
