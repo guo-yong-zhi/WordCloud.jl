@@ -40,9 +40,9 @@ Positional arguments are used to specify words and weights, and can be in differ
 * maskcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original (keep it unchanged), :auto (auto recolor the mask).
 * backgroundcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original, :maskcolor, :auto (random choose between :original and :maskcolor)
 * outline, linecolor, smoothness: See function `shape` and `outline`. 
-* transparentcolor = (1,0,0) #set the transparent color in mask  
-* transparentcolor = nothing #no transparent color  
-* transparentcolor = c->(c[1]+c[2]+c[3])/3*(c[4]/255)>128) #set transparentcolor with a Function. `c` is a (r,g,b,a) Tuple.
+* transparent = (1,0,0) #set the transparent color in mask  
+* transparent = nothing #no transparent color  
+* transparent = c->(c[1]+c[2]+c[3])/3*(c[4]/255)>128) #set transparent with a Function. `c` is a (r,g,b,a) Tuple.
 ---NOTE
 Some arguments depend on whether or not the `mask` is given or the type of the `mask` given.
 
@@ -63,7 +63,7 @@ wordcloud(text; kargs...) = wordcloud(processtext(text); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=randomscheme(), angles=randomangles(), 
                 masksize=:default, maskcolor=:default, backgroundcolor=:default,
-                mask=:auto, transparentcolor=:auto,
+                mask=:auto, transparent=:auto,
                 minfontsize=:auto, spacing=1, density=0.5, font="",
                 run=placement!, kargs...)
     @assert length(words) == length(weights) > 0
@@ -107,14 +107,14 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
             @show backgroundcolor
             bc = (1,1,1,0) #to remove the original background in mask
         end
-        mask = loadmask(mask, ms...; color=maskcolor, transparentcolor=transparentcolor, backgroundcolor=bc, kargs...)
+        mask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, kargs...)
     end
-    if transparentcolor == :auto
+    if transparent == :auto
         if maskcolor ∉ DEFAULTSYMBOLS
-            transparentcolor = c->c!=WordCloud.torgba(maskcolor)
+            transparent = c->c!=WordCloud.torgba(maskcolor)
         end
     end
-    params[:transparentcolor] = transparentcolor
+    params[:transparent] = transparent
     params[:masksize] = masksize
     params[:maskcolor] = maskcolor
     params[:backgroundcolor] = backgroundcolor
@@ -126,12 +126,12 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
             Render.recolor!(mask, maskcolor) #svg2bitmap后有杂色
         end
     end
-    mask, maskqtree, groundsize, maskoccupying = preparemask(mask, transparentcolor)
+    mask, maskqtree, groundsize, maskoccupying = preparemask(mask, transparent)
     println("mask size ", size(mask))
     params[:groundsize] = groundsize
     params[:maskoccupying] = maskoccupying
     if maskoccupying == 0
-        error("Have you set the right `transparentcolor`? e.g. `transparentcolor=mask[1,1]`")
+        error("Have you set the right `transparent`? e.g. `transparent=mask[1,1]`")
     end
     @assert maskoccupying > 0
     if minfontsize==:auto

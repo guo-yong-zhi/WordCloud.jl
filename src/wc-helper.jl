@@ -108,13 +108,13 @@ load a img as mask, recolor, or resize, etc
 * loadmask(open("res/heart.jpg"), 256, 256) #resize to 256*256  
 * loadmask("res/heart.jpg", ratio=0.3) #scale 0.3  
 * loadmask("res/heart.jpg", color="red", ratio=2) #set forecolor  
-* loadmask("res/heart.jpg", transparentcolor=rgba->maximum(rgba[1:3])*(rgba[4]/255)>128) #set transparentcolor with a Function 
-* loadmask("res/heart.jpg", color="red", transparentcolor=(1,1,1)) #set forecolor and transparentcolor  
+* loadmask("res/heart.jpg", transparent=rgba->maximum(rgba[1:3])*(rgba[4]/255)>128) #set transparent with a Function 
+* loadmask("res/heart.jpg", color="red", transparent=(1,1,1)) #set forecolor and transparent  
 * loadmask("res/heart.svg") #other arguments are not supported
 About orther keyword arguments like outline, linecolor, smoothness, see function `outline`.
 """
 function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...; 
-    color=:auto, backgroundcolor=:auto, transparentcolor=:auto, 
+    color=:auto, backgroundcolor=:auto, transparent=:auto, 
     outline=0,  linecolor="black", smoothness=0.5, kargs...)
     copied = false
     if !(isempty(args) && isempty(kargs))
@@ -123,7 +123,7 @@ function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...;
     end
     if color ∉ DEFAULTSYMBOLS || backgroundcolor ∉ DEFAULTSYMBOLS
         copied || (img = copy(img))
-        mask = imagemask(img, transparentcolor)
+        mask = imagemask(img, transparent)
         if color ∉ DEFAULTSYMBOLS
             color = parsecolor(color)
             m = @view img[mask]
@@ -137,14 +137,14 @@ function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...;
     end
     if outline > 0
         img = Render.outline(img, linewidth=outline, color=linecolor, smoothness=smoothness, 
-        transparentcolor=transparentcolor)
+        transparent=transparent)
     end
     img
 end
 function loadmask(img::AbstractMatrix{<:Colorant}, args...; kargs...)
     loadmask(ARGB.(img), args...; kargs...)
 end
-function loadmask(img::SVGImageType, args...; transparentcolor=:auto, kargs...)
+function loadmask(img::SVGImageType, args...; transparent=:auto, kargs...)
     if !isempty(args) || !isempty(v for v in values(values(kargs)) if v ∉ DEFAULTSYMBOLS)
         @warn "editing svg file is not supported: $args $kargs"
     end

@@ -7,9 +7,9 @@ svgmask = shape(squircle, 300, 200, outline=3, linecolor="navy", color="AliceBlu
 wc1 = wordcloud(
     words, weights,
     mask = svgmask,
-    transparentcolor = c->c!=WordCloud.torgba("AliceBlue"), #the outline should be regarded as transparent too
+    transparent = c->c!=WordCloud.torgba("AliceBlue"), #the outline should be regarded as transparent too
 ) |> generate!
-#md# Or, if you set the `maskcolor` in `wordcloud`, the transparentcolor will be automatically set correctly.
+#md# Or, if you set the `maskcolor` in `wordcloud`, the transparent will be automatically set correctly.
 #md# ```julia
 #md# wc1 = wordcloud(
 #md#     words, weights,

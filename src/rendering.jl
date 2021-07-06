@@ -157,18 +157,18 @@ imagemask(img::AbstractArray{Bool,2}) = img
 function imagemask(img, istransparent::Function)
     .! istransparent.(torgba.(img))
 end
-function imagemask(img, transparentcolor=:auto)
-    if transparentcolor==:auto
+function imagemask(img, transparent=:auto)
+    if transparent==:auto
         if img[1]==img[end] && any(c->c!=img[1], img)
-            transparentcolor = img[1]
+            transparent = img[1]
         else
-            transparentcolor = nothing
+            transparent = nothing
         end
     end
-    if transparentcolor === nothing
+    if transparent === nothing
         return trues(size(img))
     end
-    img .!= convert(eltype(img), parsecolor(transparentcolor))    
+    img .!= convert(eltype(img), parsecolor(transparent))    
 end
 
 function dilate(mat, r)
@@ -215,12 +215,12 @@ end
 img: a bitmap image
 linewidth: 0 <= linewidth
 color: line color
-transparentcolor: color of the background
+transparent: color of the background
 smoothness: 0 <= smoothness <= 1
 """
-function outline(img; transparentcolor=:auto, color="black", linewidth=2, smoothness=0.5)
+function outline(img; transparent=:auto, color="black", linewidth=2, smoothness=0.5)
     @assert linewidth >= 0
-    mask = imagemask(img, transparentcolor)
+    mask = imagemask(img, transparent)
     r = 4 * linewidth * smoothness
     # @show r
     mask2 = dilate2(mask, max(linewidth, round(r)), smoothness=smoothness)

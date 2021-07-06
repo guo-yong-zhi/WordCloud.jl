@@ -15,7 +15,7 @@ wc = wordcloud(
     colors = "LimeGreen",
     angles = -30,
     density = 0.45,
-    transparentcolor = istrans,
+    transparent = istrans,
     spacing = 1,
 ) |> generate!;
 #md# ## average style
