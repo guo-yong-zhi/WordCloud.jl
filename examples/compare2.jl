@@ -11,6 +11,7 @@ wca = wordcloud(
     colors = cs,
     angles = as,
     density = dens,
+    backgroundcolor = :maskcolor,
     run = x->nothing, #turn off the initimage! and placement! in advance
 )
 wcb = wordcloud(
@@ -19,6 +20,8 @@ wcb = wordcloud(
     colors = cs,
     angles = as,
     density = dens,
+    backgroundcolor = :maskcolor,
+    maskcolor = getmaskcolor(wca),
     run = x->nothing, 
 )
 #md# ### Make the same words the same style

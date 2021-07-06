@@ -127,7 +127,7 @@ function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...;
         if color ∉ DEFAULTSYMBOLS
             color = parsecolor(color)
             m = @view img[mask]
-            m .= convert.(eltype(img), Colors.alphacolor.(color, Colors.alpha.(m))) #保持透明度
+            Render.recolor!(m, color) #保持透明度
         end
         if backgroundcolor ∉ DEFAULTSYMBOLS
             backgroundcolor = parsecolor(backgroundcolor)
@@ -157,20 +157,28 @@ end
 
 "like `paint` but export svg"
 function paintsvg(wc::WC; background=true)
+    imgs = getsvgimages(wc)
+    poss = getpositions(wc)
     if background == false || background === nothing
         sz = size(wc.mask)
+        bgcolor = (1,1,1,0)
     else
         if background == true
+            bgcolor = getbackgroundcolor(wc)
+            bgcolor = bgcolor in DEFAULTSYMBOLS ? (1,1,1,0) : bgcolor
             background = getsvgmask(wc)
             if background === nothing
                 @warn "embed bitmap into SVG. You can set `background=false` to remove background."
                 background = getmask(wc)
             end
+        else
+            bgcolor = (1,1,1,0)
         end
-        sz = size(wc.mask)
-        nothing
+        imgs = Iterators.flatten(((background,), imgs))
+        poss = Iterators.flatten((((1, 1),), poss))
+        sz = size(background)
     end
-    Render.overlay(getsvgimages(wc), getpositions(wc), background=background, size=reverse(sz))
+    Render.overlay(imgs, poss, backgroundcolor=bgcolor, size=reverse(sz))
 end
 function paintsvg(wc::WC, file, args...; kargs...)
     img = paintsvg(wc, args...; kargs...)
@@ -189,9 +197,12 @@ end
 """
 function paint(wc::WC, args...; background=true, kargs...)
     if background == true
-        background = copy(wc.mask)
+        bgcolor = getbackgroundcolor(wc)
+        bgcolor = bgcolor in DEFAULTSYMBOLS ? (1,1,1,0) : bgcolor
+        background = fill(convert(eltype(wc.mask), parsecolor(bgcolor)), size(wc.mask))
+        overlay!(background, wc.mask)
     elseif background == false || background === nothing
-        background = fill(ARGB(1,1,1,0), size(wc.mask))
+        background = fill(convert(eltype(wc.mask), parsecolor((1,1,1,0))), size(wc.mask))
     else
         background = copy(background)
     end

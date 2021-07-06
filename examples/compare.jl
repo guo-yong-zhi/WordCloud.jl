@@ -10,7 +10,9 @@ wca = wordcloud(
     processtext(open(pkgdir(WordCloud)*"/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords), 
     colors = cs,
     angles = as,
-    density = dens) |> generate!
+    density = dens,
+    backgroundcolor = :maskcolor,
+    ) |> generate!
 #md# ### Then generate the wordcloud on the right      
 println("==Trump's==")
 wcb = wordcloud(
@@ -19,6 +21,8 @@ wcb = wordcloud(
     colors = cs,
     angles = as,
     density = dens,
+    backgroundcolor = :maskcolor,
+    maskcolor = getmaskcolor(wca),
     run = x->nothing, #turn off the useless initimage! and placement! in advance
 )
 #md# Follow these steps to generate a wordcloud: initimage! -> placement! -> generate!

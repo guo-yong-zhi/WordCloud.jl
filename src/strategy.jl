@@ -48,12 +48,13 @@ function preparemask(img, bgcolor)
 end
 
 function prepareword(word, fontsize, color, angle; backgroundcolor=(0,0,0,0), font="", border=0)
-    rendertext(string(word), fontsize, color=color, backgroundcolor=backgroundcolor,
+    mat, svg = rendertext(string(word), fontsize, color=color, backgroundcolor=backgroundcolor,
         angle=angle, border=border, font=font, type=:both)
+    Render.recolor!(mat, color), svg #字体边缘有杂色
 end
 
-wordmask(img, bgcolor, border) = dilate(img.!=img[1], border)
-#use `img[1]` instead of `convert(eltype(img), parsecolor(bgcolor))`
+wordmask(img, bgcolor, border) = dilate(alpha.(img) .!= 0, border)
+#use `alpha` instead of `convert(eltype(img), parsecolor(bgcolor))`
 #https://github.com/JuliaGraphics/Luxor.jl/issues/107
 
 ## weight_scale

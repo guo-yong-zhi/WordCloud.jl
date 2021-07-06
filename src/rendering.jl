@@ -1,6 +1,6 @@
 module Render
 export rendertext, overlay!, shape, ellipse, box, squircle, GIF, generate, parsecolor, rendertextoutlines,
-    colorschemes, schemes, torgba, imagemask, outline, padding, dilate, imresize
+    colorschemes, schemes, torgba, imagemask, outline, padding, dilate, imresize, recolor!, recolor
 export issvg, save, load, svg2bitmap, SVGImageType, svgstring
 using Luxor
 using Colors
@@ -18,6 +18,7 @@ parsecolor(sc::Symbol) = parsecolor.(colorschemes[sc].colors)
 issvg(d) = d isa Drawing && d.surfacetype==:svg
 const SVGImageType = Drawing
 Base.broadcastable(s::SVGImageType) = Ref(s)
+Base.size(s::SVGImageType) = (s.height, s.width)
 svgstring(d) = String(copy(d.bufferdata))
 
 function loadsvg(svg)
@@ -171,6 +172,7 @@ function imagemask(img, transparentcolor=:auto)
 end
 
 function dilate(mat, r)
+    r == 0 && return mat
     mat2 = copy(mat)
     mat2[1:end-r, :] .|= mat[1+r:end, :]
     mat2[1+r:end, : ] .|= mat[1:end-r, :]
@@ -273,15 +275,20 @@ function overlay!(img::AbstractMatrix, imgs, pos)
     img
 end
 
-function overlay(imgs::AbstractVector{Drawing}, poss; background=false, size=size(background))
+function overlay(imgs, poss; backgroundcolor=(1,1,1,0), size=size(imgs[1]))
     d = Drawing(size..., :svg)
-    bgcolor = Luxor.background(1, 1, 1, 0)
-    if !(background == false || background === nothing)
-        placeimage(background)
-    end
-    placeimage.(imgs, [Point(x-1,y-1) for (x,y) in poss])#(x,y)=(1,1)时左上角重合，此时Point(0,0)
+    Luxor.background(parsecolor(backgroundcolor))
+    placeimage.(imgs, (Point(x-1,y-1) for (x,y) in poss))#(x,y)=(1,1)时左上角重合，此时Point(0,0)
     finish()
     d
+end
+function recolor!(img::AbstractArray, color)
+    c = parsecolor(color)
+    img .= convert.(eltype(img), Colors.alphacolor.(c, Colors.alpha.(img)))
+end
+function recolor(img::AbstractArray, color)
+    c = parsecolor(color)
+    convert.(eltype(img), Colors.alphacolor.(c, Colors.alpha.(img)))
 end
 
 schemes_colorbrewer = filter(s -> occursin("colorbrewer", colorschemes[s].category), collect(keys(colorschemes)))

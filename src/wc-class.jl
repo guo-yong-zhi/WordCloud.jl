@@ -37,7 +37,8 @@ Positional arguments are used to specify words and weights, and can be in differ
 * maskshape: `box`, `ellipse`, or `squircle`.  See `shape`. Take effect only when the `mask` argument is not given.
 * masksize: Can be a tuple `(width, height)`, tuple `(width, height, cornerradius)` (for `box` only) or just a single number as hint. 
 * backgroundsize: See `shape`. Take effect only when the `mask` argument is not given.
-* maskcolor, backgroundcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :auto (auto recolor the mask), :original (only when `mask` is given).
+* maskcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original (keep it unchanged), :auto (auto recolor the mask).
+* backgroundcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original, :maskcolor, :auto (random choose between :original and :maskcolor)
 * outline, linecolor, smoothness: See function `shape` and `outline`. 
 * transparentcolor = (1,0,0) #set the transparent color in mask  
 * transparentcolor = nothing #no transparent color  
@@ -61,7 +62,7 @@ wordcloud(counter::AbstractVector{<:Union{Pair, Tuple, AbstractVector}}; kargs..
 wordcloud(text; kargs...) = wordcloud(processtext(text); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=randomscheme(), angles=randomangles(), 
-                masksize=:default, maskcolor=:default,
+                masksize=:default, maskcolor=:default, backgroundcolor=:default,
                 mask=:auto, transparentcolor=:auto,
                 minfontsize=:auto, spacing=1, density=0.5, font="",
                 run=placement!, kargs...)
@@ -73,17 +74,40 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:colors] = Any[colors...]
     angles = Iterators.take(iter_expand(angles), length(words)) |> collect
     params[:angles] = angles
+    maskcolor0 = maskcolor
     if mask == :auto
-        maskcolor = maskcolor in [:auto, :default] ? randommaskcolor(colors) : maskcolor
-        masksize = masksize in [:auto, :default] ? 40*√length(words) : masksize
+        if maskcolor in DEFAULTSYMBOLS
+            if backgroundcolor in DEFAULTSYMBOLS || backgroundcolor == :maskcolor
+                maskcolor = randommaskcolor(colors)
+            else
+                maskcolor = backgroundcolor
+            end
+        end
+        masksize = masksize in DEFAULTSYMBOLS ? 40*√length(words) : masksize
         mask = randommask(masksize, color=maskcolor; kargs...)
+        if backgroundcolor in DEFAULTSYMBOLS
+            backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1,1,1,0), :maskcolor)) : (1, 1, 1, 0)
+        end
+        backgroundcolor == :maskcolor && @show backgroundcolor
     else
         ms = masksize in DEFAULTSYMBOLS ? () : masksize
         if maskcolor == :auto && !issvg(loadmask(mask))
-            maskcolor = randommaskcolor(colors)
+            if backgroundcolor in DEFAULTSYMBOLS || backgroundcolor == :maskcolor
+                maskcolor = randommaskcolor(colors)
+            else
+                maskcolor = backgroundcolor
+            end
             println("Recolor the mask with color $maskcolor.")
         end
-        mask = loadmask(mask, ms...; color=maskcolor, transparentcolor=transparentcolor, kargs...)
+        if backgroundcolor == :auto
+            backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1,1,1,0), :maskcolor, :original)) : (1, 1, 1, 0)
+        end
+        bc = backgroundcolor
+        if backgroundcolor ∉ [:default, :original]
+            @show backgroundcolor
+            bc = (1,1,1,0) #to remove the original background in mask
+        end
+        mask = loadmask(mask, ms...; color=maskcolor, transparentcolor=transparentcolor, backgroundcolor=bc, kargs...)
     end
     if transparentcolor == :auto
         if maskcolor ∉ DEFAULTSYMBOLS
@@ -93,10 +117,14 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:transparentcolor] = transparentcolor
     params[:masksize] = masksize
     params[:maskcolor] = maskcolor
+    params[:backgroundcolor] = backgroundcolor
     svgmask = nothing
     if issvg(mask)
         svgmask = mask
         mask = svg2bitmap(mask)
+        if maskcolor ∉ DEFAULTSYMBOLS && (:outline ∉ keys(params) || params[:outline] <= 0)
+            Render.recolor!(mask, maskcolor) #svg2bitmap后有杂色
+        end
     end
     mask, maskqtree, groundsize, maskoccupying = preparemask(mask, transparentcolor)
     println("mask size ", size(mask))
@@ -212,7 +240,12 @@ function setfonts!(wc::WC, w, v::Union{AbstractString, AbstractVector{<:Abstract
 end
 getmask(wc::WC) = wc.mask
 getsvgmask(wc::WC) = wc.svgmask
-
+getmaskcolor(wc::WC) = getparameter(wc, :maskcolor)
+function getbackgroundcolor(wc::WC)
+    c = getparameter(wc, :backgroundcolor)
+    c = c == :maskcolor ? getmaskcolor(wc) : c
+end
+setbackgroundcolor!(wc::WC, v) = (setparameter!(wc, v, :backgroundcolor); v)
 @doc getdoc * " Keyword argment `type` can be `getshift` or `getcenter`."
 function getpositions(wc::WC, w=:; type=getshift)
     Stuffing.getpositions(wc.maskqtree, wc.qtrees, index(wc, w), type=type)

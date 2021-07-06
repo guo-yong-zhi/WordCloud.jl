@@ -29,8 +29,8 @@ embedded = tsne(hcat(values(wordvec)...)', 2)
 #md# ### WordCloud
 wc = wordcloud(
     words_weights,
-    maskshape = ellipse,
-    masksize = (1000, 1000),
+    maskshape = box,
+    masksize = (1000, 1000, 0),
     run = initimages!
 )
 
