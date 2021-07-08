@@ -173,8 +173,9 @@ function html2text(content::AbstractString)
     patterns = [
         r"<[\s]*?script[^>]*?>[\s\S]*?<[\s]*?/[\s]*?script[\s]*?>"=>" ",
         r"<[\s]*?style[^>]*?>[\s\S]*?<[\s]*?/[\s]*?style[\s]*?>"=>" ",
+        r"<!--[\s\S]*?-->"=>" ",
         "<br>"=>"\n",
-        r"<[^>]+>"=>" ",
+        r"<[\s\S]*?>"=>" ",
         "&quot;"=>"\"",
         "&amp;"=>"&",
         "&lt;"=>"<",

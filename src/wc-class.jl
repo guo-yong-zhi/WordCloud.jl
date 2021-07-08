@@ -127,18 +127,22 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
             backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1,1,1,0), :maskcolor)) : (1, 1, 1, 0)
         end
         backgroundcolor == :maskcolor && @show backgroundcolor
+        kg = []
         if outline in DEFAULTSYMBOLS
             if maskcolor0 in DEFAULTSYMBOLS && backgroundcolor0 in DEFAULTSYMBOLS
                 outline = randomoutline()
             else
                 outline = 0
             end
-            outline != 0 && @show outline
+            if outline != 0
+                push!(kg, :outline=>outline)
+            end
         end
         if linecolor in DEFAULTSYMBOLS && outline != 0
             linecolor = randomlinecolor(colors)
+            push!(kg, :linecolor=>linecolor)
         end
-        mask = randommask(masksize, color=maskcolor; outline=outline, linecolor=linecolor, kargs...)
+        mask = randommask(masksize, color=maskcolor; kg..., kargs...)
     else
         ms = masksize in DEFAULTSYMBOLS ? () : masksize
         if maskcolor == :auto && !issvg(loadmask(mask))

@@ -167,7 +167,6 @@ function randomlinecolor(colors)
     else
         linecolor = (rand(), rand(), rand(), min(1., 0.5+rand()/2))
     end
-    @show linecolor
     linecolor
 end
 randomoutline() = rand((0, 0, 0, rand((1,2,3,4,5))))

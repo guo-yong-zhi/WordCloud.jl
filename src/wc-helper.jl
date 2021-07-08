@@ -35,6 +35,7 @@ function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...;
         mask = imagemask(img, transparent)
         if color ∉ DEFAULTSYMBOLS
             color = parsecolor(color)
+            alpha(color) == 1 || @warn "the alpha channel is ignored"
             m = @view img[mask]
             Render.recolor!(m, color) #保持透明度
         end
