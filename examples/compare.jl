@@ -1,7 +1,7 @@
 #md# ### First generate the wordcloud on the left  
 using WordCloud
 
-stwords = ["us", "will"];
+stwords = ["us"];
 println("==Obama's==")
 cs = WordCloud.randomscheme() #:Set1_8
 as = WordCloud.randomangles() #(0,90,45,-45)

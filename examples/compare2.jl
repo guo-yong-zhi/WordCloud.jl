@@ -2,7 +2,7 @@
 #md# ### Prepare two wordcloud objects
 using WordCloud
 
-stwords = ["us", "will"];
+stwords = ["us"];
 cs = WordCloud.randomscheme() #:Set1_8#
 as = WordCloud.randomangles() #(0,90,45,-45)#
 dens = 0.5 #not too high
