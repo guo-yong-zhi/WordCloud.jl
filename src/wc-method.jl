@@ -35,7 +35,11 @@ function initwords!(wc::WC; maxiter=5, tolerance=0.02)
     wc.params[:indsmap] = nothing
 
     scale = find_weight_scale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
-    println("The density is set to $(params[:density]), with scale=$scale. The actural font minimum is $(getfontsizes(wc, length(wc.words))).")
+    println("The density is set to $(params[:density]), with scale=$scale.")
+    println("The actural fontsize ∈ [$(getfontsizes(wc, length(wc.words))), $(getfontsizes(wc, 1))]")
+    if getfontsizes(wc, 1) == wc.params[:maxfontsize]
+        @warn "Some words are limited to the maximum font size. Please set a `maxfontsize` in `wordcloud` or set a `maxweight` in `processtext`."
+    end
     initword!.(wc, 1:length(words))
     setstate!(wc, nameof(initwords!))
     wc

@@ -123,7 +123,7 @@ function processtext(counter::AbstractDict{<:AbstractString, <:Real};
     minlength=1, maxlength=30,
     minfrequency=0,
     maxnum=500,
-    minweight=1/maxnum, maxweight=minweight*20,
+    minweight=1/maxnum, maxweight=max(minweight*20, 20/maxnum),
     process=casemerge!∘lemmatize!)
     stopwords = stopwords isa AbstractSet ? stopwords : Set(stopwords)
     counter = process(counter)

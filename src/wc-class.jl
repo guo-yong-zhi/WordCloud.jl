@@ -63,7 +63,7 @@ wordcloud(text; kargs...) = wordcloud(processtext(text); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=:auto, angles=:auto, 
                 mask=:auto, font=:auto,
-                transparent=:auto, minfontsize=:auto, spacing=1, density=0.5,
+                transparent=:auto, minfontsize=:auto, maxfontsize=:auto, spacing=1, density=0.5,
                 run=placewords!, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol, Any}()
@@ -82,10 +82,14 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     @assert maskoccupying > 0
     if minfontsize==:auto
         minfontsize = min(8, sqrt(maskoccupying/length(words)/8))
-        println("set minfontsize = $minfontsize")
         @show maskoccupying length(words)
     end
+    if maxfontsize==:auto
+        maxfontsize = minimum(size(mask)) / 2
+    end
+    println("set fontsize ∈ [$minfontsize, $maxfontsize]")
     params[:minfontsize] = minfontsize
+    params[:maxfontsize] = maxfontsize
     params[:spacing] = spacing
     params[:density] = density
     params[:font] = font
@@ -264,7 +268,7 @@ function getfontsizes(wc::WC, w=:)
         if id in keys(cf)
             return cf[id]
         else
-            return max(wc.params[:minfontsize], getweights(wc, ind)*wc.params[:scale])
+            return clamp(getweights(wc, ind)*wc.params[:scale], wc.params[:minfontsize], wc.params[:maxfontsize])
         end
     end
 end
