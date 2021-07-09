@@ -24,7 +24,7 @@ About orther keyword arguments like outline, linecolor, smoothness, see function
 """
 function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...; 
     color=:auto, backgroundcolor=:auto, transparent=:auto, 
-    outline=0,  linecolor="black", smoothness=0.5, kargs...)
+    outline=0,  linecolor="black", smoothness=0.5, padding=0, kargs...)
     copied = false
     if !(isempty(args) && isempty(kargs))
         img = imresize(img, args...; kargs...)
@@ -49,14 +49,23 @@ function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...;
         img = Render.outline(img, linewidth=outline, color=linecolor, smoothness=smoothness, 
         transparent=transparent)
     end
+    if padding != 0
+        bc = backgroundcolor in DEFAULTSYMBOLS ? :auto : bc
+        img = Render.padding(img, padding, backgroundcolor=bc)
+    end
     img
 end
 function loadmask(img::AbstractMatrix{<:Colorant}, args...; kargs...)
     loadmask(ARGB.(img), args...; kargs...)
 end
-function loadmask(img::SVGImageType, args...; transparent=:auto, outline=0, linecolor=:auto, kargs...)
+function loadmask(img::SVGImageType, args...; padding=0, transparent=:auto, outline=0, linecolor=:auto, kargs...)
     if !isempty(args) || !isempty(v for v in values(values(kargs)) if v ∉ DEFAULTSYMBOLS) || outline != 0
         @warn "editing svg file is not supported: $args $kargs"
+    end
+    if padding != 0
+        bc = get(kargs, :backgroundcolor, (0,0,0,0))
+        bc = bc in DEFAULTSYMBOLS ? (0,0,0,0) : bc
+        img = Render.padding(img, padding, backgroundcolor=bc)
     end
     img
 end

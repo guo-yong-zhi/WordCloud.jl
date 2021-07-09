@@ -32,7 +32,7 @@ include("test_textprocessing.jl")
             mask=shape(squircle, 200, 150, color=0.15, rt=2.2), density=0.45, transparent=(1,1,1,0)) #String & small mask
     @test_throws AssertionError wordcloud(["1"],[2,3], density=0.1)|>generate! #length unmatch
     @test_throws AssertionError wordcloud(String[],Int[], density=0.1)|>generate! #empty inputs
-    #no mask file
+    ##############no mask file
     wc = wordcloud(["test"], [1], maskcolor="green", outline=5)
     @test WordCloud.alpha(parsecolor(getbackgroundcolor(wc))) == 0
     wc = wordcloud(["test"], [1], backgroundcolor="blue", outline=5)
@@ -41,17 +41,28 @@ include("test_textprocessing.jl")
     @test getparameter(wc, :outline) == 0
     wc = wordcloud(["test"], [1], backgroundcolor="blue")
     @test getparameter(wc, :outline) == 0
+    wc = wordcloud(["test"], [1], masksize=(100,100), outline=0)
+    @test all(size(wc.mask) .> 105)
+    wc = wordcloud(["test"], [1], masksize=(100,100), outline=30, padding=0.1)
+    @test all(size(wc.mask) .> 125)
+    ##############svg mask
     svgfile = "test.svg"
     wordcloud(["test"], [1], colors="#DE2910", mask=svgfile, maskcolor=:original)
     wordcloud(["test"], [1], mask=open(svgfile))
-    wordcloud(["test"], [1], mask=svgfile, backgroundcolor=0) #can't edit the svg to remove original backgroundcolor, 
+    wc = wordcloud(["test"], [1], mask=svgfile, backgroundcolor=0) #warning#can't edit the svg to remove original backgroundcolor, 
     #so it's only work when the svgfile has a transparent background
+    wc2 = wordcloud(["test"], [1], mask=open(svgfile), padding=1)
+    @test all(size(wc2.mask) .> size(wc.mask))
+    @test all(size(wc2.svgmask) .> size(wc.svgmask))
+    wordcloud(["test"], [1], mask=open(svgfile), padding=0.1, backgroundcolor="red")#warning#
+    ##############png mask
     pngfile = pkgdir(WordCloud)*"/res/heart_mask.png"
     wordcloud(["test"], [1], colors="#DE2910", mask=pngfile, maskcolor=:original)
     wc = wordcloud(["test"], [1], mask=open(pngfile), maskcolor="yellow", ratio=0.5)
     @test getbackgroundcolor(wc) in WordCloud.DEFAULTSYMBOLS
     wc = wordcloud(["test"], [1], mask=pngfile, maskcolor="green", outline=5)
     @test getbackgroundcolor(wc) in WordCloud.DEFAULTSYMBOLS
+    @test getparameter(wc, :outline) == 5
     wc = wordcloud(["test"], [1], colors="#DE2910", mask=pngfile, backgroundcolor=0)
     @test getmaskcolor(wc) in WordCloud.DEFAULTSYMBOLS
     wc = wordcloud(["test"], [1], colors="#DE2910", mask=pngfile, maskcolor=1, backgroundcolor=0)
@@ -65,6 +76,15 @@ include("test_textprocessing.jl")
     @test getmaskcolor(wc) == getbackgroundcolor(wc)
     wc = wordcloud(["test"], [1], mask=open(pngfile), maskcolor=:auto)
     @test getbackgroundcolor(wc) == :default
+    @test size(wc.mask) == (572, 640)
+    wc = wordcloud(["test"], [1], mask=pngfile, masksize=(200,200))
+    @test size(wc.mask) == (200,200)
+    wc = wordcloud(["test"], [1], mask=pngfile, ratio=0.3)
+    @test all(size(wc.mask) .< 200)
+    wc2 = wordcloud(["test"], [1], mask=pngfile, outline=50, ratio=0.3)
+    @test size(wc2.mask) == size(wc.mask)
+    wc = wordcloud(["test"], [1], mask=pngfile, padding=0.2)
+    @test all(size(wc.mask) .> 700)
     # get&set
     wc = wordcloud(
             processtext(open("../res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxnum=300), 

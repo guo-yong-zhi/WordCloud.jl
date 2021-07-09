@@ -103,7 +103,8 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     wc
 end
 function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
-                masksize=:default, maskcolor=:default, backgroundcolor=:default,
+                masksize=:default, maskcolor=:default, 
+                backgroundcolor=:default, padding=:default,
                 outline=:default, linecolor=:auto, font=:auto,
                 transparent=:auto, params=Dict{Symbol, Any}(), kargs...)
     merge!(params, kargs)
@@ -134,15 +135,16 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
             else
                 outline = 0
             end
-            if outline != 0
-                push!(kg, :outline=>outline)
-            end
         end
         if linecolor in DEFAULTSYMBOLS && outline != 0
             linecolor = randomlinecolor(colors)
+        end
+        if outline != 0
+            push!(kg, :outline=>outline)
             push!(kg, :linecolor=>linecolor)
         end
-        mask = randommask(masksize, color=maskcolor; kg..., kargs...)
+        padding = padding in DEFAULTSYMBOLS ? 0.1 : padding
+        mask = randommask(masksize, color=maskcolor; padding=padding, kg..., kargs...)
     else
         ms = masksize in DEFAULTSYMBOLS ? () : masksize
         if maskcolor == :auto && !issvg(loadmask(mask))
@@ -165,14 +167,15 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
         if outline == :auto
             outline = randomoutline()
             outline != 0 && @show outline
-        else
+        elseif outline in DEFAULTSYMBOLS
             outline = 0
         end
         if linecolor in DEFAULTSYMBOLS && outline != 0
-            linecolor = randomlinecolor(colors0, colors, maskcolor, backgroundcolor)
+            linecolor = randomlinecolor(colors)
         end
+        padding = padding in DEFAULTSYMBOLS ? 0 : padding
         mask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, 
-            outline=outline, linecolor=linecolor, kargs...)
+            outline=outline, linecolor=linecolor,padding=padding, kargs...)
     end
     if transparent == :auto
         if maskcolor ∉ DEFAULTSYMBOLS
@@ -184,6 +187,7 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
     params[:backgroundcolor] = backgroundcolor
     params[:outline] = outline
     params[:linecolor] = linecolor
+    params[:padding] = padding
     svgmask = nothing
     if issvg(mask)
         svgmask = mask

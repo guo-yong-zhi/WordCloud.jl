@@ -45,7 +45,7 @@ function load(file::IO)
     end
 end
 function svg2bitmap(svg::Drawing)
-    Drawing(svg.width, svg.height, :image)
+    Drawing(ceil(svg.width), ceil(svg.height), :image)
     placeimage(svg)
     m = image_as_matrix()
     finish()
@@ -152,7 +152,13 @@ function torgba(c)
     reinterpret.(UInt8, rgba)
 end
 torgba(img::AbstractArray) = torgba.(img)
-
+function _backgroundcolor(img, c=:auto)
+    if c == :auto
+        return img[1]==img[end] && any(c->c!=img[1], img) ? img[1] : (0,0,0,0)
+    else
+        return c
+    end
+end
 imagemask(img::AbstractArray{Bool,2}) = img
 function imagemask(img, istransparent::Function)
     .! istransparent.(torgba.(img))
@@ -231,13 +237,23 @@ function outline(img; transparent=:auto, color="black", linewidth=2, smoothness=
     bg
 end
 
-function padding(img, r=0.1; color=img[1])
-    color = convert(eltype(img), parsecolor(color))
+function padding(img::AbstractMatrix, r=0.1; backgroundcolor=:auto)
+    color = convert(eltype(img), parsecolor(_backgroundcolor(img, backgroundcolor)))
     p = round.(Int, size(img) .* r)
-    r = fill(color, size(img) .+ 2 .* p)
-    overlay!(r, img, reverse(p)...)
+    bg = fill(color, size(img) .+ 2 .* p)
+    overlay!(bg, img, reverse(p)...)
 end
-
+function padding(img::SVGImageType, r=0.1; backgroundcolor=(0,0,0,0))
+    color = parsecolor(backgroundcolor)
+    p = round.(Int, size(img) .* r)
+    sz = size(img) .+ 2 .* p
+    m2 = Drawing(sz..., :svg)
+    origin()
+    background(color)
+    placeimage(img, centered=true)
+    finish()
+    m2
+end
 "return the overlapping view of img1 and img2 when img2's top left corner at img1's (x, y)"
 function overlappingarea(img1, img2, x=1, y=1)
     h1, w1 = size(img1)
@@ -306,10 +322,10 @@ generate a box, ellipse or squircle svg image
 * shape(squircle, 80, 50, outline=3, linecolor="red", backgroundcolor="gray") #add a red outline to the squircle
 """
 function shape(shape_, width, height, args...; 
-    outline=0, linecolor="black",
-    color="white", backgroundcolor=(0,0,0,0), backgroundsize=(width+2outline, height+2outline), 
+    outline=0, linecolor="black", padding=0,
+    color="white", backgroundcolor=(0,0,0,0), backgroundsize=(width+2outline, height+2outline).*(2 .* padding .+ 1), 
     kargs...)
-    d = Drawing(backgroundsize..., :svg)
+    d = Drawing(ceil.(backgroundsize)..., :svg)
     origin()
     background(parsecolor(backgroundcolor))
     if outline>0
