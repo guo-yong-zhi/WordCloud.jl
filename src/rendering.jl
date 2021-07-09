@@ -237,17 +237,16 @@ function outline(img; transparent=:auto, color="black", linewidth=2, smoothness=
     bg
 end
 
-function padding(img::AbstractMatrix, r=0.1; backgroundcolor=:auto)
+function padding(img::AbstractMatrix, r=maximum(size(img))÷10; backgroundcolor=:auto)
     color = convert(eltype(img), parsecolor(_backgroundcolor(img, backgroundcolor)))
-    p = round.(Int, size(img) .* r)
-    bg = fill(color, size(img) .+ 2 .* p)
-    overlay!(bg, img, reverse(p)...)
+    r = round.(Int, r)
+    bg = fill(color, size(img) .+ 2 .* r)
+    overlay!(bg, img, reverse((0,0).+r)...)
 end
-function padding(img::SVGImageType, r=0.1; backgroundcolor=(0,0,0,0))
+function padding(img::SVGImageType, r=maximum(size(img))÷10; backgroundcolor=(0,0,0,0))
     color = parsecolor(backgroundcolor)
-    p = round.(Int, size(img) .* r)
-    sz = size(img) .+ 2 .* p
-    m2 = Drawing(sz..., :svg)
+    sz = size(img) .+ 2 .* round.(Int, r)
+    m2 = Drawing(reverse(sz)..., :svg)
     origin()
     background(color)
     placeimage(img, centered=true)
@@ -323,7 +322,7 @@ generate a box, ellipse or squircle svg image
 """
 function shape(shape_, width, height, args...; 
     outline=0, linecolor="black", padding=0,
-    color="white", backgroundcolor=(0,0,0,0), backgroundsize=(width+2outline, height+2outline).*(2 .* padding .+ 1), 
+    color="white", backgroundcolor=(0,0,0,0), backgroundsize=(width+2outline, height+2outline) .+ 2 .* padding, 
     kargs...)
     d = Drawing(ceil.(backgroundsize)..., :svg)
     origin()

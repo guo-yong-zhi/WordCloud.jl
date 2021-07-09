@@ -7,7 +7,7 @@ include("test_textprocessing.jl")
 
 
 @testset "WordCloud.jl" begin
-    #@show pwd()
+    # @show pwd()
     # overall test
     wc = runexample(:random)
     @test getstate(wc) == :generate!
@@ -43,18 +43,20 @@ include("test_textprocessing.jl")
     @test getparameter(wc, :outline) == 0
     wc = wordcloud(["test"], [1], masksize=(100,100), outline=0)
     @test all(size(wc.mask) .> 105)
-    wc = wordcloud(["test"], [1], masksize=(100,100), outline=30, padding=0.1)
-    @test all(size(wc.mask) .> 125)
+    wc = wordcloud(["test"], [1], masksize=(100,100), outline=30, padding=30)
+    @test all(size(wc.mask) .> 200)
     ##############svg mask
     svgfile = "test.svg"
     wordcloud(["test"], [1], colors="#DE2910", mask=svgfile, maskcolor=:original)
     wordcloud(["test"], [1], mask=open(svgfile))
     wc = wordcloud(["test"], [1], mask=svgfile, backgroundcolor=0) #warning#can't edit the svg to remove original backgroundcolor, 
     #so it's only work when the svgfile has a transparent background
-    wc2 = wordcloud(["test"], [1], mask=open(svgfile), padding=1)
+    wc2 = wordcloud(["test"], [1], mask=open(svgfile), padding=20)
+    wc3 = wordcloud(["test"], [1], mask=open(svgfile), padding=(10,-10))
     @test all(size(wc2.mask) .> size(wc.mask))
     @test all(size(wc2.svgmask) .> size(wc.svgmask))
-    wordcloud(["test"], [1], mask=open(svgfile), padding=0.1, backgroundcolor="red")#warning#
+    @test (size(wc3.svgmask) .> size(wc.svgmask)) == (true, false)
+    wordcloud(["test"], [1], mask=open(svgfile), padding=10, backgroundcolor="red")#warning#
     ##############png mask
     pngfile = pkgdir(WordCloud)*"/res/heart_mask.png"
     wordcloud(["test"], [1], colors="#DE2910", mask=pngfile, maskcolor=:original)
@@ -83,7 +85,9 @@ include("test_textprocessing.jl")
     @test all(size(wc.mask) .< 200)
     wc2 = wordcloud(["test"], [1], mask=pngfile, outline=50, ratio=0.3)
     @test size(wc2.mask) == size(wc.mask)
-    wc = wordcloud(["test"], [1], mask=pngfile, padding=0.2)
+    wc3 = wordcloud(["test"], [1], mask=pngfile, padding=(-50, 50))
+    @test (size(wc3.mask) .> (572, 640)) == (false, true)
+    wc = wordcloud(["test"], [1], mask=pngfile, padding=100)
     @test all(size(wc.mask) .> 700)
     # get&set
     wc = wordcloud(

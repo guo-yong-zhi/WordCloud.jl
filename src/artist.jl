@@ -148,7 +148,7 @@ function randommaskcolor(colors)
             th2 = clamp(th1+0.1, 0, 1)
             default = 1.0
         else    #黑暗
-            th2 = clamp(min(m-0.15, rand(0.0:0.001:0.2)), 0, 1) #对深色不敏感，+0.05
+            th2 = clamp(min(m-0.15, rand(0.0:0.001:0.3)), 0, 1) #对深色不敏感，+0.15
             th1 = clamp(th2-0.15, 0, 1)
             default = 0.0
         end
