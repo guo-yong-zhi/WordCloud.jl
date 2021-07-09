@@ -1,3 +1,4 @@
+using Random
 function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=getparameter(wc,:spacing))
     img = wc.imgs[i]
     mimg = wordmask(img, backgroundcolor, spacing)
@@ -48,8 +49,9 @@ initword! = initwords!
 * placewords!(wc, style=:gathering, level=6, rt=0) #rt=0, rectangle; rt=1, ellipse; rt=2, rhombus. defaults to 1.  
 There is also a bool keyword argument `centerlargestword`, which can be set to center the largest word.
 When you have set `style=:gathering`, you should disable teleporting in `generate!` at the same time, especially for big words. e.g. `generate!(wc, teleporting=0.7)`.
+The keyword argument `reorder` is a function to reorder the words, which affects the order of placement. Like `reverse`, `WordCloud.shuffle`.
 """
-function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, kargs...)
+function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, reorder=identity, kargs...)
     if STATEIDS[getstate(wc)] < STATEIDS[:initwords!]
         initwords!(wc)
     end
@@ -71,6 +73,7 @@ function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, 
         setcenter!(wc.qtrees[1],  wc.params[:groundsize] .÷ 2)
         arg = (2:length(wc.qtrees)|>collect, )
     end
+    qtrees = reorder(wc.qtrees)
     if length(wc.qtrees) > 0 + centerlargestword
         if style == :gathering
             if rt == :auto
@@ -83,10 +86,10 @@ function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, 
                 end
             end
             p = min(50, 2 / rt)
-            ind = Stuffing.place!(deepcopy(wc.maskqtree), wc.qtrees, arg...; 
+            ind = Stuffing.place!(deepcopy(wc.maskqtree), qtrees, arg...; 
                     roomfinder=findroom_gathering, p=p, kargs...)
         else
-            ind = Stuffing.place!(deepcopy(wc.maskqtree), wc.qtrees, arg...;
+            ind = Stuffing.place!(deepcopy(wc.maskqtree), qtrees, arg...;
                     roomfinder=findroom_uniform, kargs...)
         end
         if ind === nothing error("no room for placement") end
@@ -180,7 +183,7 @@ end
 * nepoch: training epoch nums
 # Keyword Args
 * patient: number of epochs before teleporting
-* teleport: a Bool value to turn on/off teleport, a Float number `p` between 0~1 indicating the teleporting ratio (Minimum `p`), a Int number `n` equivalent to `i -> i >= n`, a Function index::Int -> doteleport::Boll, or a white list collision.
+* teleporting: a Bool value to turn on/off teleport, a Float number `p` between 0~1 indicating the teleporting ratio (Minimum `p`), a Int number `n` equivalent to `i -> i >= n`, a Function index::Int -> doteleport::Boll, or a white list collision.
 * trainer: appoint a training engine
 """
 function fit!(wc, args...; teleporting=true, krags...)
