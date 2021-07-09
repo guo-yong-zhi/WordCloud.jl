@@ -48,13 +48,13 @@ Some arguments depend on whether or not the `mask` is given or the type of the `
 
 ### other keyword arguments
 The keyword argument `run` is a function. It will be called after the `wordcloud` object constructed.
-* run = placement! #default setting, will initialize word's position
+* run = placewords! #default setting, will initialize word's position
 * run = generate! #get result directly
-* run = initimages! #only initialize resources, such as rendering word images
+* run = initwords! #only initialize resources, such as rendering word images
 * run = x->nothing #do nothing
 ---NOTE
-* After getting the `wordcloud` object, these steps are needed to get the result picture: initimages! -> placement! -> generate! -> paint
-* You can skip `placement!` and/or `initimages!`, and the default action will be performed
+* After getting the `wordcloud` object, these steps are needed to get the result picture: initwords! -> placewords! -> generate! -> paint
+* You can skip `placewords!` and/or `initwords!`, and the default action will be performed
 """
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter)|>collect, values(counter)|>collect; kargs...)
@@ -64,7 +64,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
                 colors=:auto, angles=:auto, 
                 mask=:auto, font=:auto,
                 transparent=:auto, minfontsize=:auto, spacing=1, density=0.5,
-                run=placement!, kargs...)
+                run=placewords!, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol, Any}()
     colors, angles, mask, svgmask, font, transparent = getstylescheme(length(words); colors=colors, angles=angles, 
@@ -298,9 +298,9 @@ Base.show(io::IO, m::MIME"image/png", wc::WC) = Base.show(io, m, paint(wc::WC))
 Base.show(io::IO, m::MIME"image/svg+xml", wc::WC) = Base.show(io, m, paintsvg(wc::WC))
 Base.show(io::IO, m::MIME"text/plain", wc::WC) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")
 function Base.showable(::MIME"image/png", wc::WC)
-    STATEIDS[getstate(wc)] >= STATEIDS[:initimages!] && showable("image/png", zeros(ARGB,(1,1)))
+    STATEIDS[getstate(wc)] >= STATEIDS[:initwords!] && showable("image/png", zeros(ARGB,(1,1)))
 end
 function Base.showable(::MIME"image/svg+xml", wc::WC)
-    STATEIDS[getstate(wc)] >= STATEIDS[:initimages!] && (wc.svgmask !== nothing || !showable("image/png", wc))
+    STATEIDS[getstate(wc)] >= STATEIDS[:initwords!] && (wc.svgmask !== nothing || !showable("image/png", wc))
 end
 Base.show(io::IO, wc::WC) = Base.show(io, "text/plain", wc)

@@ -17,13 +17,13 @@ include("test_textprocessing.jl")
     paint(wc, "test.svg")
     @test getparameter(wc, :maskoccupying) == WordCloud.occupying(WordCloud.QTree.kernel(wc.maskqtree[1]), WordCloud.QTree.FULL)
     
-    # placement!
-    placement!(wc, style=:gathering)
+    # placewords!
+    placewords!(wc, style=:gathering)
     words = ["." for i in 1:500]
     weights = [1 for i in 1:length(words)]
     @test_throws ErrorException begin #no room
         wc = wordcloud(words, weights, maskshape=ellipse, masksize=(5,5), backgroundsize=(10,10), density=1000, angles=0)
-        placement!(wc)
+        placewords!(wc)
     end
 
     # wordcloud factory
@@ -89,7 +89,7 @@ include("test_textprocessing.jl")
     setimages!(wc, 1, wc.imgs[[4,5]])
     setimages!(wc, 1, wc.imgs[4])
     setsvgimages!(wc, 1, wc.svgs[6])
-    setsvgimages!(wc, 6, wc.svgs[6]) #the results of setsvgimages! and initimage! may not be identical
+    setsvgimages!(wc, 6, wc.svgs[6]) #the results of setsvgimages! and initword! may not be identical
     @test wc.imgs[1] == wc.imgs[6]
 
     for s = [:reset, :average, :clipping, :blending, :reset]

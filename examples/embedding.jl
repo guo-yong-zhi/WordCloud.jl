@@ -32,7 +32,7 @@ wc = wordcloud(
     maskshape = box,
     masksize = (1000, 1000, 0),
     density=0.3,
-    run = initimages!
+    run = initwords!
 )
 
 pos = embedded
@@ -43,7 +43,7 @@ sz = collect(size(wc.mask))'
 pos = round.(Int, pos .* sz .+ sz ./ 2)
 
 setpositions!(wc, keys(wordvec)|>collect, eachrow(pos), type=setcenter!)
-setstate!(wc, :placement!)
+setstate!(wc, :placewords!)
 generate!(wc, teleporting=false)
 println("results are saved to embedding.png")
 paint(wc, "embedding.png")

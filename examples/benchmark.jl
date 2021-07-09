@@ -25,7 +25,7 @@ for (i,wc) in enumerate(wcs)
     println("\n\n", "*"^10, "wordcloud - $(length(wc.words)) words on mask$(size(wc.mask))", "*"^10)
     for (j,t) in enumerate(ts)
         println("\n", i-1, "==== ", j, "/", length(ts), " ", nameof(t))
-        placement!(wc)
+        placewords!(wc)
         @time e = @elapsed generate!(wc, trainer=t, retry=1)
         push!(es[i], string(nameof(t)) * (getstate(wc)==:generate! ? " ✔" : " ✘")=>e)
     end

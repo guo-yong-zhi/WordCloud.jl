@@ -8,7 +8,7 @@ function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=getparame
 end
 initqtree!(wc, i; kargs...) = initqtree!.(wc, index(wc, i); kargs...)
 "Initialize word's images and other resources with specified style"
-function initimages!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=getparameter(wc,:spacing),
+function initwords!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=getparameter(wc,:spacing),
                     fontsize=getfontsizes(wc, i), color=wc.params[:colors][i],
                     angle = wc.params[:angles][i], font=getfonts(wc, i))
     img, svg = prepareword(wc.words[i], fontsize, color, angle,
@@ -18,8 +18,8 @@ function initimages!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=getparam
     initqtree!(wc, i, backgroundcolor=backgroundcolor, spacing=spacing)
     nothing
 end
-initimages!(wc, i; kargs...) = initimage!.(wc, index(wc, i); kargs...)
-function initimages!(wc::WC; maxiter=5, tolerance=0.02)
+initwords!(wc, i; kargs...) = initword!.(wc, index(wc, i); kargs...)
+function initwords!(wc::WC; maxiter=5, tolerance=0.02)
     params = wc.params
     
     si = sortperm(wc.weights, rev=true)
@@ -35,23 +35,23 @@ function initimages!(wc::WC; maxiter=5, tolerance=0.02)
 
     scale = find_weight_scale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
     println("The density is set to $(params[:density]), with scale=$scale. The actural font minimum is $(getfontsizes(wc, length(wc.words))).")
-    initimage!.(wc, 1:length(words))
-    setstate!(wc, nameof(initimages!))
+    initword!.(wc, 1:length(words))
+    setstate!(wc, nameof(initwords!))
     wc
 end
-initimage! = initimages!
+initword! = initwords!
 """
-* placement!(wc)
-* placement!(wc, style=:uniform)
-* placement!(wc, style=:gathering)
-* placement!(wc, style=:gathering, level=5) #`level` controls the intensity of gathering, typically between 4 and 6, defaults to 5.
-* placement!(wc, style=:gathering, level=6, rt=0) #rt=0, rectangle; rt=1, ellipse; rt=2, rhombus. defaults to 1.  
+* placewords!(wc)
+* placewords!(wc, style=:uniform)
+* placewords!(wc, style=:gathering)
+* placewords!(wc, style=:gathering, level=5) #`level` controls the intensity of gathering, typically between 4 and 6, defaults to 5.
+* placewords!(wc, style=:gathering, level=6, rt=0) #rt=0, rectangle; rt=1, ellipse; rt=2, rhombus. defaults to 1.  
 There is also a bool keyword argument `centerlargestword`, which can be set to center the largest word.
 When you have set `style=:gathering`, you should disable teleporting in `generate!` at the same time, especially for big words. e.g. `generate!(wc, teleporting=0.7)`.
 """
-function placement!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, kargs...)
-    if STATEIDS[getstate(wc)] < STATEIDS[:initimages!]
-        initimages!(wc)
+function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, kargs...)
+    if STATEIDS[getstate(wc)] < STATEIDS[:initwords!]
+        initwords!(wc)
     end
     @assert style in [:uniform, :gathering]
     if centerlargestword == :auto
@@ -83,15 +83,15 @@ function placement!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, k
                 end
             end
             p = min(50, 2 / rt)
-            ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees, arg...; 
+            ind = Stuffing.place!(deepcopy(wc.maskqtree), wc.qtrees, arg...; 
                     roomfinder=findroom_gathering, p=p, kargs...)
         else
-            ind = Stuffing.placement!(deepcopy(wc.maskqtree), wc.qtrees, arg...;
+            ind = Stuffing.place!(deepcopy(wc.maskqtree), wc.qtrees, arg...;
                     roomfinder=findroom_uniform, kargs...)
         end
         if ind === nothing error("no room for placement") end
     end
-    setstate!(wc, nameof(placement!))
+    setstate!(wc, nameof(placewords!))
     setparameter!(wc, 0, :epoch)
     wc
 end
@@ -101,12 +101,12 @@ function rescale!(wc::WC, ratio::Real)
     qts = wc.qtrees
     centers = getcenter.(qts)
     wc.params[:scale] *= ratio
-    initimage!.(wc, 1:length(wc.words))
+    initword!.(wc, 1:length(wc.words))
     setcenter!.(wc.qtrees, centers)
     wc
 end
 
-recolor_reset!(wc, i::Integer) = initimage!(wc, i)
+recolor_reset!(wc, i::Integer) = initword!(wc, i)
 recolor_reset!(wc, w=:; kargs...) = recolor_reset!.(wc, index(wc, w); kargs...)
 
 function recolor_average!(wc, i::Integer; background=getmask(wc))
@@ -117,7 +117,7 @@ function recolor_average!(wc, i::Integer; background=getmask(wc))
     m = wordmask(img, (0,0,0,0),0)
     bkv = @view bg[m]
     c = sum(bkv) / length(bkv)
-    initimage!(wc, i, color=c)
+    initword!(wc, i, color=c)
 end
 recolor_average!(wc, w=:; kargs...) = recolor_average!.(wc, index(wc, w); kargs...)
 
@@ -185,8 +185,8 @@ end
 """
 function fit!(wc, args...; teleporting=true, krags...)
     teleporton = teleporting isa Union{Function, Number} ? teleporting : index(wc, teleporting) #Bool <: Number
-    if STATEIDS[getstate(wc)] < STATEIDS[:placement!]
-        placement!(wc)
+    if STATEIDS[getstate(wc)] < STATEIDS[:placewords!]
+        placewords!(wc)
     end
     qtrees = [wc.maskqtree, wc.qtrees...]
     ep, nc = train!(qtrees, args...; teleporting=teleporton, krags...)
@@ -194,7 +194,7 @@ function fit!(wc, args...; teleporting=true, krags...)
     if nc == 0
         setstate!(wc, nameof(fit!))
     else
-        setstate!(wc, nameof(placement!))
+        setstate!(wc, nameof(placewords!))
     end
     wc
 end
@@ -220,8 +220,8 @@ end
 * trainer: appoint a training engine
 """
 function generate!(wc::WC, args...; retry=3, krags...)
-    if STATEIDS[getstate(wc)] < STATEIDS[:placement!]
-        placement!(wc)
+    if STATEIDS[getstate(wc)] < STATEIDS[:placewords!]
+        placewords!(wc)
     end
     for r in 1:retry
         if r != 1
@@ -260,7 +260,7 @@ function generate_animation!(wc::WC, args...; outputdir="gifresult", overwrite=o
     re
 end
 
-STATES = nameof.([wordcloud, initimages!, placement!, fit!, generate!])
+STATES = nameof.([wordcloud, initwords!, placewords!, fit!, generate!])
 STATEIDS = Dict([s=>i for (i,s) in enumerate(STATES)])
 
 

@@ -12,7 +12,7 @@ wca = wordcloud(
     angles = as,
     density = dens,
     backgroundcolor = :maskcolor,
-    run = x->nothing, #turn off the initimage! and placement! in advance
+    run = x->nothing, #turn off the initword! and placewords! in advance
 )
 wcb = wordcloud(
     processtext(open(pkgdir(WordCloud)*"/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords),
@@ -37,26 +37,26 @@ for w in samewords
     setangles!(wcb, w, getangles(wca, w))
 end
 #md# ### Put the same words at same position
-initimages!(wca)
-initimages!(wcb)
+initwords!(wca)
+initwords!(wcb)
 keep(wca, samewords) do
-    placement!(wca)
+    placewords!(wca)
     fit!(wca, 1000)
 end
 pin(wca, samewords) do
-    placement!(wca) #place other words
+    placewords!(wca) #place other words
 end
 centers = getpositions(wca, samewords, type=getcenter)
 setpositions!(wcb, samewords, centers, type=setcenter!) #manually initialize the position,
 pin(wcb, samewords) do
-    placement!(wcb) #place other words
+    placewords!(wcb) #place other words
 end
 #md# ### Fit them all
 function syncposition(samewords, pos, wca, wcb)
     pos2 = getpositions(wca, samewords, type=getcenter)
     if pos != pos2
         setpositions!(wcb, samewords, pos2, type=setcenter!)
-        setstate!(wcb, :placement!)
+        setstate!(wcb, :placewords!)
     end
     pos2
 end

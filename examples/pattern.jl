@@ -10,7 +10,7 @@ wc = wordcloud(
 #md# * `words` & `weights` are just placeholders  
 #md# * style arguments like `colors`, `angles` and `density` have no effect  
 #md# 
-#md# And, you should manually initialize images for the placeholders, instead of calling `initimages!`  
+#md# And, you should manually initialize images for the placeholders, instead of calling `initwords!`  
 dens = 0.6
 sz = 3expm1.(rand(l)) .+ 1
 sz ./= √(sum(π * (sz ./ 2).^2 ./ dens) / prod(size(wc.mask))) # set a proper size according to the density
@@ -21,7 +21,7 @@ sz ./= √(sum(π * (sz ./ 2).^2 ./ dens) / prod(size(wc.mask))) # set a proper 
 shapes = WordCloud.svg2bitmap.([shape(ellipse, round(sz[i]), round(sz[i]), color=rand(sc)) for i in 1:l])
 setimages!(wc, :, shapes)
 
-setstate!(wc, :initimages!) #set the state flag after manual initialization
+setstate!(wc, :initwords!) #set the state flag after manual initialization
 # generate_animation!(wc, retry=1, outputdir="pattern_animation")
 generate!(wc, retry=1) #turn off rescale attempts. manually set images can't be rescaled
 println("results are saved to pattern.png")
