@@ -20,5 +20,6 @@ paint(wc, "nomask-placewords.svg")
 #md# prevent teleporting words to the surrounding blank space
 generate!(wc, teleporting=false)
 paint(wc, "nomask.svg")
+wc
 #eval# runexample(:nomask)
 #md# ![](nomask.svg)
