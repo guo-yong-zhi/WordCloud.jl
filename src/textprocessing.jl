@@ -69,7 +69,7 @@ Count words in text. And use `regexp` to split. And save results in `counter`.
 """
 function countwords(textfile::IO; counter=Dict{String,Int}(), kargs...)
     for l in eachline(textfile)
-        countwords(l;counter=counter, kargs...)
+        countwords(l; counter=counter, kargs...)
     end
     counter
 end
@@ -123,7 +123,7 @@ function processtext(counter::AbstractDict{<:AbstractString, <:Real};
     minlength=1, maxlength=30,
     minfrequency=0,
     maxnum=500,
-    minweight=1/maxnum, maxweight=max(minweight*20, 20/maxnum),
+    minweight=1/maxnum, maxweight=:auto,
     process=casemerge!∘lemmatize!)
     stopwords = stopwords isa AbstractSet ? stopwords : Set(stopwords)
     counter = process(counter)
@@ -145,6 +145,7 @@ function processtext(counter::AbstractDict{<:AbstractString, <:Real};
     weights = weights[inds]
     @assert !isempty(weights)
     weights = weights ./ sum(weights)
+    maxweight = maxweight == :auto ? max(20minweight, 20/maxnum) : maxweight
     m = weights .> maxweight
     weights[m] .= log1p.(weights[m] .- maxweight)./10 .+ maxweight
     weights .+= minweight

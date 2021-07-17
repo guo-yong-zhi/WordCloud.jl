@@ -56,14 +56,14 @@ function displayschemes()
     end
 end
 function randomscheme()
-    if rand() < 0.9
+    if rand() < 0.95
         scheme = rand(Schemes)
         c = Render.colorschemes[scheme].colors
         colors = randsubseq(c, rand())
         colors = isempty(colors) ? c : colors
         @show (scheme, length(colors))
     else
-        colors = rand((0, 1, 0, 1, (0,1), rand(), (rand(), rand())))
+        colors = rand((0, 1, 0, 1, 0, 1, (0,1), rand(), (rand(), rand())))
         @show colors
     end
     (colors...,)

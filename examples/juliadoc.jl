@@ -17,7 +17,7 @@ words, weights = processtext(maxnum=400, maxweight=1) do
         content = html2text(open(doc))
         countwords(content, counter=counter)
     end
-    counter |> casemerge!
+    counter
 end
 
 wc = wordcloud(
