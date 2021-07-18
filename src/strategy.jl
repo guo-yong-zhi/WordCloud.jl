@@ -85,6 +85,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
     fonts = getfonts(wc)
     sc0 = 0.
     tg0 = 0.
+    oneway_count = 1
     while true
         step = step + 1
         if step > maxiter
@@ -117,11 +118,13 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
                 sc2 = sc2_
 #                 @show best_scale_L best_scale_H
             elseif isfinite(best_tar_H)
-                sc2_ = sc1 * 0.95
+                sc2_ = sc1 * (0.95^oneway_count)
+                oneway_count += 1
                 println("one-way search takes effect: scale $sc2 -> $sc2_")
                 sc2 = sc2_
             elseif isfinite(best_tar_L)
-                sc2_ = sc1 / 0.95
+                sc2_ = sc1 / (0.95^oneway_count)
+                oneway_count += 1
                 println("one-way search takes effect: scale $sc2 -> $sc2_")
                 sc2 = sc2_
             else
