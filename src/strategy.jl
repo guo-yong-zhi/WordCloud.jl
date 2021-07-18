@@ -88,11 +88,10 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
     while true
         step = step + 1
         if step > maxiter
-            @warn "find_weight_scale reach the `maxiter`. The `density` may be inaccurate. This may be caused by too small background, too many words or too big `minfontsize`."
+            @warn "find_weight_scale! reach the `maxiter`. The `density` may be inaccurate. This may be caused by too small background, too many words or too big `minfontsize`."
             break
         end
         # cal tg1
-        @assert sc1 < 50initialscale #防止全空白words的输入，计算出sc过大渲染字体耗尽内存
         setparameter!(wc, sc1, :scale)
         tg1 = textoccupying(words, getfontsizes(wc), fonts)
         dens = tg1 / ground_size
@@ -128,6 +127,10 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
             else
                 error("find_weight_scale! failed")
             end
+        end
+        if sc2 >= 50initialscale #防止空白words的输入，计算出sc过大渲染字体耗尽内存
+            @warn "Extra large font size detected. The density $density may be unreachable."
+            break
         end
         # next iter init
         tg0 = tg1
