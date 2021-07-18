@@ -1,9 +1,11 @@
 using WordCloud
 using HTTP
 
-url = "https://en.wikipedia.org/wiki/Julia_(programming_language)"
+url = "http://en.wikipedia.org/wiki/Special:random"
 try
-    content = HTTP.request("GET", url).body |> String
+    resp = HTTP.request("GET", url, redirect=true)
+    println(resp.request)
+    content = resp.body |> String
     wc = wordcloud(content|>html2text|>processtext)|>generate!
     println("results are saved to fromweb.png")
     paint(wc, "fromweb.png")
