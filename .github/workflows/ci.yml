@@ -49,19 +49,24 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
+      # Cancel ongoing documentation build if pushing to branch again before the previous
+      # build is finished.
+      - name: Cancel ongoing documentation builds for previous commits
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{ github.token }}
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
-      - run: |
-          git config --global user.name name
-          git config --global user.email email
-          git config --global github.user username
-      - run: |
+      - name: Instantiate and install dependencies
+        run: |
           julia --project=docs -e '
             using Pkg;
             Pkg.develop(PackageSpec(path=pwd()));
             Pkg.instantiate();'
-      - run: julia --project=docs docs/make.jl
-        env:
-          GITHUB_TOKEN: $
+      - name: Generate documentation and deploy
+        env: # needed for pushing to gh-pages branch
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+        run: julia --project=docs docs/make.jl
