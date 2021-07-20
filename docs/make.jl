@@ -1,10 +1,10 @@
-include(joinpath(dirname(@__DIR__), "src", "WordCloud.jl"))
-using Documenter, .WordCloud
+using Documenter
+using WordCloud
 
 Documenter.makedocs(
     clean = true,
     doctest = true,
-    modules = Module[MyCoolPackage],
+    modules = Module[WordCloud],
     repo = "",
     highlightsig = true,
     sitename = "WordCloud Documentation",
