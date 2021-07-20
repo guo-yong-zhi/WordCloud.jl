@@ -20,6 +20,7 @@ load a img as mask, recolor, or resize, etc
 * loadmask("res/heart.jpg", transparent=rgba->maximum(rgba[1:3])*(rgba[4]/255)>128) #set transparent with a Function 
 * loadmask("res/heart.jpg", color="red", transparent=(1,1,1)) #set forecolor and transparent  
 * loadmask("res/heart.svg") #other arguments are not supported
+padding: an Integer or a tuple of two Integers  
 About orther keyword arguments like outline, linecolor, smoothness, see function `outline`.
 """
 function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...; 

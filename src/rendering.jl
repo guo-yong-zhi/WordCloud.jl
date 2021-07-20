@@ -319,6 +319,8 @@ generate a box, ellipse or squircle svg image
 * shape(ellipse, 80, 50, color="red") #80*50 red ellipse
 * shape(box, 80, 50, backgroundcolor=(0,1,0), backgroundsize=(100, 100)) #80*50 box on 100*100 green background
 * shape(squircle, 80, 50, outline=3, linecolor="red", backgroundcolor="gray") #add a red outline to the squircle
+outline: an Integer  
+padding: an Integer or a tuple of two Integers  
 """
 function shape(shape_, width, height, args...; 
     outline=0, linecolor="black", padding=0,
