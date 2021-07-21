@@ -119,7 +119,7 @@ function randomellipse(w, h; kargs...)
     return shape(ellipse, w, h; kargs...)
 end
 function randomangles()
-    a = rand((-1, 1)) .* rand((0, (0,90), (0,90,45), (0,90,45,-45), (0,45,-45), (45,-45), -90:90))
+    a = rand((-1, 1)) .* rand((0, (0,90), (0,90,45), (0,90,45,-45), (0,45,-45), (45,-45), -90:90, 0:90))
     println("angles = ", a)
     a
 end

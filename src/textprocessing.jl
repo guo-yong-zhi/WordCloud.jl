@@ -48,10 +48,10 @@ function countwords(words::AbstractVector{<:AbstractString};
             m = match(regexp, w)
             if m !== nothing
                 w = m.match
-                counter[w] = get!(counter, w, 0) + 1
+                counter[w] = get(counter, w, 0) + 1
             end
         else
-            counter[w] = get!(counter, w, 0) + 1
+            counter[w] = get(counter, w, 0) + 1
         end
     end
     counter

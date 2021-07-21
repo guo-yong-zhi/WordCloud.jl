@@ -115,9 +115,29 @@ end
 
 recolor_reset!(wc, i::Integer) = initword!(wc, i)
 recolor_reset!(wc, w=:; kargs...) = recolor_reset!.(wc, index(wc, w); kargs...)
-
+function counter(iter; C = Dict{eltype(iter), Int}())
+    for e in iter
+        C[e] = get(C, e, 0) + 1
+    end
+    C
+end
+function mostfrequent(iter; C = Dict{eltype(iter), Int}())
+    C = counter(iter; C = C)
+    argmax(C)
+end
+function recolor_main!(wc, i::Integer; background=getmask(wc))
+    bg = ARGB.(background)
+    img = getimages(wc, i)
+    x,y = getpositions(wc, i)
+    bg, img = Render.overlappingarea(bg, img, x, y)
+    m = wordmask(img, (0,0,0,0),0)
+    bkv = @view bg[m]
+    c = mostfrequent(bkv)
+    initword!(wc, i, color=c)
+end
+recolor_main!(wc, w=:; kargs...) = recolor_main!.(wc, index(wc, w); kargs...)
 function recolor_average!(wc, i::Integer; background=getmask(wc))
-    bg = background
+    bg = ARGB.(background)
     img = getimages(wc, i)
     x,y = getpositions(wc, i)
     bg, img = Render.overlappingarea(bg, img, x, y)
@@ -157,19 +177,22 @@ end
 recolor_clipping!(wc, w=:; kargs...) = recolor_clipping!.(wc, index(wc, w); kargs...)
 """
 recolor the words in `wc` in different styles with the background picture.
-The styles supported are `:average`, `:clipping`, `:blending`, and :reset (to undo all effects of others).
+The styles supported are `:average`, `:main`, `:clipping`, `:blending`, and :reset (to undo all effects of others).
 e.g.  
-* recolor!(wc, style=:average) # `background` is optional
+* recolor!(wc, style=:average)
+* recolor!(wc, style=:mian)
 * recolor!(wc, style=:clipping, background=blur(getmask(wc))) # `background` is optional
 * recolor!(wc, style=:blending, alpha=0.3) # `background` and `alpha` are optional
 * recolor!(wc, style=:reset)
 
-The effects of `:average` and `:clipping` are only determined by the `background`. But the effect of `:blending` is also affected by the previous word color. Therefore, `:blending` can also be used in combination with others
+The effects of `:average`, `:main` and `:clipping` are only determined by the `background`. But the effect of `:blending` is also affected by the previous word color. Therefore, `:blending` can also be used in combination with others
 The results of `clipping` and `blending` can not be exported as SVG files, use PNG instead. 
 """
 function recolor!(wc, args...; style=:average, kargs...)
     if style == :average
         recolor_average!(wc, args...; kargs...)
+    elseif style == :main
+        recolor_main!(wc, args...; kargs...)
     elseif style == :blending
         recolor_blending!(wc, args...; kargs...)
     elseif style == :clipping

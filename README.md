@@ -1,4 +1,4 @@
-# [WordCloud.jl](https://github.com/guo-yong-zhi/WordCloud.jl)
+# <div><img src="docs/src/assets/logo.svg" height="25px"><span> [WordCloud.jl](https://github.com/guo-yong-zhi/WordCloud.jl)</span></div>  
 ![juliadoc](res/juliadoc.png)  
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://guo-yong-zhi.github.io/WordCloud.jl/dev) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/guo-yong-zhi/WordCloud.jl/master?filepath=examples.ipynb) [![CI](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci.yml) [![CI-nightly](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci-nightly.yml/badge.svg)](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci-nightly.yml) [![codecov](https://codecov.io/gh/guo-yong-zhi/WordCloud.jl/branch/master/graph/badge.svg?token=2U0X769Z51)](https://codecov.io/gh/guo-yong-zhi/WordCloud.jl)  
  Word cloud (tag cloud or wordle) is a novelty visual representation of text data. The importance of each word is shown with font size or color. Our generator has the following highlights:
@@ -51,7 +51,7 @@ paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", li
 *Run the command `runexample(:recolor)` or `showexample(:recolor)` to get the result.* 
 ## Semantic
 [![semantic](res/semantic.png)](./examples/semantic.jl)  
-*Run the command `runexample(:semantic)` or `showexample(:semantic)` to get the result.* 
+*Run the command `runexample(:semantic)` or `showexample(:semantic)` to get the result.*  
 *The variable `WordCloud.examples` holds all available examples.* 
 You can also [**see more examples**](https://github.com/guo-yong-zhi/WordCloud-Gallery) or [**try it online**](https://mybinder.org/v2/gh/guo-yong-zhi/WordCloud.jl/master?filepath=examples.ipynb).  
 # Algorithm Description

@@ -7,7 +7,7 @@ Documenter.makedocs(
     modules = Module[WordCloud],
     repo = "",
     highlightsig = true,
-    sitename = "WordCloud Documentation",
+    sitename = "WordCloud.jl",
     expandfirst = [],
     pages = [
         "Index" => "index.md",

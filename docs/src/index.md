@@ -21,7 +21,9 @@ Pkg.add("WordCloud")
 Modules = [WordCloud]
 ```
 
-## Index
+## Gallery
+* [WordCloud-Gallery](https://github.com/guo-yong-zhi/WordCloud-Gallery)
 
+## Index
 ```@index
 ```
