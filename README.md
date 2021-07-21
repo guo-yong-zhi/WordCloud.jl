@@ -49,10 +49,9 @@ paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", li
 ## Recolor
 [![recolor](res/recolor.png)](./examples/recolor.jl)  
 *Run the command `runexample(:recolor)` or `showexample(:recolor)` to get the result.* 
-## Comparison
-[![compare](res/compare.png)](./examples/compare.jl)  
-*Run the command `runexample(:compare)` or `showexample(:compare)` to get the result.* 
-
+## Semantic
+[![semantic](res/semantic.png)](./examples/semantic.jl)  
+*Run the command `runexample(:semantic)` or `showexample(:semantic)` to get the result.* 
 *The variable `WordCloud.examples` holds all available examples.* 
 You can also [**see more examples**](https://github.com/guo-yong-zhi/WordCloud-Gallery) or [**try it online**](https://mybinder.org/v2/gh/guo-yong-zhi/WordCloud.jl/master?filepath=examples.ipynb).  
 # Algorithm Description

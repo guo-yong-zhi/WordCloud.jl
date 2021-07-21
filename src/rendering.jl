@@ -14,6 +14,7 @@ parsecolor(c) = parse(Colorant, c)
 parsecolor(tp::Tuple) = ARGB(tp...)
 parsecolor(gray::Real) = Gray(gray)
 parsecolor(sc::Symbol) = parsecolor.(colorschemes[sc].colors)
+parsecolor(sc::AbstractArray) = parsecolor.(sc)
 
 issvg(d) = d isa Drawing && d.surfacetype==:svg
 const SVGImageType = Drawing
