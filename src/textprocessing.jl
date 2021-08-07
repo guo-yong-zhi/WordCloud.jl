@@ -9,11 +9,11 @@ include("wordlists.jl")
 
 "only handle the simple case of plural nouns and third person singular verbs"
 function lemmatize(word)
-    if (!endswith(word, "s")) || endswith(word, "ss") #quick return
+    if (!endswith(word, "s")) || endswith(word, "ss") # quick return
         return word
     end
     w = lowercase(word)
-    if w in s_ending_words || (length(word)<=3 && w == word) || uppercase(word)==word
+    if w in s_ending_words || (length(word) <= 3 && w == word) || uppercase(word) == word
         return word
     elseif endswith(w, "ies") && !(w[1:prevind(w, end, 1)] in xe_ending_words)
         return word[1:prevind(word, end, 3)] * "y"
@@ -83,9 +83,9 @@ end
 
 function casemerge!(d)
     for w in keys(d)
-        if length(w)>0 && isuppercase(w[1]) && islowercase(w[end])
+        if length(w) > 0 && isuppercase(w[1]) && islowercase(w[end])
             lw = lowercase(w)
-            if lw in keys(d) && d[lw]>d[w]
+            if lw in keys(d) && d[lw] > d[w]
                 d[lw] += d[w]
                 pop!(d, w)
             end
@@ -118,13 +118,13 @@ processtext the text, filter the words, and adjust the weights. return words vec
 * minweight, maxweight: within 0 ~ 1, set to adjust extreme weight
 * process: a function to process word counter, defaults to `casemerge!∘lemmatize!`
 """
-function processtext(counter::AbstractDict{<:AbstractString, <:Real}; 
+function processtext(counter::AbstractDict{<:AbstractString,<:Real}; 
     stopwords=stopwords,
     minlength=1, maxlength=30,
     minfrequency=0,
     maxnum=500,
-    minweight=1/maxnum, maxweight=:auto,
-    process=casemerge!∘lemmatize!)
+    minweight=1 / maxnum, maxweight=:auto,
+    process=casemerge! ∘ lemmatize!)
     stopwords = stopwords isa AbstractSet ? stopwords : Set(stopwords)
     counter = process(counter)
     println("$(sum(values(counter))) words")
@@ -145,11 +145,11 @@ function processtext(counter::AbstractDict{<:AbstractString, <:Real};
     weights = weights[inds]
     @assert !isempty(weights)
     weights = weights ./ sum(weights)
-    maxweight = maxweight == :auto ? max(20minweight, 20/maxnum) : maxweight
+    maxweight = maxweight == :auto ? max(20minweight, 20 / maxnum) : maxweight
     m = weights .> maxweight
-    weights[m] .= log1p.(weights[m] .- maxweight)./10 .+ maxweight
+    weights[m] .= log1p.(weights[m] .- maxweight) ./ 10 .+ maxweight
     weights .+= minweight
-    println("$(sum(m)) huge words")
+println("$(sum(m)) huge words")
     words, weights
 end
 
@@ -159,29 +159,29 @@ function processtext(text; regexp=r"\w[\w']+", counter=Dict{String,Int}(), kargs
         kargs...)
 end
 processtext(fun::Function; kargs...) = processtext(fun(); kargs...)
-function processtext(words::AbstractVector{T}, weights::AbstractVector{W}; kargs...) where {T, W}
-    dict = Dict{T, W}()
+function processtext(words::AbstractVector{T}, weights::AbstractVector{W}; kargs...) where {T,W}
+    dict = Dict{T,W}()
     for (word, weight) in zip(words, weights)
         dict[word] = get(dict, word, 0) + weight
     end
     processtext(dict; kargs...)
 end
 processtext(wordsweights::Tuple; kargs...) = processtext(wordsweights...; kargs...)
-function processtext(counter::AbstractVector{<:Union{Pair, Tuple, AbstractVector}}; kargs...)
+function processtext(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}; kargs...)
     processtext(first.(counter), [v[2] for v in counter]; kargs...)
 end
 function html2text(content::AbstractString)
     patterns = [
-        r"<[\s]*?script[^>]*?>[\s\S]*?<[\s]*?/[\s]*?script[\s]*?>"=>" ",
-        r"<[\s]*?style[^>]*?>[\s\S]*?<[\s]*?/[\s]*?style[\s]*?>"=>" ",
-        r"<!--[\s\S]*?-->"=>" ",
-        "<br>"=>"\n",
-        r"<[\s\S]*?>"=>" ",
-        "&quot;"=>"\"",
-        "&amp;"=>"&",
-        "&lt;"=>"<",
-        "&gt;"=>">",
-        r"&#?\w{1,6};"=>" ",
+        r"<[\s]*?script[^>]*?>[\s\S]*?<[\s]*?/[\s]*?script[\s]*?>" => " ",
+        r"<[\s]*?style[^>]*?>[\s\S]*?<[\s]*?/[\s]*?style[\s]*?>" => " ",
+        r"<!--[\s\S]*?-->" => " ",
+        "<br>" => "\n",
+        r"<[\s\S]*?>" => " ",
+        "&quot;" => "\"",
+        "&amp;" => "&",
+        "&lt;" => "<",
+        "&gt;" => ">",
+        r"&#?\w{1,6};" => " ",
     ]
     for p in patterns
         content = replace(content, p)

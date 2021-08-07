@@ -57,8 +57,8 @@ The keyword argument `run` is a function. It will be called after the `wordcloud
 * You can skip `placewords!` and/or `initwords!`, and the default action will be performed
 """
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
-wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter)|>collect, values(counter)|>collect; kargs...)
-wordcloud(counter::AbstractVector{<:Union{Pair, Tuple, AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
+wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter) |> collect, values(counter) |> collect; kargs...)
+wordcloud(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
 wordcloud(text; kargs...) = wordcloud(processtext(text); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=:auto, angles=:auto, 
@@ -66,7 +66,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
                 transparent=:auto, minfontsize=:auto, maxfontsize=:auto, spacing=1, density=0.5,
                 run=placewords!, kargs...)
     @assert length(words) == length(weights) > 0
-    params = Dict{Symbol, Any}()
+    params = Dict{Symbol,Any}()
     colors, angles, mask, svgmask, font, transparent = getstylescheme(length(words); colors=colors, angles=angles, 
                                                     mask=mask, font=font, transparent=transparent, params=params, kargs...)
     params[:colors] = Any[colors...]
@@ -80,11 +80,11 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
         error("Have you set the right `transparent`? e.g. `transparent=mask[1,1]`")
     end
     @assert maskoccupying > 0
-    if minfontsize==:auto
-        minfontsize = min(8, sqrt(maskoccupying/length(words)/8))
+    if minfontsize == :auto
+        minfontsize = min(8, sqrt(maskoccupying / length(words) / 8))
         @show maskoccupying length(words)
     end
-    if maxfontsize==:auto
+    if maxfontsize == :auto
         maxfontsize = minimum(size(mask)) / 2
     end
     println("set fontsize ∈ [$minfontsize, $maxfontsize]")
@@ -97,7 +97,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:state] = nameof(wordcloud)
     params[:epoch] = 0
     params[:indsmap] = nothing
-    params[:custom] = Dict(:fontsize=>Dict(), :font=>Dict())
+    params[:custom] = Dict(:fontsize => Dict(), :font => Dict())
     params[:scale] = -1
     params[:wordids] = collect(1:length(words))
     l = length(words)
@@ -110,13 +110,13 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
                 masksize=:default, maskcolor=:default, 
                 backgroundcolor=:default, padding=:default,
                 outline=:default, linecolor=:auto, font=:auto,
-                transparent=:auto, params=Dict{Symbol, Any}(), kargs...)
+                transparent=:auto, params=Dict{Symbol,Any}(), kargs...)
     merge!(params, kargs)
     colors = colors in DEFAULTSYMBOLS ? randomscheme() : colors
     angles = angles in DEFAULTSYMBOLS ? randomangles() : angles
     maskcolor0 = maskcolor
     backgroundcolor0 = backgroundcolor
-    colors = colors isa Symbol ? (colorschemes[colors].colors..., ) : colors
+    colors = colors isa Symbol ? (colorschemes[colors].colors...,) : colors
     colors = Iterators.take(iter_expand(colors), lengthwords) |> collect
     angles = Iterators.take(iter_expand(angles), lengthwords) |> collect
     if mask == :auto
@@ -127,9 +127,9 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
                 maskcolor = backgroundcolor
             end
         end
-        masksize = masksize in DEFAULTSYMBOLS ? 40*√lengthwords : masksize
+        masksize = masksize in DEFAULTSYMBOLS ? 40 * √lengthwords : masksize
         if backgroundcolor in DEFAULTSYMBOLS
-            backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1,1,1,0), :maskcolor)) : (1, 1, 1, 0)
+            backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1, 1, 1, 0), :maskcolor)) : (1, 1, 1, 0)
         end
         backgroundcolor == :maskcolor && @show backgroundcolor
         kg = []
@@ -144,10 +144,10 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
             linecolor = randomlinecolor(colors)
         end
         if outline != 0
-            push!(kg, :outline=>outline)
-            push!(kg, :linecolor=>linecolor)
+            push!(kg, :outline => outline)
+            push!(kg, :linecolor => linecolor)
         end
-        padding = padding in DEFAULTSYMBOLS ? maximum(masksize)÷10 : padding
+        padding = padding in DEFAULTSYMBOLS ? maximum(masksize) ÷ 10 : padding
         mask = randommask(masksize, color=maskcolor; padding=padding, kg..., kargs...)
     else
         ms = masksize in DEFAULTSYMBOLS ? () : masksize
@@ -160,19 +160,19 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
                 backgroundcolor = randommaskcolor(colors)
                 maskcolor = backgroundcolor
             else
-                backgroundcolor = rand(((1,1,1,0), :maskcolor, :original))
+                backgroundcolor = rand(((1, 1, 1, 0), :maskcolor, :original))
             end
         end
         bc = backgroundcolor
         if backgroundcolor ∉ [:default, :original]
             @show backgroundcolor
-            bc = (1,1,1,0) #to remove the original background in mask
+            bc = (1, 1, 1, 0) # to remove the original background in mask
         end
         if outline == :auto
             outline = randomoutline()
             outline != 0 && @show outline
         elseif outline in DEFAULTSYMBOLS
-            outline = 0
+        outline = 0
         end
         if linecolor in DEFAULTSYMBOLS && outline != 0
             linecolor = randomlinecolor(colors)
@@ -183,7 +183,7 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
     end
     if transparent == :auto
         if maskcolor ∉ DEFAULTSYMBOLS
-            transparent = c->c!=WordCloud.torgba(maskcolor)
+            transparent = c -> c != WordCloud.torgba(maskcolor)
         end
     end
     params[:masksize] = masksize
@@ -197,13 +197,13 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
         svgmask = mask
         mask = svg2bitmap(mask)
         if maskcolor ∉ DEFAULTSYMBOLS && (:outline ∉ keys(params) || params[:outline] <= 0)
-            Render.recolor!(mask, maskcolor) #svg2bitmap后有杂色 https://github.com/JuliaGraphics/Luxor.jl/issues/160
+            Render.recolor!(mask, maskcolor) # svg2bitmap后有杂色 https://github.com/JuliaGraphics/Luxor.jl/issues/160
         end
     end
     font = font in DEFAULTSYMBOLS ? randomfont() : font
     colors, angles, mask, svgmask, font, transparent
 end
-Base.getindex(wc::WC, inds...) = wc.words[inds...]=>wc.weights[inds...]
+Base.getindex(wc::WC, inds...) = wc.words[inds...] => wc.weights[inds...]
 Base.lastindex(wc::WC) = lastindex(wc.words)
 Base.broadcastable(wc::WC) = Ref(wc)
 getstate(wc::WC) = wc.params[:state]
@@ -232,17 +232,17 @@ setdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or 
 @doc getdoc getwords(wc::WC, w=:) = wc.words[index(wc, w)]
 @doc getdoc getweights(wc::WC, w=:) = wc.weights[index(wc, w)]
 @doc setdoc setcolors!(wc::WC, w, c) = @view(wc.params[:colors][index(wc, w)]) .= parsecolor(c)
-@doc setdoc setangles!(wc::WC, w, a::Union{Number, AbstractVector{<:Number}}) = @view(wc.params[:angles][index(wc, w)]) .= a
+@doc setdoc setangles!(wc::WC, w, a::Union{Number,AbstractVector{<:Number}}) = @view(wc.params[:angles][index(wc, w)]) .= a
 @doc setdoc 
-function setwords!(wc::WC, w, v::Union{AbstractString, AbstractVector{<:AbstractString}})
+function setwords!(wc::WC, w, v::Union{AbstractString,AbstractVector{<:AbstractString}})
     m = getindsmap(wc)
     @assert !any(v .∈ Ref(keys(m)))
     i = index(wc, w)
-    Broadcast.broadcast((old,new)->m[new]=pop!(m,old), wc.words[i], v)
+    Broadcast.broadcast((old, new) -> m[new] = pop!(m, old), wc.words[i], v)
     @view(wc.words[i]) .= v
     v
 end
-@doc setdoc setweights!(wc::WC, w, v::Union{Number, AbstractVector{<:Number}}) = @view(wc.weights[index(wc, w)]) .= v
+@doc setdoc setweights!(wc::WC, w, v::Union{Number,AbstractVector{<:Number}}) = @view(wc.weights[index(wc, w)]) .= v
 @doc getdoc getimages(wc::WC, w=:) = wc.imgs[index(wc, w)]
 @doc getdoc getsvgimages(wc::WC, w=:) = wc.svgs[index(wc, w)]
 
@@ -252,7 +252,7 @@ function setimages!(wc::WC, w, v::AbstractMatrix)
     initqtree!(wc, w)
     v
 end
-setimages!(wc::WC, w, v::AbstractVector) = setimages!.(wc, index(wc,w), v)
+setimages!(wc::WC, w, v::AbstractVector) = setimages!.(wc, index(wc, w), v)
 @doc setdoc
 function setsvgimages!(wc::WC, w, v)
     @view(wc.svgs[index(wc, w)]) .= v
@@ -268,12 +268,12 @@ function getfontsizes(wc::WC, w=:)
         if id in keys(cf)
             return cf[id]
         else
-            return clamp(getweights(wc, ind)*wc.params[:scale], wc.params[:minfontsize], wc.params[:maxfontsize])
+            return clamp(getweights(wc, ind) * wc.params[:scale], wc.params[:minfontsize], wc.params[:maxfontsize])
         end
     end
 end
 @doc setdoc
-function setfontsizes!(wc::WC, w, v::Union{Number, AbstractVector{<:Number}})
+function setfontsizes!(wc::WC, w, v::Union{Number,AbstractVector{<:Number}})
     push!.(Ref(wc.params[:custom][:fontsize]), wordid(wc, w) .=> v)
 end
 @doc getdoc
@@ -281,7 +281,7 @@ function getfonts(wc::WC, w=:)
     get.(Ref(wc.params[:custom][:font]), wordid(wc, w), wc.params[:font])
 end
 @doc setdoc
-function setfonts!(wc::WC, w, v::Union{AbstractString, AbstractVector{<:AbstractString}})
+function setfonts!(wc::WC, w, v::Union{AbstractString,AbstractVector{<:AbstractString}})
     push!.(Ref(wc.params[:custom][:font]), wordid(wc, w) .=> v)
 end
 getmask(wc::WC) = wc.mask
@@ -306,7 +306,7 @@ Base.show(io::IO, m::MIME"image/png", wc::WC) = Base.show(io, m, paint(wc::WC))
 Base.show(io::IO, m::MIME"image/svg+xml", wc::WC) = Base.show(io, m, paintsvg(wc::WC))
 Base.show(io::IO, m::MIME"text/plain", wc::WC) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")
 function Base.showable(::MIME"image/png", wc::WC)
-    STATEIDS[getstate(wc)] >= STATEIDS[:initwords!] && showable("image/png", zeros(ARGB,(1,1)))
+    STATEIDS[getstate(wc)] >= STATEIDS[:initwords!] && showable("image/png", zeros(ARGB, (1, 1)))
 end
 function Base.showable(::MIME"image/svg+xml", wc::WC)
     STATEIDS[getstate(wc)] >= STATEIDS[:initwords!] && (wc.svgmask !== nothing || !showable("image/png", wc))

@@ -2,8 +2,8 @@ using WordCloud
 function drawjuliacircle(sz)
     juliacirclessvg = WordCloud.Render.Drawing(sz, sz, :svg)
     WordCloud.Render.origin()
-    WordCloud.Render.background(0,0,0,0)
-    WordCloud.Render.juliacircles(sz÷4)
+    WordCloud.Render.background(0, 0, 0, 0)
+    WordCloud.Render.juliacircles(sz ÷ 4)
     WordCloud.Render.finish()
     juliacirclessvg
 end
@@ -21,29 +21,29 @@ words, weights = processtext(maxnum=400, maxweight=1) do
 end
 
 wc = wordcloud(
-    [words..., "∴"], #add a placeholder for julia-logo
+    [words..., "∴"], # add a placeholder for julia-logo
     [weights..., weights[1]], 
-    density = 0.65,
-    mask = shape(box, 900, 300, 0, color=0.95),
-    colors = ((0.796,0.235,0.20), (0.584,0.345,0.698), (0.22,0.596,0.149)),
-    angles = (0, -45, 45),
-    #font = "Verdana Bold",
+    density=0.65,
+    mask=shape(box, 900, 300, 0, color=0.95),
+    colors=((0.796, 0.235, 0.20), (0.584, 0.345, 0.698), (0.22, 0.596, 0.149)),
+    angles=(0, -45, 45),
+    # font = "Verdana Bold",
 )
 setangles!(wc, "julia", 0)
 # setangles!(wc, "function", 45)
 # initword!(wc, "function")
-setcolors!(wc, "julia", (0.796,0.235,0.20))
+setcolors!(wc, "julia", (0.796, 0.235, 0.20))
 # setfonts!(wc, "julia", "forte")
 initword!(wc, "julia")
-juliacircles = drawjuliacircle(getfontsizes(wc, "∴")|>round)
-setsvgimages!(wc, "∴", juliacircles) #replace image
+juliacircles = drawjuliacircle(getfontsizes(wc, "∴") |> round)
+setsvgimages!(wc, "∴", juliacircles) # replace image
 sz1 = size(getimages(wc, "∴"))
 sz2 = size(getimages(wc, "julia"))
-y1, x1 = (size(wc.mask) .- (sz1[1], sz1[2]+sz2[2])) .÷ 2
+y1, x1 = (size(wc.mask) .- (sz1[1], sz1[2] + sz2[2])) .÷ 2
 y2 = (size(wc.mask, 1) - sz2[1]) ÷ 2
 x1 = round(Int, x1 * 0.9)
 setpositions!(wc, "∴", (x1, y1))
-setpositions!(wc, "julia", (x1+sz1[2], y2))
+setpositions!(wc, "julia", (x1 + sz1[2], y2))
 
 pin(wc, ["julia", "∴"]) do
     placewords!(wc)

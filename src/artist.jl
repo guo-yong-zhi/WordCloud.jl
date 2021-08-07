@@ -63,24 +63,24 @@ function randomscheme()
         colors = isempty(colors) ? c : colors
         @show (scheme, length(colors))
     else
-        colors = rand((0, 1, 0, 1, 0, 1, (0,1), rand(), (rand(), rand())))
+        colors = rand((0, 1, 0, 1, 0, 1, (0, 1), rand(), (rand(), rand())))
         @show colors
     end
     (colors...,)
 end
 function randommask(sz::Number=800; kargs...)
-    s = sz * sz * (0.5+rand()/2)
-    ratio = (0.5+rand()/2)
-    ratio = ratio>0.9 ? 1.0 : ratio
-    h = round(Int, sqrt(s*ratio))
-    w = round(Int, h/ratio)
+    s = sz * sz * (0.5 + rand() / 2)
+    ratio = (0.5 + rand() / 2)
+ratio = ratio > 0.9 ? 1.0 : ratio
+    h = round(Int, sqrt(s * ratio))
+    w = round(Int, h / ratio)
     randommask(w, h; kargs...)
 end
 function randommask(sz; kargs...)
     randommask(sz...; kargs...)
 end
 function randommask(w, h, args...; maskshape=:rand, kargs...)
-    ran = Dict(box=>0.2, squircle=>0.7, ellipse=>1, :rand=>rand())[maskshape]
+    ran = Dict(box => 0.2, squircle => 0.7, ellipse => 1, :rand => rand())[maskshape]
     if ran <= 0.2
         return randombox(w, h, args...; kargs...)
     elseif ran <= 0.7
@@ -93,33 +93,33 @@ function randombox(w, h, r=:rand; kargs...)
     if r == :rand
         r = rand() * 0.5 - 0.05 # up to 0.45
         r = r < 0. ? 0. : r # 10% for 0.
-        r = round(Int, h*r)
+        r = round(Int, h * r)
     end
-    println("shape(box, $w, $h, $r", join([", $k=$(repr(v))" for (k,v) in kargs]), ")")
+    println("shape(box, $w, $h, $r", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
     return shape(box, w, h, r; kargs...)
 end
 function randomsquircle(w, h; rt=:rand, kargs...)
     if rt == :rand
-        if rand()<0.8
+        if rand() < 0.8
             rt = rand()
         else
             ran = rand()
             if ran < 0.5
                 rt = 2
             else
-                rt = 1 + 1.5rand()
+    rt = 1 + 1.5rand()
             end
         end
     end
-    println("shape(squircle, $w, $h, rt=$rt", join([", $k=$(repr(v))" for (k,v) in kargs]), ")")
+    println("shape(squircle, $w, $h, rt=$rt", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
     return shape(squircle, w, h, rt=rt; kargs...)
 end
 function randomellipse(w, h; kargs...)
-    println("shape(ellipse, $w, $h", join([", $k=$(repr(v))" for (k,v) in kargs]), ")")
+    println("shape(ellipse, $w, $h", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
     return shape(ellipse, w, h; kargs...)
 end
 function randomangles()
-    a = rand((-1, 1)) .* rand((0, (0,90), (0,90,45), (0,90,45,-45), (0,45,-45), (45,-45), -90:90, 0:90))
+    a = rand((-1, 1)) .* rand((0, (0, 90), (0, 90, 45), (0, 90, 45, -45), (0, 45, -45), (45, -45), -90:90, 0:90))
     println("angles = ", a)
     a
 end
@@ -139,17 +139,17 @@ function randommaskcolor(colors)
         end
         # @show I, m, M
         if I > 3(1 - M) && I > 3m
-            middle = (g[i]+g[i+1])/2
-            th1 = clamp(max(g[i]+0.15, middle-rand(0:0.001:0.05)), 0, middle)
-            th2 = clamp(min(g[i+1]-0.15, middle+rand(0:0.001:0.05)), middle, 1)
+            middle = (g[i] + g[i + 1]) / 2
+            th1 = clamp(max(g[i] + 0.15, middle - rand(0:0.001:0.05)), 0, middle)
+            th2 = clamp(min(g[i + 1] - 0.15, middle + rand(0:0.001:0.05)), middle, 1)
             default = middle
-        elseif sum(g)/length(g) < 0.7 && (m+M)/2 < 0.7 && !(m>2(1-M))#明亮
-            th1 = clamp(max(M+0.15, rand(0.85:0.001:1.0)), 0, 1)
-            th2 = clamp(th1+0.1, 0, 1)
+        elseif sum(g) / length(g) < 0.7 && (m + M) / 2 < 0.7 && !(m > 2(1 - M))# 明亮
+            th1 = clamp(max(M + 0.15, rand(0.85:0.001:1.0)), 0, 1)
+            th2 = clamp(th1 + 0.1, 0, 1)
             default = 1.0
-        else    #黑暗
-            th2 = clamp(min(m-0.15, rand(0.0:0.001:0.3)), 0, 1) #对深色不敏感，+0.15
-            th1 = clamp(th2-0.15, 0, 1)
+        else    # 黑暗
+            th2 = clamp(min(m - 0.15, rand(0.0:0.001:0.3)), 0, 1) # 对深色不敏感，+0.15
+            th1 = clamp(th2 - 0.15, 0, 1)
             default = 0.0
         end
         maskcolor = rand((default, (rand(th1:0.001:th2), rand(th1:0.001:th2), rand(th1:0.001:th2))))
@@ -157,7 +157,7 @@ function randommaskcolor(colors)
         return maskcolor
     catch e
         @show e
-        @show "colors sum failed",colors
+    @show "colors sum failed", colors
         return "white"
     end
 end
@@ -165,11 +165,11 @@ function randomlinecolor(colors)
     if rand() < 0.8
         linecolor = rand((colors[1], colors[1], rand(colors)))
     else
-        linecolor = (rand(), rand(), rand(), min(1., 0.5+rand()/2))
+        linecolor = (rand(), rand(), rand(), min(1., 0.5 + rand() / 2))
     end
     linecolor
 end
-randomoutline() = rand((0, 0, 0, rand((1,2,3,4,5))))
+randomoutline() = rand((0, 0, 0, rand((1, 2, 3, 4, 5))))
 function randomfont()
     font = rand(AvailableFonts)
     @show font

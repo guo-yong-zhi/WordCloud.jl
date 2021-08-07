@@ -3,27 +3,27 @@
 using WordCloud
 
 stwords = ["us"];
-cs = WordCloud.randomscheme() #:Set1_8#
-as = WordCloud.randomangles() #(0,90,45,-45)#
-dens = 0.5 #not too high
+cs = WordCloud.randomscheme() # :Set1_8#
+as = WordCloud.randomangles() # (0,90,45,-45)#
+dens = 0.5 # not too high
 wca = wordcloud(
-    processtext(open(pkgdir(WordCloud)*"/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords), 
-    colors = cs,
-    angles = as,
-    density = dens,
-    backgroundcolor = :maskcolor,
-    run = x->nothing, #turn off the initword! and placewords! in advance
+    processtext(open(pkgdir(WordCloud) * "/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords), 
+    colors=cs,
+    angles=as,
+    density=dens,
+    backgroundcolor=:maskcolor,
+    run=x -> nothing, # turn off the initword! and placewords! in advance
 )
 wcb = wordcloud(
-    processtext(open(pkgdir(WordCloud)*"/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords),
-    mask = getsvgmask(wca),
-    colors = cs,
-    angles = as,
-    density = dens,
-    backgroundcolor = :maskcolor,
-    maskcolor = getmaskcolor(wca),
-    font = getparameter(wca, :font),
-    run = x->nothing, 
+    processtext(open(pkgdir(WordCloud) * "/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords),
+    mask=getsvgmask(wca),
+    colors=cs,
+    angles=as,
+    density=dens,
+    backgroundcolor=:maskcolor,
+    maskcolor=getmaskcolor(wca),
+    font=getparameter(wca, :font),
+    run=x -> nothing, 
 )
 #md# ### Make the same words the same style
 samewords = getwords(wca) ∩ getwords(wcb)
@@ -44,12 +44,12 @@ keep(wca, samewords) do
     fit!(wca, 1000)
 end
 pin(wca, samewords) do
-    placewords!(wca) #place other words
+    placewords!(wca) # place other words
 end
 centers = getpositions(wca, samewords, type=getcenter)
-setpositions!(wcb, samewords, centers, type=setcenter!) #manually initialize the position,
+setpositions!(wcb, samewords, centers, type=setcenter!) # manually initialize the position,
 pin(wcb, samewords) do
-    placewords!(wcb) #place other words
+    placewords!(wcb) # place other words
 end
 #md# ### Fit them all
 function syncposition(samewords, pos, wca, wcb)
@@ -64,7 +64,7 @@ function pinfit!(wc, samewords, ep1, ep2)
     pin(wc, samewords) do
         fit!(wc, ep1)
     end
-    fit!(wc, ep2, teleporting=getparameter(wc, :uniquewords)) #only teleport the unique words
+    fit!(wc, ep2, teleporting=getparameter(wc, :uniquewords)) # only teleport the unique words
 end
 pos = getpositions(wca, samewords, type=getcenter)
 while getparameter(wca, :epoch) < 2000 && getparameter(wcb, :epoch) < 2000
@@ -83,8 +83,8 @@ WordCloud.printcollisions(wcb)
 #md# 
 ma = paint(wca)
 mb = paint(wcb)
-h,w = size(ma)
-space = fill(mb[1], (h, w÷20))
+h, w = size(ma)
+space = fill(mb[1], (h, w ÷ 20))
 try mkdir("address_compare2") catch end
 println("results are saved in address_compare2")
 WordCloud.save("address_compare2/compare2.png", [ma space mb])

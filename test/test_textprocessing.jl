@@ -5,9 +5,9 @@
     @test c["Makes"] == 1
     WordCloud.TextProcessing.casemerge!(c)
     @test "so" in keys(c)
-    @test !("So" in keys(c)) #casemerge!
-    words,weights = WordCloud.TextProcessing.processtext(c)
-    @test !("to" in words) #stopwords
+    @test !("So" in keys(c)) # casemerge!
+    words, weights = WordCloud.TextProcessing.processtext(c)
+    @test !("to" in words) # stopwords
     @test lemmatize("Cars") == "Car"
     @test lemmatize("monkeys") == "monkey"
     @test lemmatize("politics") == "politics"
@@ -32,7 +32,7 @@
 
     @test lemmatize!(Dict("dog" => 1, "dogs" => 2)) == Dict("dog" => 3)
     @test lemmatize!(Dict("cat" => 1, "dogs" => 2)) == Dict("dog" => 2, "cat" => 1)
-    @test length(processtext(["cat" => 1, "dog" => 1, "dogs" => 3, "Dogs" => 2, "Dog" => 1])[1])==2
+    @test length(processtext(["cat" => 1, "dog" => 1, "dogs" => 3, "Dogs" => 2, "Dog" => 1])[1]) == 2
     @test processtext(["cat" => 3, "Dog" => 1, "dogs" => 2])[2] |> diff |> only |> iszero
-    @test processtext("word cloud") == processtext(["word","cloud"], [12,12]) == processtext([("word",3), ("cloud",3)])
+    @test processtext("word cloud") == processtext(["word","cloud"], [12,12]) == processtext([("word", 3), ("cloud", 3)])
 end

@@ -5,36 +5,36 @@ function occupying(img::AbstractMatrix, bgvalue=img[1])
 end
 function occupying(imgs::AbstractVector, bgvalue=imgs[1][1])
     if isempty(imgs) return 0 end
-    return sum(p->occupying(p, bgvalue), imgs)
+    return sum(p -> occupying(p, bgvalue), imgs)
 end
 function boxoccupying(img::AbstractMatrix, border=0)
-    return (size(img, 1)-2border) * (size(img, 2)-2border)
+    return (size(img, 1) - 2border) * (size(img, 2) - 2border)
 end
 function boxoccupying(imgs::AbstractVector, border=0)
     if isempty(imgs) return 0 end
-    return sum(p->boxoccupying(p, border), imgs)
+    return sum(p -> boxoccupying(p, border), imgs)
 end
 function feelingoccupying(imgs, border=0, bgvalue=imgs[1][1])
     bs = boxoccupying.(imgs, border)
     os = occupying.(imgs, bgvalue)
-    s = (0.8 * sum(bs) + 0.2 * sum(os)) / 0.93 #兼顾饱满字体（华文琥珀）和清瘦字体（仿宋）
+    s = (0.8 * sum(bs) + 0.2 * sum(os)) / 0.93 # 兼顾饱满字体（华文琥珀）和清瘦字体（仿宋）
     # sum(os) ≈ 2/3 sum(bs), 故除以0.93还原到sum(bs)的大小
     th = 10quantile(bs, 0.1)
-    bigind = findall(x->x>th, bs)
+    bigind = findall(x -> x > th, bs)
 #     @show length(bigind)
-    er = (sum(bs[bigind]) - sum(os[bigind])) * 0.2 #兼顾大字的内隙和小字的占据
+    er = (sum(bs[bigind]) - sum(os[bigind])) * 0.2 # 兼顾大字的内隙和小字的占据
     (s - er)
 end
 
 function textoccupying(words, fontsizes, fonts)
-    border=1
+    border = 1
     imgs = []
     for (c, sz, ft) in zip(words, fontsizes, fonts)
 #         print(c)
-        img = Render.rendertext(string(c), sz, backgroundcolor=(0,0,0,0), font=ft, border=border)
+        img = Render.rendertext(string(c), sz, backgroundcolor=(0, 0, 0, 0), font=ft, border=border)
         push!(imgs, img)
     end
-    feelingoccupying(imgs, border) #border>0 以获取背景色imgs[1]
+    feelingoccupying(imgs, border) # border>0 以获取背景色imgs[1]
 end
 
 ## prepare
@@ -43,33 +43,33 @@ function preparemask(img, bgcolor)
     maskqt = maskqtree(mask)
     groundsize = size(maskqt[1], 1)
     maskoccupying = occupying(mask, false)
-    @assert maskoccupying==occupying(QTree.kernel(maskqt[1]), QTree.FULL)
+    @assert maskoccupying == occupying(QTree.kernel(maskqt[1]), QTree.FULL)
     return img, maskqt, groundsize, maskoccupying
 end
 
-function prepareword(word, fontsize, color, angle; backgroundcolor=(0,0,0,0), font="", border=0)
+function prepareword(word, fontsize, color, angle; backgroundcolor=(0, 0, 0, 0), font="", border=0)
     mat, svg = rendertext(string(word), fontsize, color=color, backgroundcolor=backgroundcolor,
         angle=angle, border=border, font=font, type=:both)
-    Render.recolor!(mat, color), svg #字体边缘有杂色
+    Render.recolor!(mat, color), svg # 字体边缘有杂色
 end
 
 wordmask(img, bgcolor, border) = dilate(alpha.(img) .!= 0, border)
-#use `alpha` instead of `convert(eltype(img), parsecolor(bgcolor))`
-#https://github.com/JuliaGraphics/Luxor.jl/issues/107
+# use `alpha` instead of `convert(eltype(img), parsecolor(bgcolor))`
+# https://github.com/JuliaGraphics/Luxor.jl/issues/107
 
 ## weight_scale
 function scalestep(x₀, y₀, x₁, y₁, y)
-    x₀ = x₀ ^ 2
-    x₁ = x₁ ^ 2
-    x = ((x₁-x₀)*y + x₀*y₁ - x₁*y₀) / (y₁-y₀) # 假设y=k*x^2+b
-    x > 0 ? √x : (√min(x₀, x₁))/2
+    x₀ = x₀^2
+    x₁ = x₁^2
+    x = ((x₁ - x₀) * y + x₀ * y₁ - x₁ * y₀) / (y₁ - y₀) # 假设y=k*x^2+b
+    x > 0 ? √x : (√min(x₀, x₁)) / 2
 end
 
 function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tolerance=0.05)
     ground_size = getparameter(wc, :maskoccupying)
     words = wc.words
-    if initialscale <= 0
-        initialscale = √(ground_size/length(words)/0.45*density) #初始值假设字符的字面框面积占正方格比率为0.45（低估了汉字）
+        if initialscale <= 0
+        initialscale = √(ground_size / length(words) / 0.45 * density) # 初始值假设字符的字面框面积占正方格比率为0.45（低估了汉字）
     end
     @assert sum(wc.weights.^2 .* length.(words)) / length(wc.weights) ≈ 1.0
     target = density * ground_size
@@ -96,7 +96,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
         setparameter!(wc, sc1, :scale)
         tg1 = textoccupying(words, getfontsizes(wc), fonts)
         dens = tg1 / ground_size
-        println("scale=$(getparameter(wc, :scale)), density=$dens\t", dens>density ? "↑" : "↓")
+        println("scale=$(getparameter(wc, :scale)), density=$dens\t", dens > density ? "↑" : "↓")
         if tg1 > target
             if best_tar_H > tg1
                 best_tar_H = tg1
@@ -113,7 +113,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
 #         @show sc0, tg0, sc1, tg1, sc2
         if !(best_scale_L < sc2 < best_scale_H)
             if isfinite(best_tar_H + best_tar_L)
-                sc2_ = √((best_scale_H^2 + best_scale_L^2)/2.)
+                sc2_ = √((best_scale_H^2 + best_scale_L^2) / 2.)
                 println("bisection search takes effect: scale $sc2 -> $sc2_")
                 sc2 = sc2_
 #                 @show best_scale_L best_scale_H
@@ -131,7 +131,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
                 error("find_weight_scale! failed")
             end
         end
-        if sc2 >= 50initialscale #防止空白words的输入，计算出sc过大渲染字体耗尽内存
+        if sc2 >= 50initialscale # 防止空白words的输入，计算出sc过大渲染字体耗尽内存
             @warn "Extra large font size detected. The density $density may be unreachable."
             break
         end

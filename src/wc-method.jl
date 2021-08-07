@@ -1,5 +1,5 @@
 using Random
-function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=getparameter(wc,:spacing))
+function initqtree!(wc, i::Integer; backgroundcolor=(0, 0, 0, 0), spacing=getparameter(wc, :spacing))
     img = wc.imgs[i]
     mimg = wordmask(img, backgroundcolor, spacing)
     t = qtree(mimg, wc.params[:groundsize])
@@ -9,9 +9,9 @@ function initqtree!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=getparame
 end
 initqtree!(wc, i; kargs...) = initqtree!.(wc, index(wc, i); kargs...)
 "Initialize word's images and other resources with specified style"
-function initwords!(wc, i::Integer; backgroundcolor=(0,0,0,0), spacing=getparameter(wc,:spacing),
+function initwords!(wc, i::Integer; backgroundcolor=(0, 0, 0, 0), spacing=getparameter(wc, :spacing),
                     fontsize=getfontsizes(wc, i), color=wc.params[:colors][i],
-                    angle = wc.params[:angles][i], font=getfonts(wc, i))
+                    angle=wc.params[:angles][i], font=getfonts(wc, i))
     img, svg = prepareword(wc.words[i], fontsize, color, angle,
         font=font, backgroundcolor=backgroundcolor, border=spacing)
     wc.imgs[i] = img
@@ -61,13 +61,13 @@ function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, 
     end
     @assert style in [:uniform, :gathering]
     if centerlargestword == :auto
-        c = wc.params[:groundsize] ÷ 2 #can't wc.maskqtree[1][end÷2]. 1D index goes wrong.
+        c = wc.params[:groundsize] ÷ 2 # can't wc.maskqtree[1][end÷2]. 1D index goes wrong.
         kernelsize = Stuffing.kernelsize
         centerlargestword = wc.maskqtree[1][c, c] == QTree.EMPTY && (
             length(wc.qtrees) < 2 
             || (length(wc.qtrees) >= 2 
-                && wc.weights[2]/wc.weights[1] < 0.5 
-                && prod(kernelsize(wc.qtrees[2]))/prod(kernelsize(wc.qtrees[1])) < 0.5))
+                && wc.weights[2] / wc.weights[1] < 0.5 
+                && prod(kernelsize(wc.qtrees[2])) / prod(kernelsize(wc.qtrees[1])) < 0.5))
         if centerlargestword
             println("Center the largest word $(repr(getwords(wc, 1)))")
         end
@@ -75,7 +75,7 @@ function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, 
     arg = ()
     if centerlargestword
         setcenter!(wc.qtrees[1],  wc.params[:groundsize] .÷ 2)
-        arg = (2:length(wc.qtrees)|>collect, )
+        arg = (2:length(wc.qtrees) |> collect,)
     end
     qtrees = reorder(wc.qtrees)
     if length(wc.qtrees) > 0 + centerlargestword
@@ -115,22 +115,22 @@ end
 
 recolor_reset!(wc, i::Integer) = initword!(wc, i)
 recolor_reset!(wc, w=:; kargs...) = recolor_reset!.(wc, index(wc, w); kargs...)
-function counter(iter; C = Dict{eltype(iter), Int}())
+function counter(iter; C=Dict{eltype(iter),Int}())
     for e in iter
         C[e] = get(C, e, 0) + 1
     end
     C
 end
-function mostfrequent(iter; C = Dict{eltype(iter), Int}())
-    C = counter(iter; C = C)
+function mostfrequent(iter; C=Dict{eltype(iter),Int}())
+    C = counter(iter; C=C)
     argmax(C)
 end
 function recolor_main!(wc, i::Integer; background=getmask(wc))
     bg = ARGB.(background)
     img = getimages(wc, i)
-    x,y = getpositions(wc, i)
+    x, y = getpositions(wc, i)
     bg, img = Render.overlappingarea(bg, img, x, y)
-    m = wordmask(img, (0,0,0,0),0)
+    m = wordmask(img, (0, 0, 0, 0), 0)
     bkv = @view bg[m]
     c = mostfrequent(bkv)
     initword!(wc, i, color=c)
@@ -139,9 +139,9 @@ recolor_main!(wc, w=:; kargs...) = recolor_main!.(wc, index(wc, w); kargs...)
 function recolor_average!(wc, i::Integer; background=getmask(wc))
     bg = ARGB.(background)
     img = getimages(wc, i)
-    x,y = getpositions(wc, i)
+    x, y = getpositions(wc, i)
     bg, img = Render.overlappingarea(bg, img, x, y)
-    m = wordmask(img, (0,0,0,0),0)
+    m = wordmask(img, (0, 0, 0, 0), 0)
     bkv = @view bg[m]
     c = sum(bkv) / length(bkv)
     initword!(wc, i, color=c)
@@ -151,9 +151,9 @@ recolor_average!(wc, w=:; kargs...) = recolor_average!.(wc, index(wc, w); kargs.
 function recolor_blending!(wc, i::Integer; alpha=0.5, background=getmask(wc))
     bg = background
     img = getimages(wc, i)
-    x,y = getpositions(wc, i)
+    x, y = getpositions(wc, i)
     bg, img = Render.overlappingarea(bg, img, x, y)
-    m = wordmask(img, (0,0,0,0), 0)
+    m = wordmask(img, (0, 0, 0, 0), 0)
     bg = @view bg[m]
     img = @view img[m]
     alphas = Colors.alpha.(img)
@@ -166,9 +166,9 @@ recolor_blending!(wc, w=:; kargs...) = recolor_blending!.(wc, index(wc, w); karg
 function recolor_clipping!(wc, i::Integer; background=getmask(wc))
     bg = background
     img = getimages(wc, i)
-    x,y = getpositions(wc, i)
+    x, y = getpositions(wc, i)
     bg, img = Render.overlappingarea(bg, img, x, y)
-    m = wordmask(img, (0,0,0,0), 0)
+    m = wordmask(img, (0, 0, 0, 0), 0)
     bg = @view bg[m]
     img = @view img[m]
     img .= convert.(eltype(img), Colors.alphacolor.(bg, Colors.alpha.(img)))
@@ -214,7 +214,7 @@ end
 * trainer: appoint a training engine
 """
 function fit!(wc, args...; teleporting=true, krags...)
-    teleporton = teleporting isa Union{Function, Number} ? teleporting : index(wc, teleporting) #Bool <: Number
+    teleporton = teleporting isa Union{Function,Number} ? teleporting : index(wc, teleporting) # Bool <: Number
     if STATEIDS[getstate(wc)] < STATEIDS[:placewords!]
         placewords!(wc)
     end
@@ -231,8 +231,8 @@ end
 function printcollisions(wc)
     qtrees = [wc.maskqtree, wc.qtrees...]
     colllist = first.(batchcollision(qtrees))
-    get_text(i) = i>1 ? wc.words[i-1] : "#MASK#"
-    collwords = [(get_text(i), get_text(j)) for (i,j) in colllist]
+    get_text(i) = i > 1 ? wc.words[i - 1] : "#MASK#"
+    collwords = [(get_text(i), get_text(j)) for (i, j) in colllist]
     if length(colllist) > 0
         println("have $(length(colllist)) collisions.",
         " try setting a larger `nepoch` and `retry`, or lower `density` in `wordcloud` to fix that")
@@ -256,7 +256,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
     for r in 1:retry
         if r != 1
             rescale!(wc, 0.97)
-            dens = textoccupying(getwords(wc), getfontsizes(wc), getfonts(wc))/wc.params[:maskoccupying]
+            dens = textoccupying(getwords(wc), getfontsizes(wc), getfonts(wc)) / wc.params[:maskoccupying]
             println("#$r. try scale = $(wc.params[:scale]). The density is reduced to $dens")
         else
             println("#$r. scale = $(wc.params[:scale])")
@@ -272,26 +272,26 @@ function generate!(wc::WC, args...; retry=3, krags...)
         # @assert isempty(outofkernelbounds(wc.maskqtree, wc.qtrees))
         # colllist = first.(batchcollision(qtrees))
         # @assert length(colllist) == 0
-    else #check
+    else # check
         printcollisions(wc)
     end
     wc
 end
 
-function generate_animation!(wc::WC, args...; outputdir="gifresult", overwrite=outputdir!="gifresult", callbackstep=1, kargs...)
+function generate_animation!(wc::WC, args...; outputdir="gifresult", overwrite=outputdir != "gifresult", callbackstep=1, kargs...)
     if overwrite
         try rm(outputdir, force=true, recursive=true) catch end
     end
     try mkpath(outputdir) catch end
     gif = GIF(outputdir)
     record(wc, "0", gif)
-    re = generate!(wc, args...; callbackstep=callbackstep, callbackfun=ep->record(wc, string(ep), gif), kargs...)
+    re = generate!(wc, args...; callbackstep=callbackstep, callbackfun=ep -> record(wc, string(ep), gif), kargs...)
     Render.generate(gif)
     re
 end
 
 STATES = nameof.([wordcloud, initwords!, placewords!, fit!, generate!])
-STATEIDS = Dict([s=>i for (i,s) in enumerate(STATES)])
+STATEIDS = Dict([s => i for (i, s) in enumerate(STATES)])
 
 
 """
@@ -356,7 +356,7 @@ function pin(fun, wc::WC, mask::AbstractArray{Bool})
     finally
         wc.maskqtree = maskqtree
         wc.mask = wcmask
-        wc.params[:maskoccupying] = maskoccupying
+    wc.params[:maskoccupying] = maskoccupying
     end
     r
 end

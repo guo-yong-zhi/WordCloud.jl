@@ -1,14 +1,14 @@
 #md# ### Words
 using WordCloud
 stwords = ["us"];
-words_weights = processtext(open(pkgdir(WordCloud)*"/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords)
+words_weights = processtext(open(pkgdir(WordCloud) * "/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords)
 words_weights = Dict(zip(words_weights...))
 #md# ### Embedding
 #md# The positions of words can be initialized with pre-trained word vectors so that similar words will appear near each other.
 using Embeddings
 using TSne
 const embtable = load_embeddings(GloVe{:en})
-const get_word_index = Dict(word=>ii for (ii,word) in enumerate(embtable.vocab))
+const get_word_index = Dict(word => ii for (ii, word) in enumerate(embtable.vocab))
 function get_embedding(word)
     ind = get_word_index[word]
     emb = embtable.embeddings[:,ind]
@@ -31,18 +31,18 @@ embedded = tsne(vectors', 2)
 #md# 
 wc = wordcloud(
     words_weights,
-    maskshape = box,
-    masksize = (1000, 1000, 0),
-    density = 0.3,
-    colors = 0.3,
-    backgroundcolor = :maskcolor,
-    run = initwords!,
+    maskshape=box,
+    masksize=(1000, 1000, 0),
+    density=0.3,
+    colors=0.3,
+    backgroundcolor=:maskcolor,
+    run=initwords!,
     # angles = (0,45), font = "Helvetica thin", maskcolor=0.98,
 )
 
 pos = embedded
 mean = sum(pos, dims=1) / size(pos, 1)
-r = maximum(sqrt.(pos[:,1].^2 + pos[:,2].^2 ))
+r = maximum(sqrt.(pos[:,1].^2 + pos[:,2].^2))
 pos = (pos .- mean) ./ 2r
 sz = collect(reverse(size(wc.mask)))'
 sz0 = collect(getparameter(wc, :masksize)[1:2])'
@@ -58,16 +58,16 @@ paint(wc, "semantic_embedding.png")
 using Clustering
 V = vectors
 G = V' * V
-H = sum(V .^ 2, dims=1)
+H = sum(V.^2, dims=1)
 D = max.(0, (H .+ H' .- 2G))
-D ./= sum(D)/length(D)
-D .= .√D #the distance matrix
+D ./= sum(D) / length(D)
+D .= .√D # the distance matrix
 tree = hclust(D, linkage=:ward)
 lb = cutree(tree, h=2, k=10)
 println("$(length(lb)) words are divided into $(length(unique(lb))) groups")
 #md# 
 colors = parsecolor(:seaborn_dark)
-setcolors!(wc, words, colors[lb.%length(colors).+1])
+setcolors!(wc, words, colors[lb .% length(colors) .+ 1])
 recolor!(wc, style=:reset)
 paint(wc, "semantic_clustering.png")
 #md# ![](semantic_clustering.png)  

@@ -20,10 +20,10 @@ jieba.add_word("英特纳雄耐尔")
 
 wc = wordcloud(
     processtext(jieba.lcut(TheInternationale)), 
-    colors = "#DE2910",
+    colors="#DE2910",
 #     mask = WordCloud.randommask(400, color="#FFDE00"),
-    mask = pkgdir(WordCloud)*"/res/heart_mask.png",
-    maskcolor = "#FFDE00",
+    mask=pkgdir(WordCloud) * "/res/heart_mask.png",
+    maskcolor="#FFDE00",
     density=0.65) |> generate!
 
 println("结果保存在 中文.png")

@@ -1,13 +1,13 @@
 using WordCloud
-words = (1:200).%10 .|> string
-weights = (1:200).%11 .+ 1
+words = (1:200) .% 10 .|> string
+weights = (1:200) .% 11 .+ 1
 #md# ### SVG
 #md# You already have or want to manually generate a SVG mask with outline, you should set a proper transparent region
 svgmask = shape(squircle, 300, 200, outline=3, linecolor="navy", color="AliceBlue")
 wc1 = wordcloud(
     words, weights,
-    mask = svgmask,
-    transparent = c->c!=WordCloud.torgba("AliceBlue"), #the outline should be regarded as transparent too
+    mask=svgmask,
+    transparent=c -> c != WordCloud.torgba("AliceBlue"), # the outline should be regarded as transparent too
 ) |> generate!
 #md# Or, if you set the `maskcolor` in `wordcloud`, the transparent will be automatically set correctly.
 #md# ```julia
@@ -26,7 +26,7 @@ println("results are saved to outline.svg")
 bitmapmask = WordCloud.svg2bitmap(shape(squircle, 300, 200, color="AliceBlue", backgroundsize=(312, 212)))
 wc2 = wordcloud(
     words, weights,
-    mask = bitmapmask,
+    mask=bitmapmask,
 ) |> generate!
 paint(wc2, "outline.png", background=outline(bitmapmask, color="navy", linewidth=3, smoothness=0.8))
 println("results are saved to outline.png")

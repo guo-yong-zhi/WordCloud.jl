@@ -5,13 +5,13 @@
 #md# * generating with teleporting off
 using WordCloud
 wc = wordcloud(
-    processtext(open(pkgdir(WordCloud)*"/res/Donald Trump's Inaugural Address.txt"), maxweight=1, minweight=0),
-    density = 0.3,
-    maskshape = box,
-    masksize = (800, 600, 0),
-    backgroundcolor = :maskcolor,
-    angles = rand((0, (0, 90))),
-    run = identity,
+    processtext(open(pkgdir(WordCloud) * "/res/Donald Trump's Inaugural Address.txt"), maxweight=1, minweight=0),
+    density=0.3,
+    maskshape=box,
+    masksize=(800, 600, 0),
+    backgroundcolor=:maskcolor,
+    angles=rand((0, (0, 90))),
+    run=identity,
 )
 #md# place words in the center of the background to prevent encountering the mask boundary
 placewords!(wc, style=:gathering, reorder=WordCloud.shuffle, level=6, rt=1) # a proper level is important, and so is luck

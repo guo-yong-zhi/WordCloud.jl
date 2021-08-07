@@ -3,28 +3,28 @@ using WordCloud
 
 stwords = ["us"];
 println("==Obama's==")
-cs = WordCloud.randomscheme() #:Set1_8
-as = WordCloud.randomangles() #(0,90,45,-45)
-dens = 0.5 #not too high
+cs = WordCloud.randomscheme() # :Set1_8
+as = WordCloud.randomangles() # (0,90,45,-45)
+dens = 0.5 # not too high
 wca = wordcloud(
-    processtext(open(pkgdir(WordCloud)*"/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords), 
-    colors = cs,
-    angles = as,
-    density = dens,
-    backgroundcolor = :maskcolor,
+    processtext(open(pkgdir(WordCloud) * "/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords), 
+    colors=cs,
+    angles=as,
+    density=dens,
+    backgroundcolor=:maskcolor,
     ) |> generate!
 #md# ### Then generate the wordcloud on the right      
 println("==Trump's==")
 wcb = wordcloud(
-    processtext(open(pkgdir(WordCloud)*"/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords),
-    mask = getsvgmask(wca),
-    colors = cs,
-    angles = as,
-    density = dens,
-    backgroundcolor = :maskcolor,
-    maskcolor = getmaskcolor(wca),
-    font = getparameter(wca, :font),
-    run = x->nothing, #turn off the useless initword! and placewords! in advance
+    processtext(open(pkgdir(WordCloud) * "/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords),
+    mask=getsvgmask(wca),
+    colors=cs,
+    angles=as,
+    density=dens,
+    backgroundcolor=:maskcolor,
+    maskcolor=getmaskcolor(wca),
+    font=getparameter(wca, :font),
+    run=x -> nothing, # turn off the useless initword! and placewords! in advance
 )
 #md# Follow these steps to generate a wordcloud: initword! -> placewords! -> generate!
 samewords = getwords(wca) ∩ getwords(wcb)
@@ -40,26 +40,26 @@ println("=ignore defferent words=")
 keep(wcb, samewords) do
     @assert Set(wcb.words) == Set(samewords)
     centers = getpositions(wca, samewords, type=getcenter)
-    setpositions!(wcb, samewords, centers, type=setcenter!) #manually initialize the position,
-    setstate!(wcb, :placewords!) #and set the state flag
-    generate!(wcb, 1000, teleporting=false, retry=1) #turn off the teleporting; retry=1 means no rescale
+    setpositions!(wcb, samewords, centers, type=setcenter!) # manually initialize the position,
+    setstate!(wcb, :placewords!) # and set the state flag
+    generate!(wcb, 1000, teleporting=false, retry=1) # turn off the teleporting; retry=1 means no rescale
 end
 
 println("=pin same words=")
 pin(wcb, samewords) do
     placewords!(wcb)
-    generate!(wcb, 1000, retry=1) #allow teleport but don‘t allow rescale
+    generate!(wcb, 1000, retry=1) # allow teleport but don‘t allow rescale
 end
 
 if getstate(wcb) != :generate!
     println("=overall tuning=")
-    generate!(wcb, 1000, teleporting=setdiff(getwords(wcb), samewords), retry=2) #only teleport the unique words
+    generate!(wcb, 1000, teleporting=setdiff(getwords(wcb), samewords), retry=2) # only teleport the unique words
 end
 
 ma = paint(wca)
 mb = paint(wcb)
-h,w = size(ma)
-space = fill(mb[1], (h, w÷20))
+h, w = size(ma)
+space = fill(mb[1], (h, w ÷ 20))
 try mkdir("address_compare") catch end
 println("results are saved in address_compare")
 WordCloud.save("address_compare/compare.png", [ma space mb])

@@ -4,9 +4,9 @@ words = repeat(["we", "are", "the", "world"], 150)
 weights = repeat([1], length(words))
 wc = wordcloud(
         words, weights, 
-        mask = mask,
-        angles = 0,
-        colors = ("#006BB0", "#EFA90D", "#1D1815", "#059341", "#DC2F1F"),
+        mask=mask,
+        angles=0,
+        colors=("#006BB0", "#EFA90D", "#1D1815", "#059341", "#DC2F1F"),
         density=0.55,
         ) |> generate!
 println("results are saved to lettermask.svg")
