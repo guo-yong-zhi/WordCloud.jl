@@ -21,8 +21,12 @@ weights = randexp(length(words))
 wc1 = wordcloud(words, weights)
 generate!(wc1)
 paint(wc1, "random.svg")
-#Or it could be
+```
+Or it could be
+```julia
 wc2 = wordcloud("It's easy to generate word clouds") |> generate!
+```
+```julia
 wc3 = wordcloud(open(pkgdir(WordCloud)*"/res/alice.txt")) |> generate!
 ```
 # More Advanced Usage

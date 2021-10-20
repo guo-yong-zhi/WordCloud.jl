@@ -35,8 +35,18 @@ function initwords!(wc::WC; maxiter=5, tolerance=0.02)
     wc.params[:indsmap] = nothing
 
     scale = find_weight_scale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
+    nsmall = findlast(i->getfontsizes(wc, i)<=wc.params[:minfontsize], length(wc):-1:1)
+    nsmall = nsmall === nothing ? 0 : nsmall
     println("The density is set to $(params[:density]), with scale=$scale.")
-    println("The actural fontsize ∈ [$(getfontsizes(wc, length(wc.words))), $(getfontsizes(wc, 1))]")
+    println("The actural fontsize ∈ [$(getfontsizes(wc, length(wc))), $(getfontsizes(wc, 1))]")
+    if nsmall > 0
+        perc = round(Int, nsmall/length(wc)*100)
+        println("$nsmall words($perc%) are limited to the minimum font size.")
+        if perc > 75
+            @warn "It seems too crowded. You need to reduce the number of words or change to a larger mask."
+        end
+
+    end
     if getfontsizes(wc, 1) == wc.params[:maxfontsize]
         @warn "Some words are limited to the maximum font size. Please set a `maxfontsize` in `wordcloud` or set a `maxweight` in `processtext`."
     end
@@ -108,7 +118,7 @@ function rescale!(wc::WC, ratio::Real)
     qts = wc.qtrees
     centers = getcenter.(qts)
     wc.params[:scale] *= ratio
-    initword!.(wc, 1:length(wc.words))
+    initword!.(wc, 1:length(wc))
     setcenter!.(wc.qtrees, centers)
     wc
 end
@@ -300,7 +310,7 @@ keep some words and ignore the others, then execute the function. It's the oppos
 * keep(fun, wc, ws::Set{String}) #kepp all words in ws
 * keep(fun, wc, ws::Vector{String}) #keep all words in ws
 * keep(fun, wc, inds::Union{Integer, Vector{Integer}})
-* keep(fun, wc::WC, mask::AbstractArray{Bool}) #keep words. length(mask)==length(wc.words)
+* keep(fun, wc::WC, mask::AbstractArray{Bool}) #keep words. length(mask)==length(wc)
 """
 function keep(fun, wc::WC, mask::AbstractArray{Bool})
     mem = [wc.words, wc.weights, wc.imgs, wc.svgs, wc.qtrees, 
@@ -337,7 +347,7 @@ pin some words as if they were part of the background, then execute the function
 * pin(fun, wc, ws::Set{String}) #pin all words in ws
 * pin(fun, wc, ws::Vector{String}) #pin all words in ws
 * pin(fun, wc, inds::Union{Integer, Vector{Integer}})
-* pin(fun, wc::WC, mask::AbstractArray{Bool}) #pin words. length(mask)==length(wc.words)
+* pin(fun, wc::WC, mask::AbstractArray{Bool}) #pin words. length(mask)==length(wc)
 """           
 function pin(fun, wc::WC, mask::AbstractArray{Bool})
     maskqtree = wc.maskqtree
@@ -362,12 +372,12 @@ function pin(fun, wc::WC, mask::AbstractArray{Bool})
 end
 
 function keep(fun, wc, ind::Integer)
-    mask = falses(length(wc.words))
+    mask = falses(length(wc))
     mask[ind] = 1
     keep(fun, wc, mask)
 end
 function keep(fun, wc, inds::AbstractArray{<:Integer})
-    mask = falses(length(wc.words))
+    mask = falses(length(wc))
     mask[inds] .= 1
     keep(fun, wc, mask)
 end
@@ -381,18 +391,18 @@ ignore some words as if they don't exist, then execute the function. It's the op
 * ignore(fun, wc, ws::Set{String}) #ignore all words in ws
 * ignore(fun, wc, ws::Vector{String}) #ignore all words in ws
 * ignore(fun, wc, inds::Union{Integer, Vector{Integer}})
-* ignore(fun, wc::WC, mask::AbstractArray{Bool}) #ignore words. length(mask)==length(wc.words)
+* ignore(fun, wc::WC, mask::AbstractArray{Bool}) #ignore words. length(mask)==length(wc)
 """
 function ignore(fun, wc::WC, mask::AbstractArray{Bool})
     keep(fun, wc, .!mask)
 end
 function ignore(fun, wc, ind::Integer)
-    mask = falses(length(wc.words))
+    mask = falses(length(wc))
     mask[ind] = 1
     ignore(fun, wc, mask)
 end
 function ignore(fun, wc, inds::AbstractArray{<:Integer})
-    mask = falses(length(wc.words))
+    mask = falses(length(wc))
     mask[inds] .= 1
     ignore(fun, wc, mask)
 end
@@ -401,12 +411,12 @@ function ignore(fun, wc, ws)
 end
 
 function pin(fun, wc, ind::Integer)
-    mask = falses(length(wc.words))
+    mask = falses(length(wc))
     mask[ind] = 1
     pin(fun, wc, mask)
 end
 function pin(fun, wc, inds::AbstractArray{<:Integer})
-    mask = falses(length(wc.words))
+    mask = falses(length(wc))
     mask[inds] .= 1
     pin(fun, wc, mask)
 end

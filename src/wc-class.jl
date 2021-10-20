@@ -73,16 +73,18 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:angles] = angles
     params[:transparent] = transparent
     mask, maskqtree, groundsize, maskoccupying = preparemask(mask, transparent)
-    println("mask size ", size(mask))
     params[:groundsize] = groundsize
     params[:maskoccupying] = maskoccupying
     if maskoccupying == 0
         error("Have you set the right `transparent`? e.g. `transparent=mask[1,1]`")
     end
+    usablesize = round(Int, √maskoccupying)
+    avgsize = round(Int, sqrt(maskoccupying / length(words)))
+    println("mask size: $(size(mask, 1))×$(size(mask, 2)), usable area: $(usablesize)² ($(avgsize)²/word)")
+    
     @assert maskoccupying > 0
     if minfontsize == :auto
         minfontsize = min(8, sqrt(maskoccupying / length(words) / 8))
-        @show maskoccupying length(words)
     end
     if maxfontsize == :auto
         maxfontsize = minimum(size(mask)) / 2
@@ -203,6 +205,7 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
     font = font in DEFAULTSYMBOLS ? randomfont() : font
     colors, angles, mask, svgmask, font, transparent
 end
+Base.length(wc::WC) = length(wc.words)
 Base.getindex(wc::WC, inds...) = wc.words[inds...] => wc.weights[inds...]
 Base.lastindex(wc::WC) = lastindex(wc.words)
 Base.broadcastable(wc::WC) = Ref(wc)
@@ -304,7 +307,7 @@ end
 
 Base.show(io::IO, m::MIME"image/png", wc::WC) = Base.show(io, m, paint(wc::WC))
 Base.show(io::IO, m::MIME"image/svg+xml", wc::WC) = Base.show(io, m, paintsvg(wc::WC))
-Base.show(io::IO, m::MIME"text/plain", wc::WC) = print(io, "wordcloud(", wc.words, ") #", length(wc.words), "words")
+Base.show(io::IO, m::MIME"text/plain", wc::WC) = print(io, "wordcloud(", wc.words, ") #", length(wc), "words")
 function Base.showable(::MIME"image/png", wc::WC)
     STATEIDS[getstate(wc)] >= STATEIDS[:initwords!] && showable("image/png", zeros(ARGB, (1, 1)))
 end

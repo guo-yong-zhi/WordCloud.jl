@@ -22,7 +22,7 @@ WordCloud.Stuffing.trainepoch_EM2!,WordCloud.Stuffing.trainepoch_EM3!,
 WordCloud.Stuffing.trainepoch_P!,WordCloud.Stuffing.trainepoch_P2!,WordCloud.Stuffing.trainepoch_Px!]
 es = [[] for i in 1:length(wcs)]
 for (i, wc) in enumerate(wcs)
-    println("\n\n", "*"^10, "wordcloud - $(length(wc.words)) words on mask$(size(wc.mask))", "*"^10)
+    println("\n\n", "*"^10, "wordcloud - $(length(wc)) words on mask$(size(wc.mask))", "*"^10)
     for (j, t) in enumerate(ts)
         println("\n", i - 1, "==== ", j, "/", length(ts), " ", nameof(t))
         placewords!(wc)
@@ -32,6 +32,6 @@ for (i, wc) in enumerate(wcs)
 end
 println("SUMMARY")
 for (i, (wc, e)) in enumerate(zip(wcs, es))
-    println("##$(i - 1) $(length(wc.words))@$(size(wc.mask)):")
+    println("##$(i - 1) $(length(wc))@$(size(wc.mask)):")
     println(repr("text/plain", e))
 end

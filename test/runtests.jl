@@ -97,7 +97,7 @@ include("test_textprocessing.jl")
             angles=(0, 90));
     rescale!(wc, 1.23)
     pin(wc, ["little", "know"]) do 
-        @test length(wc.words) == 298
+        @test length(wc) == 298
         setpositions!(wc, 1, (2, 2))
         setpositions!(wc, [1, "Alice", "one"], (-1, -2))
         setpositions!(wc, [1, "Alice", "one"], [(10, 10),(10, 20),(21, 2)])
