@@ -67,7 +67,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
                 run=placewords!, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol,Any}()
-    colors, angles, mask, svgmask, font, transparent = getstylescheme(length(words); colors=colors, angles=angles, 
+    colors, angles, mask, svgmask, font, transparent = getstylescheme(words, weights; colors=colors, angles=angles, 
                                                     mask=mask, font=font, transparent=transparent, params=params, kargs...)
     params[:colors] = Any[colors...]
     params[:angles] = angles
@@ -85,6 +85,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     @assert maskoccupying > 0
     if minfontsize == :auto
         minfontsize = min(8, sqrt(maskoccupying / length(words) / 8))
+        #只和单词数量有关，和单词长度无关。不管单词多长，字号小了依然看不见。
     end
     if maxfontsize == :auto
         maxfontsize = minimum(size(mask)) / 2
@@ -108,7 +109,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     run(wc)
     wc
 end
-function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
+function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
                 masksize=:default, maskcolor=:default, 
                 backgroundcolor=:default, padding=:default,
                 outline=:default, linecolor=:auto, font=:auto,
@@ -119,8 +120,8 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
     maskcolor0 = maskcolor
     backgroundcolor0 = backgroundcolor
     colors = colors isa Symbol ? (colorschemes[colors].colors...,) : colors
-    colors = Iterators.take(iter_expand(colors), lengthwords) |> collect
-    angles = Iterators.take(iter_expand(angles), lengthwords) |> collect
+    colors = Iterators.take(iter_expand(colors), length(words)) |> collect
+    angles = Iterators.take(iter_expand(angles), length(words)) |> collect
     if mask == :auto
         if maskcolor in DEFAULTSYMBOLS
             if backgroundcolor in DEFAULTSYMBOLS || backgroundcolor == :maskcolor
@@ -129,7 +130,9 @@ function getstylescheme(lengthwords; colors=:auto, angles=:auto, mask=:auto,
                 maskcolor = backgroundcolor
             end
         end
-        masksize = masksize in DEFAULTSYMBOLS ? 40 * √lengthwords : masksize
+        weights = weights .^ 2
+        weights = weights ./ (sum(weights) / length(weights))
+        masksize = masksize in DEFAULTSYMBOLS ? 20 * √sum(length.(words) .* weights) : masksize #平均每个字母占据20 pixel*20 pixel 
         if backgroundcolor in DEFAULTSYMBOLS
             backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1, 1, 1, 0), :maskcolor)) : (1, 1, 1, 0)
         end

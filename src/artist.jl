@@ -69,9 +69,9 @@ function randomscheme()
     (colors...,)
 end
 function randommask(sz::Number=800; kargs...)
-    s = sz * sz * (0.5 + rand() / 2)
+    s = sz * sz * (0.75 + rand() / 4)
     ratio = (0.5 + rand() / 2)
-ratio = ratio > 0.9 ? 1.0 : ratio
+    ratio = ratio > 0.9 ? 1.0 : ratio
     h = round(Int, sqrt(s * ratio))
     w = round(Int, h / ratio)
     randommask(w, h; kargs...)

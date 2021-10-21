@@ -33,23 +33,9 @@ function initwords!(wc::WC; maxiter=5, tolerance=0.02)
     wc.params[:angles] .= wc.params[:angles][si]
     wc.params[:wordids] .= wc.params[:wordids][si]
     wc.params[:indsmap] = nothing
-
+    println("set density = $(params[:density])")
     scale = find_weight_scale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
-    nsmall = findlast(i->getfontsizes(wc, i)<=wc.params[:minfontsize], length(wc):-1:1)
-    nsmall = nsmall === nothing ? 0 : nsmall
-    println("The density is set to $(params[:density]), with scale=$scale.")
-    println("The actural fontsize ∈ [$(getfontsizes(wc, length(wc))), $(getfontsizes(wc, 1))]")
-    if nsmall > 0
-        perc = round(Int, nsmall/length(wc)*100)
-        println("$nsmall words($perc%) are limited to the minimum font size.")
-        if perc > 75
-            @warn "It seems too crowded. You need to reduce the number of words or change to a larger mask."
-        end
 
-    end
-    if getfontsizes(wc, 1) == wc.params[:maxfontsize]
-        @warn "Some words are limited to the maximum font size. Please set a `maxfontsize` in `wordcloud` or set a `maxweight` in `processtext`."
-    end
     initword!.(wc, 1:length(words))
     setstate!(wc, nameof(initwords!))
     wc
@@ -249,6 +235,22 @@ function printcollisions(wc)
         println("$collwords")
     end
 end
+function printfontsizes(wc)
+    nsmall = findlast(i->getfontsizes(wc, i)<=wc.params[:minfontsize], length(wc):-1:1)
+    nsmall = nsmall === nothing ? 0 : nsmall
+    println("fontsize ∈ [$(getfontsizes(wc, length(wc))), $(getfontsizes(wc, 1))]")
+    if nsmall > 0
+        perc = round(Int, nsmall/length(wc)*100)
+        println("$nsmall words($perc%) are limited to the minimum font size.")
+        if perc > 75
+            @warn "It seems too crowded. You need to reduce the number of words or change to a larger mask."
+        end
+
+    end
+    if getfontsizes(wc, 1) == wc.params[:maxfontsize]
+        @warn "Some words are limited to the maximum font size. Please set a `maxfontsize` in `wordcloud` or set a `maxweight` in `processtext`."
+    end
+end
 """
 # Positional Args
 * wc: the wordcloud to fit
@@ -267,10 +269,11 @@ function generate!(wc::WC, args...; retry=3, krags...)
         if r != 1
             rescale!(wc, 0.97)
             dens = textoccupying(getwords(wc), getfontsizes(wc), getfonts(wc)) / wc.params[:maskoccupying]
-            println("#$r. try scale = $(wc.params[:scale]). The density is reduced to $dens")
+            println("▸$r. try scale = $(wc.params[:scale]). The density is reduced to $dens")
         else
-            println("#$r. scale = $(wc.params[:scale])")
+            println("▸$r. scale = $(wc.params[:scale])")
         end
+        printfontsizes(wc)
         fit!(wc, args...; krags...)
         if getstate(wc) == :fit!
             break
