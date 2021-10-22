@@ -110,7 +110,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     wc
 end
 function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
-                masksize=:default, maskcolor=:default, 
+                masksize=:default, maskcolor=:default, keepmaskcontent=:auto,
                 backgroundcolor=:default, padding=:default,
                 outline=:default, linecolor=:auto, font=:auto,
                 transparent=:auto, params=Dict{Symbol,Any}(), kargs...)
@@ -131,7 +131,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
             end
         end
         weights = weights ./ (sum(weights) / length(weights)) #权重为平均值的单词为中等大小的单词。weights不平方，即按条目平均，而不是按面积平均
-        masksize = masksize in DEFAULTSYMBOLS ? 16 * √sum(length.(words) .* weights .^ 2) : masksize #中等大小的单词其每个字母占据16 pixel*16 pixel 
+        masksize = masksize in DEFAULTSYMBOLS ? 12 * √sum(length.(words) .* weights .^ 2) : masksize #中等大小的单词其每个字母占据16 pixel*16 pixel 
         if backgroundcolor in DEFAULTSYMBOLS
             backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1, 1, 1, 0), :maskcolor)) : (1, 1, 1, 0)
         end
@@ -152,7 +152,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
             push!(kg, :linecolor => linecolor)
         end
         padding = padding in DEFAULTSYMBOLS ? maximum(masksize) ÷ 10 : padding
-        mask = randommask(masksize, color=maskcolor; padding=padding, kg..., kargs...)
+        mask = randommask(masksize, color=maskcolor; padding=padding, keepcontent=keepmaskcontent, kg..., kargs...)
     else
         ms = masksize in DEFAULTSYMBOLS ? () : masksize
         if maskcolor == :auto && !issvg(loadmask(mask))

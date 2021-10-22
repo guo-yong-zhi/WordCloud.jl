@@ -1,5 +1,6 @@
 module Render
-export rendertext, overlay!, shape, ellipse, box, squircle, GIF, generate, parsecolor, rendertextoutlines,
+export rendertext, overlay!, shape, ellipse, box, squircle, ellipse_area, box_area, squircle_area, 
+    GIF, generate, parsecolor, rendertextoutlines,
     colorschemes, torgba, imagemask, outline, padding, dilate, imresize, recolor!, recolor
 export issvg, save, load, svg2bitmap, SVGImageType, svgstring
 using Luxor
@@ -340,6 +341,16 @@ function shape(shape_, width, height, args...;
     finish()
     d
 end
+ellipse_area(h, w) = π*h*w/4
+function box_area(h, w, r)
+    @assert min(h,w) >= 2r
+    h*w + (π-4)*r*r
+end
+function squircle_area(h, w; rt)
+    @assert rt < 100
+    h * w * (gamma(1+rt/2))^2 / gamma(1+rt)
+end
+gamma(z) = √(2π/z) * (1/ℯ*(z + 1 / (12z - 1/(10z))))^z
 
 using Printf
 function gif_callback_factory()

@@ -69,7 +69,7 @@ function randomscheme()
     (colors...,)
 end
 function randommask(sz::Number=800; kargs...)
-    s = sz * sz * (0.8 + 0.2rand())
+    s = sz * sz * (0.9 + 0.2rand())
     ratio = (0.5 + rand() / 2)
     ratio = ratio > 0.9 ? 1.0 : ratio
     h = round(Int, sqrt(s * ratio))
@@ -79,7 +79,8 @@ end
 function randommask(sz; kargs...)
     randommask(sz...; kargs...)
 end
-function randommask(w, h, args...; maskshape=:rand, kargs...)
+function randommask(w, h, args...; maskshape=:rand, keepcontent=:auto, kargs...)
+    keepcontent = keepcontent == :auto ? maskshape == :rand : keepcontent
     ran = Dict(box => 0.2, squircle => 0.7, ellipse => 1, :rand => rand())[maskshape]
     if ran <= 0.2
         return randombox(w, h, args...; kargs...)
@@ -89,16 +90,18 @@ function randommask(w, h, args...; maskshape=:rand, kargs...)
         return randomellipse(w, h, args...; kargs...)
     end
 end
-function randombox(w, h, r=:rand; kargs...)
+function randombox(w, h, r=:rand; keepcontent=false, kargs...)
     if r == :rand
         r = rand() * 0.5 - 0.05 # up to 0.45
         r = r < 0. ? 0. : r # 10% for 0.
         r = round(Int, h * r)
     end
+    sc = keepcontent ? sqrt(w*h/box_area(w, h, r)) : 1
+    w = round(Int, w*sc); h = round(Int, h*sc); r = round(Int, r*sc)
     println("shape(box, $w, $h, $r", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
     return shape(box, w, h, r; kargs...)
 end
-function randomsquircle(w, h; rt=:rand, kargs...)
+function randomsquircle(w, h; rt=:rand, keepcontent=false, kargs...)
     if rt == :rand
         if rand() < 0.8
             rt = rand()
@@ -107,14 +110,18 @@ function randomsquircle(w, h; rt=:rand, kargs...)
             if ran < 0.5
                 rt = 2
             else
-    rt = 1 + 1.5rand()
+                rt = 1 + 1.5rand()
             end
         end
     end
+    sc = keepcontent ? sqrt(w*h/squircle_area(w, h, rt=rt)) : 1
+    w = round(Int, w*sc); h = round(Int, h*sc)
     println("shape(squircle, $w, $h, rt=$rt", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
     return shape(squircle, w, h, rt=rt; kargs...)
 end
-function randomellipse(w, h; kargs...)
+function randomellipse(w, h; keepcontent=false, kargs...)
+    sc = keepcontent ? sqrt(w*h/ellipse_area(w, h)) : 1
+    w = round(Int, w*sc); h = round(Int, h*sc)
     println("shape(ellipse, $w, $h", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
     return shape(ellipse, w, h; kargs...)
 end
