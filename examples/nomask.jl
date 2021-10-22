@@ -8,7 +8,7 @@ wc = wordcloud(
     processtext(open(pkgdir(WordCloud) * "/res/Donald Trump's Inaugural Address.txt"), maxweight=1, minweight=0),
     density=0.3,
     maskshape=box,
-    masksize=(800, 600, 0),
+    masksize=(1200, 900, 0),
     backgroundcolor=:maskcolor,
     angles=rand((0, (0, 90))),
     run=identity,

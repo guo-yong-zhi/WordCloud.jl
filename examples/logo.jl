@@ -25,7 +25,7 @@ wc = wordcloud(
     colors=1,
     angles=-90:0,
     font="JuliaMono Black",
-    density=0.77,
+    density=0.7,
     )
 generate!(wc, 2000, retry=1)
 recolor!(wc, style=:main)

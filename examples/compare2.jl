@@ -84,10 +84,9 @@ WordCloud.printcollisions(wcb)
 ma = paint(wca)
 mb = paint(wcb)
 h, w = size(ma)
-space = fill(mb[1], (h, w ÷ 20))
 try mkdir("address_compare2") catch end
 println("results are saved in address_compare2")
-WordCloud.save("address_compare2/compare2.png", [ma space mb])
+WordCloud.save("address_compare2/compare2.png", [ma mb])
 #eval# try rm("address_compare2", force=true, recursive=true) catch end 
 gif = WordCloud.GIF("address_compare2")
 record(wca, "Obama", gif)
