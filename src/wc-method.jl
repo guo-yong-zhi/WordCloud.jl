@@ -35,12 +35,23 @@ function initwords!(wc::WC; maxiter=5, tolerance=0.02)
     wc.params[:indsmap] = nothing
     println("set density = $(params[:density])")
     scale = find_weight_scale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
-
+    printfontsizes(wc)
     initword!.(wc, 1:length(words))
     setstate!(wc, nameof(initwords!))
     wc
 end
 initword! = initwords!
+function printcollisions(wc)
+    qtrees = [wc.maskqtree, wc.qtrees...]
+    colllist = first.(batchcollision(qtrees))
+    get_text(i) = i > 1 ? wc.words[i - 1] : "#MASK#"
+    collwords = [(get_text(i), get_text(j)) for (i, j) in colllist]
+    if length(colllist) > 0
+        println("have $(length(colllist)) collisions.",
+        " try setting a larger `nepoch` and `retry`, or lower `density` in `wordcloud` to fix that")
+        println("$collwords")
+    end
+end
 """
 * placewords!(wc)
 * placewords!(wc, style=:uniform)
@@ -224,17 +235,6 @@ function fit!(wc, args...; teleporting=true, krags...)
     end
     wc
 end
-function printcollisions(wc)
-    qtrees = [wc.maskqtree, wc.qtrees...]
-    colllist = first.(batchcollision(qtrees))
-    get_text(i) = i > 1 ? wc.words[i - 1] : "#MASK#"
-    collwords = [(get_text(i), get_text(j)) for (i, j) in colllist]
-    if length(colllist) > 0
-        println("have $(length(colllist)) collisions.",
-        " try setting a larger `nepoch` and `retry`, or lower `density` in `wordcloud` to fix that")
-        println("$collwords")
-    end
-end
 function printfontsizes(wc)
     nsmall = findlast(i->getfontsizes(wc, i)<=wc.params[:minfontsize], length(wc):-1:1)
     nsmall = nsmall === nothing ? 0 : nsmall
@@ -242,8 +242,8 @@ function printfontsizes(wc)
     if nsmall > 0
         perc = round(Int, nsmall/length(wc)*100)
         println("$nsmall words($perc%) are limited to the minimum font size.")
-        if perc > 75
-            @warn "It seems too crowded. You need to reduce the number of words or change to a larger mask."
+        if perc > 70
+            @warn "It seems too crowded. Word size may be seriously distorted. You need to reduce the number of words or set a larger mask."
         end
 
     end
@@ -270,10 +270,10 @@ function generate!(wc::WC, args...; retry=3, krags...)
             rescale!(wc, 0.97)
             dens = textoccupying(getwords(wc), getfontsizes(wc), getfonts(wc)) / wc.params[:maskoccupying]
             println("▸$r. try scale = $(wc.params[:scale]). The density is reduced to $dens")
+            printfontsizes(wc)
         else
             println("▸$r. scale = $(wc.params[:scale])")
         end
-        printfontsizes(wc)
         fit!(wc, args...; krags...)
         if getstate(wc) == :fit!
             break

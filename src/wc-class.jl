@@ -130,9 +130,8 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
                 maskcolor = backgroundcolor
             end
         end
-        weights = weights .^ 2
-        weights = weights ./ (sum(weights) / length(weights))
-        masksize = masksize in DEFAULTSYMBOLS ? 20 * √sum(length.(words) .* weights) : masksize #平均每个字母占据20 pixel*20 pixel 
+        weights = weights ./ (sum(weights) / length(weights)) #权重为平均值的单词为中等大小的单词。weights不平方，即按条目平均，而不是按面积平均
+        masksize = masksize in DEFAULTSYMBOLS ? 16 * √sum(length.(words) .* weights .^ 2) : masksize #中等大小的单词其每个字母占据16 pixel*16 pixel 
         if backgroundcolor in DEFAULTSYMBOLS
             backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1, 1, 1, 0), :maskcolor)) : (1, 1, 1, 0)
         end

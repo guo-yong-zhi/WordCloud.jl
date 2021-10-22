@@ -96,7 +96,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
         setparameter!(wc, sc1, :scale)
         tg1 = textoccupying(words, getfontsizes(wc), fonts)
         dens = tg1 / ground_size
-        println("scale=$(getparameter(wc, :scale)), density=$dens\t", dens > density ? "↑" : "↓")
+        println("⋯scale=$(getparameter(wc, :scale)), density=$dens\t", dens > density ? "↑" : "↓")
         if tg1 > target
             if best_tar_H > tg1
                 best_tar_H = tg1
