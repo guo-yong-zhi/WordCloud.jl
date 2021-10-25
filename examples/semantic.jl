@@ -36,7 +36,7 @@ wc = wordcloud(
     density=0.3,
     colors=0.3,
     backgroundcolor=:maskcolor,
-    run=initwords!,
+    state=initwords!,
     # angles = (0,45), font = "Helvetica thin", maskcolor=0.98,
 )
 

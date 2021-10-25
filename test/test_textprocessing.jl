@@ -28,6 +28,7 @@
     @test lemmatize("ourselves") == "ourselves"
     @test lemmatize("loves") == "love"
     @test lemmatize("lives") in ("life", "live")
+    @test lemmatize("cos") == "cos"
     @test lemmatize("中文") == "中文"
 
     @test lemmatize!(Dict("dog" => 1, "dogs" => 2)) == Dict("dog" => 3)

@@ -11,7 +11,7 @@ wc = wordcloud(
     masksize=(1200, 900, 0),
     backgroundcolor=:maskcolor,
     angles=rand((0, (0, 90))),
-    run=identity,
+    state=identity,
 )
 #md# place words in the center of the background to prevent encountering the mask boundary
 placewords!(wc, style=:gathering, reorder=WordCloud.shuffle, level=6, rt=1) # a proper level is important, and so is luck

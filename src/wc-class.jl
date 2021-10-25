@@ -47,11 +47,11 @@ Positional arguments are used to specify words and weights, and can be in differ
 Some arguments depend on whether or not the `mask` is given or the type of the `mask` given.
 
 ### other keyword arguments
-The keyword argument `run` is a function. It will be called after the `wordcloud` object constructed.
-* run = placewords! #default setting, will initialize word's position
-* run = generate! #get result directly
-* run = initwords! #only initialize resources, such as rendering word images
-* run = x->nothing #do nothing
+The keyword argument `state` is a function. It will be called after the `wordcloud` object constructed. This will set the object to a specific state.
+* state = placewords! #default setting, will initialize word's position
+* state = generate! #get result directly
+* state = initwords! #only initialize resources, such as rendering word images
+* state = identity #do nothing
 ---NOTE
 * After getting the `wordcloud` object, these steps are needed to get the result picture: initwords! -> placewords! -> generate! -> paint
 * You can skip `placewords!` and/or `initwords!`, and the default action will be performed
@@ -64,7 +64,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
                 colors=:auto, angles=:auto, 
                 mask=:auto, font=:auto,
                 transparent=:auto, minfontsize=:auto, maxfontsize=:auto, spacing=1, density=0.5,
-                run=placewords!, kargs...)
+                state=placewords!, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol,Any}()
     colors, angles, mask, svgmask, font, transparent = getstylescheme(words, weights; colors=colors, angles=angles, 
@@ -106,11 +106,13 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     l = length(words)
     wc = WC(copy(words), float.(weights), Vector(undef, l), Vector{SVGImageType}(undef, l), 
     mask, svgmask, Vector(undef, l), maskqtree, params)
-    run(wc)
+    if state != wordcloud
+        state(wc)
+    end
     wc
 end
 function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
-                masksize=:default, maskcolor=:default, keepmaskcontent=:auto,
+                masksize=:default, maskcolor=:default, keepmaskarea=:auto,
                 backgroundcolor=:default, padding=:default,
                 outline=:default, linecolor=:auto, font=:auto,
                 transparent=:auto, params=Dict{Symbol,Any}(), kargs...)
@@ -152,7 +154,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
             push!(kg, :linecolor => linecolor)
         end
         padding = padding in DEFAULTSYMBOLS ? maximum(masksize) ÷ 10 : padding
-        mask = randommask(masksize, color=maskcolor; padding=padding, keepcontent=keepmaskcontent, kg..., kargs...)
+        mask = randommask(masksize, color=maskcolor; padding=padding, keeparea=keepmaskarea, kg..., kargs...)
     else
         ms = masksize in DEFAULTSYMBOLS ? () : masksize
         if maskcolor == :auto && !issvg(loadmask(mask))

@@ -5,7 +5,7 @@ wc = wordcloud(
     mask=shape(ellipse, 600, 500, color=(0.98, 0.97, 0.99), backgroundcolor=0.97, backgroundsize=(700, 550)),
     colors=:seaborn_icefire_gradient,
     angles=-90:90,
-    run=x -> x, # turn off the useless initword! and placewords! in advance
+    state=identity, # turn off the useless initword! and placewords! in advance
 )
 
 setwords!(wc, "Alice", "Alice in Wonderland") # replace the word 'Alice' with 'Alice in Wonderland'

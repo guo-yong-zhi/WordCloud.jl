@@ -6,7 +6,7 @@ l = 200
 wc = wordcloud(
     repeat(["placeholder"], l), repeat([1], l), 
     mask=shape(box, 400, 300, color=WordCloud.randommaskcolor(sc)),
-    run=x -> x)
+    state=identity)
 #md# * `words` & `weights` are just placeholders  
 #md# * style arguments like `colors`, `angles` and `density` have no effect  
 #md# 

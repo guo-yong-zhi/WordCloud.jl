@@ -12,7 +12,7 @@ wca = wordcloud(
     angles=as,
     density=dens,
     backgroundcolor=:maskcolor,
-    run=x -> nothing, # turn off the initword! and placewords! in advance
+    state=identity, # turn off the initword! and placewords! in advance
 )
 wcb = wordcloud(
     processtext(open(pkgdir(WordCloud) * "/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords),
@@ -23,7 +23,7 @@ wcb = wordcloud(
     backgroundcolor=:maskcolor,
     maskcolor=getmaskcolor(wca),
     font=getparameter(wca, :font),
-    run=x -> nothing, 
+    state=identity, 
 )
 #md# ### Make the same words the same style
 samewords = getwords(wca) ∩ getwords(wcb)

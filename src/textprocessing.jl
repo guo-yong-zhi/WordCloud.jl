@@ -149,8 +149,11 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     m = weights .> maxweight
     weights[m] .= log1p.(weights[m] .- maxweight) ./ 10 .+ maxweight
     weights .+= minweight
-    print("$(sum(m)) huge words, ")
-    println("keep top $(length(words)) words.")
+    nhuge = sum(m)
+    if nhuge > 0
+        print("$nhuge huge words, ")
+    end
+    println("keep the top $(length(words)) words.")
     words, weights
 end
 

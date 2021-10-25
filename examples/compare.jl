@@ -24,7 +24,7 @@ wcb = wordcloud(
     backgroundcolor=:maskcolor,
     maskcolor=getmaskcolor(wca),
     font=getparameter(wca, :font),
-    run=x -> nothing, # turn off the useless initword! and placewords! in advance
+    state=identity, # turn off the useless initword! and placewords! in advance
 )
 #md# Follow these steps to generate a wordcloud: initword! -> placewords! -> generate!
 samewords = getwords(wca) ∩ getwords(wcb)
