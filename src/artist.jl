@@ -61,7 +61,7 @@ function randomscheme()
         c = Render.colorschemes[scheme].colors
         colors = randsubseq(c, rand())
         colors = isempty(colors) ? c : colors
-        @show (scheme, length(colors))
+        println("color scheme: ", repr(scheme), ", length: ", length(colors))
     else
         colors = rand((0, 1, 0, 1, 0, 1, (0, 1), rand(), (rand(), rand())))
         @show colors
@@ -69,7 +69,7 @@ function randomscheme()
     (colors...,)
 end
 function randommask(sz::Number=800; kargs...)
-    s = sz * sz * (0.9 + 0.2rand())
+    s = sz * sz
     ratio = (0.5 + rand() / 2)
     ratio = ratio > 0.9 ? 1.0 : ratio
     h = round(Int, sqrt(s * ratio))
@@ -79,8 +79,7 @@ end
 function randommask(sz; kargs...)
     randommask(sz...; kargs...)
 end
-function randommask(w, h, args...; maskshape=:rand, keeparea=:auto, kargs...)
-    keeparea = keeparea == :auto ? maskshape == :rand : keeparea
+function randommask(w, h, args...; maskshape=:rand, kargs...)
     ran = Dict(box => 0.2, squircle => 0.7, ellipse => 1, :rand => rand())[maskshape]
     if ran <= 0.2
         return randombox(w, h, args...; kargs...)
@@ -113,6 +112,7 @@ function randomsquircle(w, h; rt=:rand, keeparea=false, kargs...)
                 rt = 1 + 1.5rand()
             end
         end
+        rt = round(rt, digits=3)
     end
     sc = keeparea ? sqrt(w*h/squircle_area(w, h, rt=rt)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
@@ -159,7 +159,10 @@ function randommaskcolor(colors)
             th1 = clamp(th2 - 0.15, 0, 1)
             default = 0.0
         end
-        maskcolor = rand((default, (rand(th1:0.001:th2), rand(th1:0.001:th2), rand(th1:0.001:th2))))
+        maskcolor = rand((default, 
+        (round(rand(th1:0.001:th2), digits=3),
+        round(rand(th1:0.001:th2), digits=3),
+        round(rand(th1:0.001:th2), digits=3))))
         # @show maskcolor
         return maskcolor
     catch e
@@ -172,7 +175,11 @@ function randomlinecolor(colors)
     if rand() < 0.8
         linecolor = rand((colors[1], colors[1], rand(colors)))
     else
-        linecolor = (rand(), rand(), rand(), min(1., 0.5 + rand() / 2))
+        linecolor = (
+            round(rand(), digits=3), 
+            round(rand(), digits=3), 
+            round(rand(), digits=3), 
+            min(1., round(0.5 + rand()/2, digits=3)))
     end
     linecolor
 end

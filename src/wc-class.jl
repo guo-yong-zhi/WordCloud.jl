@@ -35,7 +35,7 @@ Positional arguments are used to specify words and weights, and can be in differ
 * mask = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
 * mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #see doc of `shape`
 * maskshape: `box`, `ellipse`, or `squircle`.  See `shape`. Take effect only when the `mask` argument is not given.
-* masksize: Can be a tuple `(width, height)`, tuple `(width, height, cornerradius)` (for `box` only) or just a single number as hint. 
+* masksize: Can be a tuple `(width, height)`, tuple `(width, height, cornerradius)` (for `box` only) or just a single number as a side length hint. 
 * backgroundsize: See `shape`. Take effect only when the `mask` argument is not given.
 * maskcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original (keep it unchanged), :auto (auto recolor the mask).
 * backgroundcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original, :maskcolor, :auto (random choose between :original and :maskcolor)
@@ -78,9 +78,9 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     if maskoccupying == 0
         error("Have you set the right `transparent`? e.g. `transparent=mask[1,1]`")
     end
-    usablesize = round(Int, √maskoccupying)
+    contentsize = round(Int, √maskoccupying)
     avgsize = round(Int, sqrt(maskoccupying / length(words)))
-    println("mask size: $(size(mask, 1))×$(size(mask, 2)), usable area: $(usablesize)² ($(avgsize)²/word)")
+    println("mask size: $(size(mask, 1))×$(size(mask, 2)), content area: $(contentsize)² ($(avgsize)²/word)")
     
     @assert maskoccupying > 0
     if minfontsize == :auto
@@ -132,8 +132,11 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
                 maskcolor = backgroundcolor
             end
         end
+        if keepmaskarea in DEFAULTSYMBOLS
+            keepmaskarea = masksize in DEFAULTSYMBOLS
+        end
         weights = weights ./ (sum(weights) / length(weights)) #权重为平均值的单词为中等大小的单词。weights不平方，即按条目平均，而不是按面积平均
-        masksize = masksize in DEFAULTSYMBOLS ? 12 * √sum(length.(words) .* weights .^ 2) : masksize #中等大小的单词其每个字母占据16 pixel*16 pixel 
+        masksize = masksize in DEFAULTSYMBOLS ? 12 * √sum(length.(words) .* weights .^ 2) : masksize #中等大小的单词其每个字母占据12 pixel*12 pixel 
         if backgroundcolor in DEFAULTSYMBOLS
             backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1, 1, 1, 0), :maskcolor)) : (1, 1, 1, 0)
         end

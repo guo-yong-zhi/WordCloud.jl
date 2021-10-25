@@ -76,7 +76,7 @@ function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, 
                 && wc.weights[2] / wc.weights[1] < 0.5 
                 && prod(kernelsize(wc.qtrees[2])) / prod(kernelsize(wc.qtrees[1])) < 0.5))
         if centerlargestword
-            println("Center the largest word $(repr(getwords(wc, 1)))")
+            println("center the largest word $(repr(getwords(wc, 1)))")
         end
     end
     arg = ()
