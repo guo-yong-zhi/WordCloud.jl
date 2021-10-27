@@ -1,5 +1,6 @@
 module Render
-export rendertext, overlay!, shape, ellipse, box, squircle, ellipse_area, box_area, squircle_area, 
+export rendertext, overlay!, 
+    shape, ellipse, box, squircle, star, ngon, ellipse_area, box_area, squircle_area, star_area, ngon_area,
     GIF, generate, parsecolor, rendertextoutlines,
     colorschemes, torgba, imagemask, outline, padding, dilate, imresize, recolor!, recolor
 export issvg, save, load, svg2bitmap, SVGImageType, svgstring
@@ -311,18 +312,57 @@ end
 function squircle(pos, w, h, args...; kargs...)
     Luxor.squircle(pos, w / 2, h / 2, args...; kargs...)
 end
+function ngon(pos, w, h, npoints=5, orientation=0, args...; kargs...)
+    r = min(w, h) / 2
+    orientation = orientation -π / 2 # 尖朝上
+    Luxor.ngon(pos, r, npoints, orientation, args...; kargs...)
+end
+function star(pos, w, h, npoints=5, ratio=0.5, orientation=0, args...; kargs...)
+    r = min(w, h) / 2
+    orientation = orientation -π / 2 # 尖朝上
+    Luxor.star(pos, r, npoints, ratio, orientation, args...; kargs...)
+end
+
+ellipse_area(h, w) = π*h*w/4
+function box_area(h, w, r)
+    @assert min(h,w) >= 2r
+    h*w + (π-4)*r*r
+end
+function squircle_area(h, w; rt)
+    @assert rt < 100
+    h * w * (gamma(1+rt/2))^2 / gamma(1+rt)
+end
+gamma(z) = √(2π/z) * (1/ℯ*(z + 1 / (12z - 1/(10z))))^z
+function ngon_area(h, w, npoints=5)
+    r = min(w, h) / 2
+    θ = 2π / npoints
+    (r * r * sin(θ)) * npoints / 2
+end
+function star_area(h, w, npoints=5, ratio=0.5)
+    r = min(w, h) / 2
+    r2 = r * ratio
+    θ = π / npoints
+    (r * r2 * sin(θ)) * npoints
+end
 
 """
-generate a box, ellipse or squircle svg image
+generate a box, ellipse, squircle, ngon or star svg image
 ## Examples
 * shape(box, 80, 50) #80*50 box
 * shape(box, 80, 50, 4) #box with cornerradius=4
-* shape(squircle, 80, 50, rt=0.7) #squircle or superellipse. rt=0, rectangle; rt=1, ellipse; rt=2, rhombus.
+* shape(squircle, 80, 50, rt=0.7) #squircle or superellipse. rt=0, rectangle; rt=1, ellipse; rt=2, rhombus
+* shape(ngon, 120, 100, 12) #regular dodecagon (12 corners)
+* shape(ngon, 120, 100, 12, π/6) #oriented by π/6 
+* shape(star, 120, 100, 5) #pentagram (5 tips)
+* shape(star, 120, 100, 5, 0.7) #0.7 specifies the ratio of the smaller radius of the star and the larger
+* shape(star, 120, 100, 5, 0.7, π/2) #oriented by π/2
 * shape(ellipse, 80, 50, color="red") #80*50 red ellipse
 * shape(box, 80, 50, backgroundcolor=(0,1,0), backgroundsize=(100, 100)) #80*50 box on 100*100 green background
 * shape(squircle, 80, 50, outline=3, linecolor="red", backgroundcolor="gray") #add a red outline to the squircle
 outline: an Integer  
 padding: an Integer or a tuple of two Integers  
+backgroundsize: a tuple of two Integers
+color, linecolor, backgroundcolor: anything that can be parsed to a color
 """
 function shape(shape_, width, height, args...; 
     outline=0, linecolor="black", padding=0,
@@ -334,23 +374,13 @@ function shape(shape_, width, height, args...;
     if outline > 0
         setline(outline)
         setcolor(parsecolor(linecolor))
-        shape_(Point(0, 0), width, height, args..., :stroke; kargs...)
+        shape_(Point(0, 0), width, height, args...; action=:stroke, kargs...)
     end
     setcolor(parsecolor(color))
-    shape_(Point(0, 0), width, height, args..., :fill; kargs...)
+    shape_(Point(0, 0), width, height, args...; action=:fill, kargs...)
     finish()
     d
 end
-ellipse_area(h, w) = π*h*w/4
-function box_area(h, w, r)
-    @assert min(h,w) >= 2r
-    h*w + (π-4)*r*r
-end
-function squircle_area(h, w; rt)
-    @assert rt < 100
-    h * w * (gamma(1+rt/2))^2 / gamma(1+rt)
-end
-gamma(z) = √(2π/z) * (1/ℯ*(z + 1 / (12z - 1/(10z))))^z
 
 using Printf
 function gif_callback_factory()
