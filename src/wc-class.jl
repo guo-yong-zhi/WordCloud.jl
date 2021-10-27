@@ -156,7 +156,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
             push!(kg, :outline => outline)
             push!(kg, :linecolor => linecolor)
         end
-        padding = padding in DEFAULTSYMBOLS ? maximum(masksize) ÷ 10 : padding
+        padding = padding in DEFAULTSYMBOLS ? round(Int, maximum(masksize) ÷ 10) : padding
         mask = randommask(masksize, color=maskcolor; padding=padding, keeparea=keepmaskarea, kg..., kargs...)
     else
         ms = masksize in DEFAULTSYMBOLS ? () : masksize
