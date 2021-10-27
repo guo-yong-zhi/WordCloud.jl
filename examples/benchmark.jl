@@ -14,7 +14,7 @@ wc2 = wordcloud(words, weights, mask=shape(ellipse, 500, 500, color=0.15), angle
 
 words = [Random.randstring(rand(1:8)) for i in 1:5000]
 weights = randexp(length(words)) .* 2000 .+ rand(20:100, length(words));
-wc3 = wordcloud(words, weights, mask=shape(box, 2000, 2000, 100, color=0.15), angles=(0, 90, 45))
+wc3 = wordcloud(words, weights, mask=shape(box, 2000, 2000, cornerradius=100, color=0.15), angles=(0, 90, 45))
 
 wcs = [wc1, wc1, wc2, wc3] # repeat wc1 to trigger compiling
 ts = [WordCloud.Stuffing.trainepoch_E!,WordCloud.Stuffing.trainepoch_EM!,

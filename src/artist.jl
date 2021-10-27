@@ -70,7 +70,7 @@ function randomscheme()
 end
 function randommask(sz::Number=800; kargs...)
     s = sz * sz
-    ratio = (9/16 + rand()*7/9)
+    ratio = (9/16 + rand()*7/16)
     ratio = ratio > 0.9 ? 1.0 : ratio
     h = round(Int, sqrt(s * ratio))
     w = round(Int, h / ratio)
@@ -80,29 +80,31 @@ function randommask(sz; kargs...)
     randommask(sz...; kargs...)
 end
 function randommask(w, h, args...; maskshape=:rand, kargs...)
-    ran = Dict(squircle => 0.3, box => 0.5, ellipse => 0.7, ngon => 0.85, star => 1, :rand => rand())[maskshape]
-    if ran <= 0.3
+    ran = Dict(squircle => 0.4, box => 0.6, ellipse => 0.8, ngon => 0.9, star => 1, :rand => rand())[maskshape]
+    if ran <= 0.4
         return randomsquircle(w, h, args...; kargs...)
-    elseif ran <= 0.5
+    elseif ran <= 0.6
         return randombox(w, h, args...; kargs...)
-    elseif ran <= 0.7
+    elseif ran <= 0.8
         return randomellipse(w, h, args...; kargs...)
-    elseif ran <= 0.85
+    elseif ran <= 0.9
         return randomngon(w, h, args...; kargs...)
     else
         return randomstar(w, h, args...; kargs...)
     end
 end
-function randombox(w, h, r=:rand; keeparea=false, kargs...)
-    if r == :rand
+function randombox(w, h; cornerradius=:rand, keeparea=false, kargs...)
+    if cornerradius == :rand
         r = rand() * 0.5 - 0.05 # up to 0.45
         r = r < 0. ? 0. : r # 10% for 0.
         r = round(Int, h * r)
+    else
+        r = cornerradius
     end
-    sc = keeparea ? sqrt(w*h/box_area(w, h, r)) : 1
+    sc = keeparea ? sqrt(w*h/box_area(w, h, cornerradius=r)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc); r = round(Int, r*sc)
-    println("shape(box, $w, $h, $r", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
-    return shape(box, w, h, r; kargs...)
+    println("shape(box, $w, $h, cornerradius=$r", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
+    return shape(box, w, h; cornerradius=r, kargs...)
 end
 function randomsquircle(w, h; rt=:rand, keeparea=false, kargs...)
     if rt == :rand
@@ -129,23 +131,23 @@ function randomellipse(w, h; keeparea=false, kargs...)
     println("shape(ellipse, $w, $h", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
     return shape(ellipse, w, h; kargs...)
 end
-function randomngon(w, h, npoints=:rand, args...; keeparea=false, kargs...)
+function randomngon(w, h; npoints=:rand, keeparea=false, kargs...)
     npoints = npoints == :rand ? rand(3:12) : npoints
-    sc = keeparea ? sqrt(w*h/ngon_area(w, h, npoints)) : 1
+    sc = keeparea ? sqrt(w*h/ngon_area(w, h, npoints=npoints)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
-    println("shape(ngon, $w, $h, $npoints", join([", $(repr(v))" for v in args]), join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
-    return shape(ngon, w, h, npoints, args...; kargs...)
+    println("shape(ngon, $w, $h, npoints=$npoints", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
+    return shape(ngon, w, h; npoints=npoints, kargs...)
 end
-function randomstar(w, h, npoints=:rand, ratio=:rand, args...; keeparea=false, kargs...)
+function randomstar(w, h; npoints=:rand, starratio=:rand, keeparea=false, kargs...)
     npoints = npoints == :rand ? rand(5:12) : npoints
-    if ratio == :rand
-        ratio = cos(π/npoints) * (0.7 + 0.25rand())
-        ratio = round(ratio, digits=3)
+    if starratio == :rand
+        starratio = cos(π/npoints) * (0.7 + 0.25rand())
+        starratio = round(starratio, digits=3)
     end
-    sc = keeparea ? sqrt(w*h/star_area(w, h, npoints, ratio)) : 1
+    sc = keeparea ? sqrt(w*h/star_area(w, h, npoints=npoints, starratio=starratio)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
-    println("shape(star, $w, $h, $npoints, $ratio", join([", $(repr(v))" for v in args]), join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
-    return shape(star, w, h, npoints, ratio, args...; kargs...)
+    println("shape(star, $w, $h, npoints=$npoints, starratio=$starratio", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
+    return shape(star, w, h; npoints=npoints, starratio=starratio, kargs...)
 end
 function randomangles()
     a = rand((-1, 1)) .* rand((0, (0, 90), (0, 90, 45), (0, 90, 45, -45), (0, 45, -45), (45, -45), -90:90, 0:90))

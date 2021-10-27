@@ -16,9 +16,9 @@
     h = 300+300rand()
     w = 300+300rand()
     r = 10 + 140rand()
-    sh = WordCloud.Render.shape(box, h, w, r,color=0)
+    sh = WordCloud.Render.shape(box, h, w, cornerradius=r,color=0)
     true_area = WordCloud.occupying(WordCloud.imagemask(WordCloud.svg2bitmap(sh), (0, 0, 0, 0)), false)
-    @test 0.8 < WordCloud.box_area(h, w, r) / true_area < 1.2
+    @test 0.8 < WordCloud.box_area(h, w, cornerradius=r) / true_area < 1.2
 
     h = 300+300rand()
     w = 300+300rand()
@@ -30,15 +30,15 @@
     h = 300+300rand()
     w = 300+300rand()
     npoints = rand(3:10)
-    sh = WordCloud.Render.shape(ngon, h, w, npoints, color=0)
+    sh = WordCloud.Render.shape(ngon, h, w, npoints=npoints, color=0)
     true_area = WordCloud.occupying(WordCloud.imagemask(WordCloud.svg2bitmap(sh), (0, 0, 0, 0)), false)
-    @test 0.8 < WordCloud.ngon_area(h, w, npoints) / true_area < 1.2
+    @test 0.8 < WordCloud.ngon_area(h, w, npoints=npoints) / true_area < 1.2
 
     h = 300+300rand()
     w = 300+300rand()
     npoints = rand(3:10)
-    ratio = 0.3 + 0.7rand()
-    sh = WordCloud.Render.shape(star, h, w, npoints, ratio, color=0)
+    starratio = 0.3 + 0.7rand()
+    sh = WordCloud.Render.shape(star, h, w, npoints=npoints, starratio=starratio, color=0)
     true_area = WordCloud.occupying(WordCloud.imagemask(WordCloud.svg2bitmap(sh), (0, 0, 0, 0)), false)
-    WordCloud.star_area(h, w, npoints, ratio) / true_area 
+    WordCloud.star_area(h, w, npoints=npoints, starratio=starratio) / true_area 
 end

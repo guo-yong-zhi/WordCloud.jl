@@ -312,19 +312,23 @@ end
 function squircle(pos, w, h, args...; kargs...)
     Luxor.squircle(pos, w / 2, h / 2, args...; kargs...)
 end
-function ngon(pos, w, h, npoints=5, orientation=0, args...; kargs...)
+function box(pos, w, h, args...; cornerradius=0, kargs...)
+    Luxor.box(pos, w, h, cornerradius, args...; kargs...)
+end
+function ngon(pos, w, h, args...; npoints=5, orientation=0, kargs...)
     r = min(w, h) / 2
     orientation = orientation -π / 2 # 尖朝上
     Luxor.ngon(pos, r, npoints, orientation, args...; kargs...)
 end
-function star(pos, w, h, npoints=5, ratio=0.5, orientation=0, args...; kargs...)
+function star(pos, w, h, args...; npoints=5, starratio=0.5, orientation=0, kargs...)
     r = min(w, h) / 2
     orientation = orientation -π / 2 # 尖朝上
-    Luxor.star(pos, r, npoints, ratio, orientation, args...; kargs...)
+    Luxor.star(pos, r, npoints, starratio, orientation, args...; kargs...)
 end
 
 ellipse_area(h, w) = π*h*w/4
-function box_area(h, w, r)
+function box_area(h, w; cornerradius=0)
+    r = cornerradius
     @assert min(h,w) >= 2r
     h*w + (π-4)*r*r
 end
@@ -333,14 +337,14 @@ function squircle_area(h, w; rt)
     h * w * (gamma(1+rt/2))^2 / gamma(1+rt)
 end
 gamma(z) = √(2π/z) * (1/ℯ*(z + 1 / (12z - 1/(10z))))^z
-function ngon_area(h, w, npoints=5)
+function ngon_area(h, w; npoints=5)
     r = min(w, h) / 2
     θ = 2π / npoints
     (r * r * sin(θ)) * npoints / 2
 end
-function star_area(h, w, npoints=5, ratio=0.5)
+function star_area(h, w; npoints=5, starratio=0.5)
     r = min(w, h) / 2
-    r2 = r * ratio
+    r2 = r * starratio
     θ = π / npoints
     (r * r2 * sin(θ)) * npoints
 end
@@ -349,13 +353,11 @@ end
 generate a box, ellipse, squircle, ngon or star svg image
 ## Examples
 * shape(box, 80, 50) #80*50 box
-* shape(box, 80, 50, 4) #box with cornerradius=4
+* shape(box, 80, 50, cornerradius=4) #box with cornerradius=4
 * shape(squircle, 80, 50, rt=0.7) #squircle or superellipse. rt=0, rectangle; rt=1, ellipse; rt=2, rhombus
-* shape(ngon, 120, 100, 12) #regular dodecagon (12 corners)
-* shape(ngon, 120, 100, 12, π/6) #oriented by π/6 
-* shape(star, 120, 100, 5) #pentagram (5 tips)
-* shape(star, 120, 100, 5, 0.7) #0.7 specifies the ratio of the smaller radius of the star and the larger
-* shape(star, 120, 100, 5, 0.7, π/2) #oriented by π/2
+* shape(ngon, 120, 100, npoints=12, orientation=π/6) #regular dodecagon (12 corners) oriented by π/6 
+* shape(star, 120, 100, npoints=5) #pentagram (5 tips)
+* shape(star, 120, 100, npoints=5, starratio=0.7, orientation=π/2) #0.7 specifies the ratio of the smaller radius of the star and the larger; oriented by π/2
 * shape(ellipse, 80, 50, color="red") #80*50 red ellipse
 * shape(box, 80, 50, backgroundcolor=(0,1,0), backgroundsize=(100, 100)) #80*50 box on 100*100 green background
 * shape(squircle, 80, 50, outline=3, linecolor="red", backgroundcolor="gray") #add a red outline to the squircle
