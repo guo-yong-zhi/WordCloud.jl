@@ -183,7 +183,7 @@ function randomlinecolor(colors)
     end
     linecolor
 end
-randomoutline() = rand((0, 0, 0, rand((1, 2, 3, 4, 5))))
+randomoutline() = rand((0, 0, 0, rand(2:10)))
 function randomfont()
     font = rand(AvailableFonts)
     @show font

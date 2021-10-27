@@ -9,11 +9,11 @@ weights = (1:200) .% 11 .+ 1
 #md#     maskshape = squircle, rt=0.5,
 #md#     masksize = (300, 200),
 #md#     maskcolor = "AliceBlue",
-#md#     outline = 3, linecolor = "navy"
+#md#     outline = 6, linecolor = "navy"
 #md# ) |> generate!
 #md# ```
 #md# Or if you already have a SVG mask with outline, you should set a proper transparent region in `wordcloud`
-svgmask = shape(squircle, 300, 200, outline=3, linecolor="navy", color="AliceBlue")
+svgmask = shape(squircle, 300, 200, outline=6, linecolor="navy", color="AliceBlue")
 wc1 = wordcloud(
     words, weights,
     mask=svgmask,
@@ -30,7 +30,7 @@ wc2 = wordcloud(
     words, weights,
     mask=bitmapmask,
 ) |> generate!
-paint(wc2, "outline.png", background=outline(bitmapmask, color="navy", linewidth=3, smoothness=0.8))
+paint(wc2, "outline.png", background=outline(bitmapmask, color="navy", linewidth=6, smoothness=0.8))
 println("results are saved to outline.png")
 #md# ![](outline.png)  
 wc1, wc2

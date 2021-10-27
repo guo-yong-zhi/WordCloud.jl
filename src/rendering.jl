@@ -229,7 +229,7 @@ smoothness: 0 <= smoothness <= 1
 function outline(img; transparent=:auto, color="black", linewidth=2, smoothness=0.5)
     @assert linewidth >= 0
     mask = imagemask(img, transparent)
-    r = 4 * linewidth * smoothness
+    r = 2 * linewidth * smoothness
     # @show r
     mask2 = dilate2(mask, max(linewidth, round(r)), smoothness=smoothness)
     c = ARGB(parsecolor(color)) # https://github.com/JuliaGraphics/Colors.jl/issues/500
@@ -332,7 +332,7 @@ function shape(shape_, width, height, args...;
     origin()
     background(parsecolor(backgroundcolor))
     if outline > 0
-        setline(2outline)
+        setline(outline)
         setcolor(parsecolor(linecolor))
         shape_(Point(0, 0), width, height, args..., :stroke; kargs...)
     end
