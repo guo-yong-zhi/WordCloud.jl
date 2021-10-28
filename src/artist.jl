@@ -95,6 +95,10 @@ function randommask(args...; maskshape=:rand, kargs...)
         return randomstar(equalwh(args...)...; kargs...)
     end
 end
+function showcallshape(args...; kargs...)
+    ags = [string(args[1]), repr.(args[2:end])..., ("$k=$(repr(v))" for (k, v) in kargs)...]
+    println("shape(", join(ags, ", "), ")")
+end
 function randombox(w, h; cornerradius=:rand, keeparea=false, kargs...)
     if cornerradius == :rand
         r = rand() * 0.5 - 0.05 # up to 0.45
@@ -105,7 +109,7 @@ function randombox(w, h; cornerradius=:rand, keeparea=false, kargs...)
     end
     sc = keeparea ? sqrt(w*h/box_area(w, h, cornerradius=r)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc); r = round(Int, r*sc)
-    println("shape(box, $w, $h, cornerradius=$r", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
+    showcallshape(box, w, h; cornerradius=r, kargs...)
     return shape(box, w, h; cornerradius=r, kargs...)
 end
 function randomsquircle(w, h; rt=:rand, keeparea=false, kargs...)
@@ -124,32 +128,44 @@ function randomsquircle(w, h; rt=:rand, keeparea=false, kargs...)
     end
     sc = keeparea ? sqrt(w*h/squircle_area(w, h, rt=rt)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
-    println("shape(squircle, $w, $h, rt=$rt", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
+    showcallshape(squircle, w, h, rt=rt; kargs...)
     return shape(squircle, w, h, rt=rt; kargs...)
 end
 function randomellipse(w, h; keeparea=false, kargs...)
     sc = keeparea ? sqrt(w*h/ellipse_area(w, h)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
-    println("shape(ellipse, $w, $h", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
+    showcallshape(ellipse, w, h; kargs...)
     return shape(ellipse, w, h; kargs...)
 end
-function randomngon(w, h; npoints=:rand, keeparea=false, kargs...)
+function randomorientation(n)
+    if n == 3
+        ori = rand((0, π/2, π/3))
+    elseif n % 2 == 0
+        ori = rand((0, π/n))
+    else
+        ori = 0
+    end
+    return ori
+end
+function randomngon(w, h; npoints=:rand, orientation=:rand, keeparea=false, kargs...)
     npoints = npoints == :rand ? rand(3:12) : npoints
+    orientation = orientation == :rand ? randomorientation(npoints) : orientation
     sc = keeparea ? sqrt(w*h/ngon_area(w, h, npoints=npoints)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
-    println("shape(ngon, $w, $h, npoints=$npoints", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
-    return shape(ngon, w, h; npoints=npoints, kargs...)
+    showcallshape(ngon, w, h; npoints=npoints, orientation=orientation, kargs...)
+    return shape(ngon, w, h; npoints=npoints, orientation=orientation, kargs...)
 end
-function randomstar(w, h; npoints=:rand, starratio=:rand, keeparea=false, kargs...)
+function randomstar(w, h; npoints=:rand, starratio=:rand, orientation=:rand, keeparea=false, kargs...)
     npoints = npoints == :rand ? rand(5:12) : npoints
+    orientation = orientation == :rand ? randomorientation(npoints) : orientation
     if starratio == :rand
         starratio = cos(π/npoints) * (0.7 + 0.25rand())
         starratio = round(starratio, digits=3)
     end
     sc = keeparea ? sqrt(w*h/star_area(w, h, npoints=npoints, starratio=starratio)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
-    println("shape(star, $w, $h, npoints=$npoints, starratio=$starratio", join([", $k=$(repr(v))" for (k, v) in kargs]), ")")
-    return shape(star, w, h; npoints=npoints, starratio=starratio, kargs...)
+    showcallshape(star, w, h; npoints=npoints, starratio=starratio, orientation=orientation, kargs...)
+    return shape(star, w, h; npoints=npoints, starratio=starratio, orientation=orientation, kargs...)
 end
 function randomangles()
     a = rand((-1, 1)) .* rand((0, (0, 90), (0, 90, 45), (0, 90, 45, -45), (0, 45, -45), (45, -45), -90:90, 0:90))
