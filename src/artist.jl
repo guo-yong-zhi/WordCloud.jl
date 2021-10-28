@@ -68,29 +68,31 @@ function randomscheme()
     end
     (colors...,)
 end
-function randommask(sz::Number=800; kargs...)
+function randomwh(sz::Number=800)
     s = sz * sz
     ratio = (9/16 + rand()*7/16)
     ratio = ratio > 0.9 ? 1.0 : ratio
     h = round(Int, sqrt(s * ratio))
     w = round(Int, h / ratio)
-    randommask(w, h; kargs...)
+    w, h
 end
-function randommask(sz; kargs...)
-    randommask(sz...; kargs...)
-end
-function randommask(w, h, args...; maskshape=:rand, kargs...)
+randomwh(sz::Tuple) = sz
+randomwh(arg...) = arg
+equalwh(sz::Number=800) = sz, sz
+equalwh(sz::Tuple) = sz
+equalwh(arg...) = arg
+function randommask(args...; maskshape=:rand, kargs...)
     ran = Dict(squircle => 0.4, box => 0.6, ellipse => 0.8, ngon => 0.9, star => 1, :rand => rand())[maskshape]
     if ran <= 0.4
-        return randomsquircle(w, h, args...; kargs...)
+        return randomsquircle(randomwh(args...)...; kargs...)
     elseif ran <= 0.6
-        return randombox(w, h, args...; kargs...)
+        return randombox(randomwh(args...)...; kargs...)
     elseif ran <= 0.8
-        return randomellipse(w, h, args...; kargs...)
+        return randomellipse(randomwh(args...)...; kargs...)
     elseif ran <= 0.9
-        return randomngon(w, h, args...; kargs...)
+        return randomngon(equalwh(args...)...; kargs...)
     else
-        return randomstar(w, h, args...; kargs...)
+        return randomstar(equalwh(args...)...; kargs...)
     end
 end
 function randombox(w, h; cornerradius=:rand, keeparea=false, kargs...)
