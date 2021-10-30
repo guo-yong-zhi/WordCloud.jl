@@ -7,10 +7,8 @@ export issvg, save, load, svg2bitmap, SVGImageType, svgstring
 using Luxor
 using Colors
 using ColorSchemes
-using ImageMagick
+using FileIO
 import ImageTransformations.imresize
-
-save = Luxor.FileIO.save
 
 parsecolor(c) = parse(Colorant, c)
 parsecolor(tp::Tuple) = ARGB(tp...)
@@ -36,12 +34,12 @@ function load(fn::AbstractString)
     if endswith(fn, r".svg|.SVG")
         loadsvg(fn)
     else
-        ImageMagick.load(fn)
+        FileIO.load(fn)
     end
 end
 function load(file::IO)
     try
-        ImageMagick.load(file)
+        FileIO.load(file)
     catch
         seekstart(file)
         loadsvg(read(file, String))
@@ -408,7 +406,7 @@ end
 function GIF(directory)
     GIF(Iterators.Stateful(0:typemax(Int)), directory)
 end
-Base.push!(gif::GIF, img) = ImageMagick.save(gif.directory * @sprintf("/%010d.png", popfirst!(gif.counter)), img)
+Base.push!(gif::GIF, img) = save(gif.directory * @sprintf("/%010d.png", popfirst!(gif.counter)), img)
 (gif::GIF)(img) = Base.push!(gif, img)
 generate(gif::GIF, args...; kargs...) = try_gif_gen(gif.directory, args...; kargs...)
 end
