@@ -41,15 +41,20 @@ function initwords!(wc::WC; maxiter=5, tolerance=0.02)
     wc
 end
 initword! = initwords!
-function printcollisions(wc)
-    qtrees = [wc.maskqtree, wc.qtrees...]
-    colllist = first.(batchcollision(qtrees))
-    get_text(i) = i > 1 ? wc.words[i - 1] : "#MASK#"
-    collwords = [(get_text(i), get_text(j)) for (i, j) in colllist]
-    if length(colllist) > 0
-        println("have $(length(colllist)) collisions.",
-        " try setting a larger `nepoch` and `retry`, or lower `density` in `wordcloud` to fix that")
-        println("$collwords")
+function printfontsizes(wc)
+    nsmall = findlast(i->getfontsizes(wc, i)<=wc.params[:minfontsize], length(wc):-1:1)
+    nsmall = nsmall === nothing ? 0 : nsmall
+    println("fontsize ∈ [$(getfontsizes(wc, length(wc))), $(getfontsizes(wc, 1))]")
+    if nsmall > 0
+        perc = round(Int, nsmall/length(wc)*100)
+        println("$nsmall words($perc%) are limited to the minimum font size.")
+        if perc > 70
+            @warn "It seems too crowded. Word size may be seriously distorted. You need to reduce the number of words or set a larger mask."
+        end
+
+    end
+    if getfontsizes(wc, 1) == wc.params[:maxfontsize]
+        @warn "Some words are limited to the maximum font size. Please set a `maxfontsize` in `wordcloud` or set a `maxweight` in `processtext`."
     end
 end
 """
@@ -235,22 +240,17 @@ function fit!(wc, args...; teleporting=true, krags...)
     end
     wc
 end
-function printfontsizes(wc)
-    nsmall = findlast(i->getfontsizes(wc, i)<=wc.params[:minfontsize], length(wc):-1:1)
-    nsmall = nsmall === nothing ? 0 : nsmall
-    println("fontsize ∈ [$(getfontsizes(wc, length(wc))), $(getfontsizes(wc, 1))]")
-    if nsmall > 0
-        perc = round(Int, nsmall/length(wc)*100)
-        println("$nsmall words($perc%) are limited to the minimum font size.")
-        if perc > 70
-            @warn "It seems too crowded. Word size may be seriously distorted. You need to reduce the number of words or set a larger mask."
-        end
-
-    end
-    if getfontsizes(wc, 1) == wc.params[:maxfontsize]
-        @warn "Some words are limited to the maximum font size. Please set a `maxfontsize` in `wordcloud` or set a `maxweight` in `processtext`."
+function printcollisions(wc)
+    qtrees = [wc.maskqtree, wc.qtrees...]
+    colllist = first.(batchcollision(qtrees))
+    get_text(i) = i > 1 ? wc.words[i - 1] : "#MASK#"
+    collwords = [(get_text(i), get_text(j)) for (i, j) in colllist]
+    if length(colllist) > 0
+        @warn "Have $(length(colllist)) collisions. Try setting a larger `nepoch` and `retry`, or lower `density` in `wordcloud` to fix that"
+        println("$collwords")
     end
 end
+
 """
 # Positional Args
 * wc: the wordcloud to fit
