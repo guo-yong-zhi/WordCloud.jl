@@ -75,7 +75,7 @@ function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, 
     if centerlargestword == :auto
         c = wc.params[:groundsize] ÷ 2 # can't wc.maskqtree[1][end÷2]. 1D index goes wrong.
         kernelsize = Stuffing.kernelsize
-        centerlargestword = wc.maskqtree[1][c, c] == QTree.EMPTY && (
+        centerlargestword = wc.maskqtree[1][c, c] == QTrees.EMPTY && (
             length(wc.qtrees) < 2 
             || (length(wc.qtrees) >= 2 
                 && wc.weights[2] / wc.weights[1] < 0.5 
@@ -362,7 +362,7 @@ function pin(fun, wc::WC, mask::AbstractArray{Bool})
     wc.maskqtree = maskqtree2
     resultpic = copy(wc.mask)
     wc.mask = overlay!(resultpic, wc.imgs[mask], getpositions(wc, mask))
-    wc.params[:maskoccupying] = occupying(QTree.kernel(wc.maskqtree[1]), QTree.FULL)
+    wc.params[:maskoccupying] = occupying(QTrees.kernel(wc.maskqtree[1]), QTrees.FULL)
     r = nothing
     try
         r = ignore(fun, wc, mask)

@@ -15,7 +15,7 @@ include("test_textprocessing.jl")
     paint(wc)
     paint(wc, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2), ratio=0.5)
     paint(wc, "test.svg")
-    @test getparameter(wc, :maskoccupying) == WordCloud.occupying(WordCloud.QTree.kernel(wc.maskqtree[1]), WordCloud.QTree.FULL)
+    @test getparameter(wc, :maskoccupying) == WordCloud.occupying(WordCloud.QTrees.kernel(wc.maskqtree[1]), WordCloud.QTrees.FULL)
     
     # placewords!
     placewords!(wc, style=:gathering)
@@ -104,7 +104,7 @@ include("test_textprocessing.jl")
         setpositions!(wc, "time", (0, 0), type=setcenter!)
     end
     @test getpositions(wc, [1, "Alice", "one"])[3] == (21, 2)
-    @test WordCloud.QTree.kernelsize(wc.qtrees[WordCloud.index(wc, "time")]) == size(getimages(wc, "time"))
+    @test WordCloud.QTrees.kernelsize(wc.qtrees[WordCloud.index(wc, "time")]) == size(getimages(wc, "time"))
     @test .-reverse(size(getimages(wc, "time"))) .÷ 2 == getpositions(wc, ["time", getwords(wc, 9)])[1]
     w = getweights(wc, getwords(wc, [1,2]))
     setwords!(wc, [1,2], ["zz","yy"])

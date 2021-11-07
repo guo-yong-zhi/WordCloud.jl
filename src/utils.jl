@@ -1,4 +1,4 @@
-import .QTree.decode
+import .QTrees.decode
 import Colors.Gray
 function imageof(layer::AbstractMatrix{UInt8})
     Gray.(decode.(layer))

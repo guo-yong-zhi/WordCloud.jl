@@ -43,7 +43,7 @@ function preparemask(img, bgcolor)
     maskqt = maskqtree(mask)
     groundsize = size(maskqt[1], 1)
     maskoccupying = occupying(mask, false)
-    @assert maskoccupying == occupying(QTree.kernel(maskqt[1]), QTree.FULL)
+    @assert maskoccupying == occupying(QTrees.kernel(maskqt[1]), QTrees.FULL)
     return img, maskqt, groundsize, maskoccupying
 end
 
