@@ -72,19 +72,19 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:colors] = Any[colors...]
     params[:angles] = angles
     params[:transparent] = transparent
-    mask, maskqtree, groundsize, maskoccupying = preparemask(mask, transparent)
+    mask, maskqtree, groundsize, contentarea = preparemask(mask, transparent)
     params[:groundsize] = groundsize
-    params[:maskoccupying] = maskoccupying
-    if maskoccupying == 0
+    params[:contentarea] = contentarea
+    if contentarea == 0
         error("Have you set the right `transparent`? e.g. `transparent=mask[1,1]`")
     end
-    contentsize = round(Int, √maskoccupying)
-    avgsize = round(Int, sqrt(maskoccupying / length(words)))
+    contentsize = round(Int, √contentarea)
+    avgsize = round(Int, sqrt(contentarea / length(words)))
     println("mask size: $(size(mask, 1))×$(size(mask, 2)), content area: $(contentsize)² ($(avgsize)²/word)")
     
-    @assert maskoccupying > 0
+    @assert contentarea > 0
     if minfontsize == :auto
-        minfontsize = min(8, sqrt(maskoccupying / length(words) / 8))
+        minfontsize = min(8, sqrt(contentarea / length(words) / 8))
         #只和单词数量有关，和单词长度无关。不管单词多长，字号小了依然看不见。
     end
     if maxfontsize == :auto
@@ -135,8 +135,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         if keepmaskarea in DEFAULTSYMBOLS
             keepmaskarea = masksize in DEFAULTSYMBOLS
         end
-        weights = weights ./ (sum(weights) / length(weights)) #权重为平均值的单词为中等大小的单词。weights不平方，即按条目平均，而不是按面积平均
-        masksize = masksize in DEFAULTSYMBOLS ? 12 * √sum(length.(words) .* weights .^ 2) : masksize #中等大小的单词其每个字母占据12 pixel*12 pixel 
+        masksize = masksize in DEFAULTSYMBOLS ? contentsize_proposal(words, weights) : masksize
         if backgroundcolor in DEFAULTSYMBOLS
             backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1, 1, 1, 0), :maskcolor)) : (1, 1, 1, 0)
         end

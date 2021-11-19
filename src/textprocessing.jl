@@ -114,7 +114,7 @@ processtext the text, filter the words, and adjust the weights. return words vec
 * stopwords: a words Set
 * minlength, maxlength: min and max length of a word to be included
 * minfrequency: minimum frequency of a word to be included
-* maxnum: maximum number of words
+* maxnum: maximum number of words, defaults to 500
 * minweight, maxweight: within 0 ~ 1, set to adjust extreme weight
 * process: a function to process word counter, defaults to `casemerge!∘lemmatize!`
 """

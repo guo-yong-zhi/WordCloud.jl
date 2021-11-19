@@ -42,9 +42,9 @@ function preparemask(img, bgcolor)
     mask = imagemask(img, bgcolor)
     maskqt = maskqtree(mask)
     groundsize = size(maskqt[1], 1)
-    maskoccupying = occupying(mask, false)
-    @assert maskoccupying == occupying(QTrees.kernel(maskqt[1]), QTrees.FULL)
-    return img, maskqt, groundsize, maskoccupying
+    contentarea = occupying(mask, false)
+    @assert contentarea == occupying(QTrees.kernel(maskqt[1]), QTrees.FULL)
+    return img, maskqt, groundsize, contentarea
 end
 
 function prepareword(word, fontsize, color, angle; backgroundcolor=(0, 0, 0, 0), font="", border=0)
@@ -57,25 +57,30 @@ wordmask(img, bgcolor, border) = dilate(alpha.(img) .!= 0, border)
 # use `alpha` instead of `convert(eltype(img), parsecolor(bgcolor))`
 # https://github.com/JuliaGraphics/Luxor.jl/issues/107
 
+function contentsize_proposal(words, weights)
+    weights = weights ./ (sum(weights) / length(weights)) #权重为平均值的单词为中等大小的单词。weights不平方，即按条目平均，而不是按面积平均
+    12 * √sum(length.(words) .* weights .^ 2) #中等大小的单词其每个字母占据12 pixel*12 pixel 
+end
+
 ## weight_scale
 function scalestep(x₀, y₀, x₁, y₁, y)
     x₀ = x₀^2
     x₁ = x₁^2
     x = ((x₁ - x₀) * y + x₀ * y₁ - x₁ * y₀) / (y₁ - y₀) # 假设y=k*x^2+b
-    x > 0 ? √x : (√min(x₀, x₁)) / 2
+    (x > 0) ? √x : (√min(x₀, x₁)) / 2
 end
 
 function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tolerance=0.05)
-    ground_size = getparameter(wc, :maskoccupying)
+    area = getparameter(wc, :contentarea)
     words = wc.words
         if initialscale <= 0
-        initialscale = √(ground_size / length(words) / 0.45 * density) # 初始值假设字符的字面框面积占正方格比率为0.45（低估了汉字）
+        initialscale = √(area / length(words) / 0.45 * density) # 初始值假设字符的字面框面积占正方格比率为0.45（低估了汉字）
     end
     @assert sum(wc.weights.^2 .* length.(words)) / length(wc.weights) ≈ 1.0
-    target = density * ground_size
-    target_lower = (density - tolerance) * ground_size
-    target_upper = (density + tolerance) * ground_size
-    target = density * ground_size
+    target = density * area
+    target_lower = (density - tolerance) * area
+    target_upper = (density + tolerance) * area
+    target = density * area
     best_tar_H = Inf
     best_tar_L = -Inf
     best_scale_H = Inf
@@ -95,7 +100,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
         # cal tg1
         setparameter!(wc, sc1, :scale)
         tg1 = textoccupying(words, getfontsizes(wc), fonts)
-        dens = tg1 / ground_size
+        dens = tg1 / area
         println("⋯scale=$(getparameter(wc, :scale)), density=$dens\t", dens > density ? "↑" : "↓")
         if tg1 > target
             if best_tar_H > tg1
@@ -146,4 +151,3 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
     setparameter!(wc, sc1, :scale)
     return sc1
 end
-

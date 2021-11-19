@@ -49,7 +49,12 @@ function printfontsizes(wc)
         perc = round(Int, nsmall/length(wc)*100)
         println("$nsmall words($perc%) are limited to the minimum font size.")
         if perc > 70
-            @warn "It seems too crowded. Word size may be seriously distorted. You need to reduce the number of words or set a larger mask."
+            msg = "It seems too crowded. Word size may be seriously distorted. You need to reduce the number of words or set a larger mask."
+            ratio = contentsize_proposal(wc.words, wc.weights) / √getparameter(wc, :contentarea)
+            if ratio > 1.1
+                msg = msg * " Recommended mask scaling: ratio=$(round(ratio, digits=3))."
+            end
+            @warn msg
         end
 
     end
@@ -268,7 +273,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
     for r in 1:retry
         if r != 1
             rescale!(wc, 0.97)
-            dens = textoccupying(getwords(wc), getfontsizes(wc), getfonts(wc)) / wc.params[:maskoccupying]
+            dens = textoccupying(getwords(wc), getfontsizes(wc), getfonts(wc)) / wc.params[:contentarea]
             println("▸$r. try scale = $(wc.params[:scale]). The density is reduced to $dens")
             printfontsizes(wc)
         else
@@ -355,21 +360,21 @@ pin some words as if they were part of the background, then execute the function
 function pin(fun, wc::WC, mask::AbstractArray{Bool})
     maskqtree = wc.maskqtree
     wcmask = wc.mask
-    maskoccupying = wc.params[:maskoccupying]
+    contentarea = wc.params[:contentarea]
     
     maskqtree2 = deepcopy(maskqtree)
     Stuffing.overlap!(maskqtree2, wc.qtrees[mask])
     wc.maskqtree = maskqtree2
     resultpic = copy(wc.mask)
     wc.mask = overlay!(resultpic, wc.imgs[mask], getpositions(wc, mask))
-    wc.params[:maskoccupying] = occupying(QTrees.kernel(wc.maskqtree[1]), QTrees.FULL)
+    wc.params[:contentarea] = occupying(QTrees.kernel(wc.maskqtree[1]), QTrees.FULL)
     r = nothing
     try
         r = ignore(fun, wc, mask)
     finally
         wc.maskqtree = maskqtree
         wc.mask = wcmask
-    wc.params[:maskoccupying] = maskoccupying
+    wc.params[:contentarea] = contentarea
     end
     r
 end
