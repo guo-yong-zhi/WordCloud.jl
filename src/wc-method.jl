@@ -247,7 +247,7 @@ function fit!(wc, args...; teleporting=true, krags...)
 end
 function printcollisions(wc)
     qtrees = [wc.maskqtree, wc.qtrees...]
-    colllist = first.(batchcollision(qtrees))
+    colllist = first.(batchcollisions(qtrees))
     get_text(i) = i > 1 ? wc.words[i - 1] : "#MASK#"
     collwords = [(get_text(i), get_text(j)) for (i, j) in colllist]
     if length(colllist) > 0
@@ -288,7 +288,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
         println("$(wc.params[:epoch]) epochs")
         setstate!(wc, nameof(generate!))
         # @assert isempty(outofkernelbounds(wc.maskqtree, wc.qtrees))
-        # colllist = first.(batchcollision(qtrees))
+        # colllist = first.(collisions(qtrees))
         # @assert length(colllist) == 0
     else # check
         printcollisions(wc)
