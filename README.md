@@ -59,13 +59,13 @@ paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", li
 *The variable `WordCloud.examples` holds all available examples.* 
 You can also [**see more examples**](https://github.com/guo-yong-zhi/WordCloud-Gallery) or [**try it online**](https://mybinder.org/v2/gh/guo-yong-zhi/WordCloud.jl/master?filepath=examples.ipynb).  
 # About Implementation
-Unlike most other implementations, **WordCloud.jl** is programmed based on local grayscale gradient optimization. It’s a non-greedy algorithm in which words can be further [moved](res/animation.gif) after they are positioned. This means shrinking words is unnecessary, thus the word size can be kept unchanged during the adjustment. In addition, it allows words to be assigned to any initial position whether or not there will be an overlap. This enables the program to achieve the maximum flexibility. See also [Stuffing.jl](https://github.com/guo-yong-zhi/Stuffing.jl#algorithm-description).  
-* [x] 权重计算和单词预放置
-* [x] 基于四叉树（层次包围盒）碰撞检测
-* [x] 根据局部灰度梯度位置调整（训练迭代）
+Unlike most other implementations, WordCloud.jl is programmed based on image local gradient optimization. It’s a non-greedy algorithm in which words can be further [moved](res/animation.gif) after they are positioned. This means shrinking words is unnecessary, thus the word size can be kept unchanged during the adjustment. In addition, it allows words to be assigned to any initial position whether or not there will be an overlap. This enables the program to achieve the maximum flexibility. See also [Stuffing.jl - Algorithm Description](https://github.com/guo-yong-zhi/Stuffing.jl#algorithm-description).  
+* [x] 权重计算和单词位置初始化
+* [x] 基于四叉树（层次包围盒）的碰撞检测
+* [x] 根据局部灰度梯度平移单词（训练迭代）
 * [x] 引入动量加速训练
 * [x] 分代检测优化性能（for pairwise trainer)
-* [x] 定位树批量碰撞检测
+* [x] 区域四叉树批量碰撞检测
 * [x] LRU优化性能（for element-wise trainer)
 * [x] 控制字体大小和填充密度的策略
 * [x] 使用重新放置策略跳出局部最优
