@@ -2,7 +2,7 @@
 #md# * set a lower density
 #md# * set the background color as the mask color
 #md# * gathering style placement
-#md# * generating with teleporting off
+#md# * generating with repositioning off
 using WordCloud
 wc = wordcloud(
     processtext(open(pkgdir(WordCloud) * "/res/Donald Trump's Inaugural Address.txt"), maxweight=1, minweight=0),
@@ -18,8 +18,8 @@ wc = wordcloud(
 placewords!(wc, style=:gathering, reorder=WordCloud.shuffle, level=6, rt=1) # a proper level is important, and so is luck
 paint(wc, "nomask-placewords.svg")
 #md# ![](nomask-placewords.svg)
-#md# prevent teleporting words to the surrounding blank space
-generate!(wc, teleporting=false)
+#md# prevent repositioning words to the surrounding blank space
+generate!(wc, reposition=false)
 paint(wc, "nomask.svg")
 wc
 #eval# runexample(:nomask)

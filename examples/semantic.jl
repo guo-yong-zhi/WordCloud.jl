@@ -51,7 +51,7 @@ pos = round.(Int, pos .* sz0 .+ sz ./ 2)
 
 setpositions!(wc, words, eachrow(pos), type=setcenter!)
 setstate!(wc, :placewords!)
-generate!(wc, teleporting=false)
+generate!(wc, reposition=false)
 paint(wc, "semantic_embedding.png")
 #md# ![](semantic_embedding.png)  
 #md# ### Clustering
