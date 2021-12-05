@@ -3,7 +3,7 @@
 *.cov
 res/*/*
 address_compare*
-guxiang_animation*
+./animation*
 /*.png
 /*.svg
 /*.gif
