@@ -72,7 +72,8 @@ There is also a bool keyword argument `centerlargestword`, which can be set to c
 When you have set `style=:gathering`, you should disable repositioning in `generate!` at the same time, especially for big words. e.g. `generate!(wc, reposition=0.7)`.
 The keyword argument `reorder` is a function to reorder the words, which affects the order of placement. Like `reverse`, `WordCloud.shuffle`.
 """
-function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, reorder=identity, kargs...)
+function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, reorder=identity,
+    callbackstep=1, callbackfun=x->x, kargs...)
     if STATEIDS[getstate(wc)] < STATEIDS[:initwords!]
         initwords!(wc)
     end
@@ -93,6 +94,7 @@ function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, 
     if centerlargestword
         setcenter!(wc.qtrees[1],  wc.params[:groundsize] .÷ 2)
         arg = (2:length(wc.qtrees) |> collect,)
+        if 1 % callbackstep == 0 callbackfun(1) end
     end
     qtrees = reorder(wc.qtrees)
     if length(wc.qtrees) > 0 + centerlargestword
@@ -108,10 +110,12 @@ function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, 
             end
             p = min(50, 2 / rt)
             ind = Stuffing.place!(deepcopy(wc.maskqtree), qtrees, arg...; 
-                    roomfinder=findroom_gathering, p=p, kargs...)
+                    roomfinder=findroom_gathering, p=p,
+                    callbackstep=callbackstep, callbackfun=callbackfun, kargs...)
         else
             ind = Stuffing.place!(deepcopy(wc.maskqtree), qtrees, arg...;
-                    roomfinder=findroom_uniform, kargs...)
+                    roomfinder=findroom_uniform,
+                    callbackstep=callbackstep, callbackfun=callbackfun, kargs...)
         end
         if ind === nothing error("no room for placement") end
     end
@@ -119,7 +123,17 @@ function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, 
     setparameter!(wc, 0, :epoch)
     wc
 end
-
+function placewords_animation!(wc::WC, args...; outputdir="gifresult", overwrite=outputdir != "gifresult", callbackstep=1, kargs...)
+    if overwrite
+        try rm(outputdir, force=true, recursive=true) catch end
+    end
+    try mkpath(outputdir) catch end
+    gif = GIF(outputdir)
+    record(wc, "0", gif)
+    re = placewords!(wc, args...; callbackstep=callbackstep, callbackfun=i -> record(wc, string(i), gif), kargs...)
+    Render.generate(gif)
+    re
+end
 "rescale!(wc::WC, ratio::Real)\nRescale all words's size. set `ratio`<1 to shrink, set `ratio`>1 to expand."
 function rescale!(wc::WC, ratio::Real)
     qts = wc.qtrees
