@@ -32,13 +32,20 @@ wc3 = wordcloud(open(pkgdir(WordCloud)*"/res/alice.txt")) |> generate!
 # More Advanced Usage
 ```julia
 using WordCloud
+stopwords = WordCloud.stopwords_en ∪ ["said"]
+textfile = pkgdir(WordCloud)*"/res/alice.txt"
+maskfile = pkgdir(WordCloud)*"/res/alice_mask.png"
 wc = wordcloud(
-    processtext(open(pkgdir(WordCloud)*"/res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
-    mask = loadmask(pkgdir(WordCloud)*"/res/alice_mask.png", color="#faeef8"),
-    colors = :Set1_5,
-    angles = (0, 90),
-    density = 0.55) |> generate!
-paint(wc, "alice.png", ratio=0.5, background=outline(wc.mask, color="purple", linewidth=4))
+    processtext(open(textfile), stopwords=stopwords), 
+    mask = maskfile,
+    maskcolor="#faeef8",
+    outline = 4,
+    linecolor = "purple",
+    colors = :Set1_5,
+    angles = (0, 90),
+    font = "Tahoma",
+    density = 0.55) |> generate!
+paint(wc, "alice.png", ratio=0.5)
 ```
 *Run the command `runexample(:alice)` or `showexample(:alice)` to get the result.*  
 [![alice](res/alice.png)](./examples/alice.jl)

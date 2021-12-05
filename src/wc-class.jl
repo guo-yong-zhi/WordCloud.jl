@@ -34,9 +34,9 @@ Positional arguments are used to specify words and weights, and can be in differ
 * mask = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
 * mask = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
 * mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #see doc of `shape`
-* maskshape: `box`, `ellipse`, `squircle`, `ngon` or `star`.  See `shape`. Take effect only when the `mask` argument is not given.
+* maskshape: `box`, `ellipse`, `squircle`, `ngon` or `star`.  See `shape`. 
 * masksize: Can be a tuple `(width, height)` or just a single number as a side length hint. 
-* backgroundsize: See `shape`. Take effect only when the `mask` argument is not given.
+* backgroundsize: See `shape`. Need to be used with `masksize` to specify the padding size.
 * maskcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original (keep it unchanged), :auto (auto recolor the mask).
 * backgroundcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original, :maskcolor, :auto (random choose between :original and :maskcolor)
 * outline, linecolor, smoothness: See function `shape` and `outline`. 
@@ -63,7 +63,7 @@ wordcloud(text; kargs...) = wordcloud(processtext(text); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=:auto, angles=:auto, 
                 mask=:auto, font=:auto,
-                transparent=:auto, minfontsize=:auto, maxfontsize=:auto, spacing=1, density=0.5,
+                transparent=:auto, minfontsize=:auto, maxfontsize=:auto, spacing::Integer=1, density=0.5,
                 state=placewords!, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol,Any}()
