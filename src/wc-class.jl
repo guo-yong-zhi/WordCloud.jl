@@ -191,7 +191,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
     end
     if transparent == :auto
         if maskcolor ∉ DEFAULTSYMBOLS
-            transparent = c -> c != WordCloud.torgba(maskcolor)
+            transparent = c -> c[4] == 0 || c[1:3] != WordCloud.torgba(maskcolor)[1:3] #ignore the alpha channel when alpha!=0
         end
     end
     params[:masksize] = masksize
