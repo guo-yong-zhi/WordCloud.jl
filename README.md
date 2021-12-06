@@ -51,9 +51,9 @@ paint(wc, "alice.png", ratio=0.5)
 [![alice](res/alice.png)](./examples/alice.jl)
 
 # More Examples
-## Training animation
-[![animation](res/animation.gif)](./examples/animation.jl)  
-*Run the command `runexample(:animation)` or `showexample(:animation)` to get the result.* 
+## Fitting animation
+[![animation2](res/animation2.gif)](./examples/animation2.jl)  
+*Run the command `runexample(:animation2)` or `showexample(:animation2)` to get the result.* 
 ## Gathering style
 [![gathering](res/gathering.png)](./examples/gathering.jl)  
 *Run the command `runexample(:gathering)` or `showexample(:gathering)` to get the result.* 

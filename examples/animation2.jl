@@ -8,9 +8,9 @@ words = df[!, "Column2"]
 weights = df[!, "Column3"]
 
 wc = wordcloud(words, weights, density=0.65)
-gifdirectory = "animation2_fit"
+gifdirectory = "animation2"
 record(generate!, wc, 100, outputdir=gifdirectory)
-println("results are saved in animation2_fit")
+println("results are saved in animation2")
 wc
-#eval# runexample(:animation2_fit)
-#md# ![](animation2_fit/result.gif)  
+#eval# runexample(:animation2)
+#md# ![](animation2/result.gif)  

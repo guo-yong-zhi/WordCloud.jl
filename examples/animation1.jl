@@ -9,16 +9,16 @@ wc = wordcloud(
     angles = 0:90,
     state = initwords!)
 #md# ### uniform style
-gifdirectory = "animation1_placewords/uniform"
+gifdirectory = "animation1/uniform"
 setpositions!(wc, :, (-1000,-1000))
 record(placewords!, wc, style=:uniform, outputdir=gifdirectory, filter=i->i%(2^(i÷100))==0)
-#md# ![](animation1_placewords/uniform/result.gif)  
+#md# ![](animation1/uniform/result.gif)  
 #md# ### gathering style
-gifdirectory = "animation1_placewords/gathering"
+gifdirectory = "animation1/gathering"
 setpositions!(wc, :, (-1000,-1000))
 record(placewords!, wc, style=:gathering, outputdir=gifdirectory, filter=i->i%(2^(i÷100))==0)
-#md# ![](animation1_placewords/gathering/result.gif)  
+#md# ![](animation1/gathering/result.gif)  
 #md# 
-println("results are saved in animation1_placewords")
+println("results are saved in animation1")
 wc
-#eval# runexample(:animation1_placewords)
+#eval# runexample(:animation1)
