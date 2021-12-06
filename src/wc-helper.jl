@@ -144,13 +144,22 @@ function paint(wc::WC, file, args...; kargs...)
     img
 end
         
-function record(wc::WC, label::AbstractString, gif_callback=x->x)
-#     @show size(n1)
-    resultpic = overlay!(paint(wc), 
-        rendertextoutlines(label, 32, color="black", linecolor="white", linewidth=1), 20, 20)
-    gif_callback(resultpic)
+function frame(wc::WC, label::AbstractString)
+    overlay!(paint(wc), rendertextoutlines(label, 32, color="black", linecolor="white", linewidth=1), 20, 20)
 end
 
+function record(func::Function, wc::WC, args...; 
+    outputdir="record_result", overwrite=outputdir != "record_result", filter=i->true, kargs...)
+    if overwrite
+        try rm(outputdir, force=true, recursive=true) catch end
+    end
+    gif = GIF(outputdir)
+    callback = i -> (filter(i) && gif(frame(wc, string(i))))
+    callback(0)
+    re = func(wc, args...; callback=callback, kargs...)
+    Render.generate(gif)
+    re
+end
 
 runexample(example=:random) = @time evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
 showexample(example=:random) = read(pkgdir(WordCloud)*"/examples/$(example).jl", String)|>print

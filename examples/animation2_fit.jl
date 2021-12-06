@@ -9,8 +9,7 @@ weights = df[!, "Column3"]
 
 wc = wordcloud(words, weights, density=0.65)
 gifdirectory = "animation2_fit"
-#eval# try rm("animation2_fit", force=true, recursive=true) catch end 
-generate_animation!(wc, 100, outputdir=gifdirectory)
+record(generate!, wc, 100, outputdir=gifdirectory)
 println("results are saved in animation2_fit")
 wc
 #eval# runexample(:animation2_fit)

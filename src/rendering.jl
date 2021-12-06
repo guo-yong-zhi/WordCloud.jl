@@ -404,6 +404,7 @@ struct GIF
     directory::String
 end
 function GIF(directory)
+    try mkpath(directory) catch end
     GIF(Iterators.Stateful(0:typemax(Int)), directory)
 end
 Base.push!(gif::GIF, img) = save(gif.directory * @sprintf("/%010d.png", popfirst!(gif.counter)), img)

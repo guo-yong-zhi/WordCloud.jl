@@ -120,17 +120,7 @@ function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, 
     setparameter!(wc, 0, :epoch)
     wc
 end
-function placewords_animation!(wc::WC, args...; outputdir="gifresult", overwrite=outputdir != "gifresult", callback=i->i%1==0, kargs...)
-    if overwrite
-        try rm(outputdir, force=true, recursive=true) catch end
-    end
-    try mkpath(outputdir) catch end
-    gif = GIF(outputdir)
-    record(wc, "0", gif)
-    re = placewords!(wc, args...; callback=i -> callback(i) && record(wc, string(i), gif), kargs...)
-    Render.generate(gif)
-    re
-end
+
 "rescale!(wc::WC, ratio::Real)\nRescale all words's size. set `ratio`<1 to shrink, set `ratio`>1 to expand."
 function rescale!(wc::WC, ratio::Real)
     qts = wc.qtrees
@@ -305,18 +295,6 @@ function generate!(wc::WC, args...; retry=3, krags...)
         printcollisions(wc)
     end
     wc
-end
-
-function generate_animation!(wc::WC, args...; outputdir="gifresult", overwrite=outputdir != "gifresult", callback=i->i%1==0, kargs...)
-    if overwrite
-        try rm(outputdir, force=true, recursive=true) catch end
-    end
-    try mkpath(outputdir) catch end
-    gif = GIF(outputdir)
-    record(wc, "0", gif)
-    re = generate!(wc, args...; callback=ep -> callback(ep) && record(wc, string(ep), gif), kargs...)
-    Render.generate(gif)
-    re
 end
 
 STATES = nameof.([wordcloud, initwords!, placewords!, fit!, generate!])
