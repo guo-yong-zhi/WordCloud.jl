@@ -298,7 +298,7 @@ getsvgmask(wc::WC) = wc.svgmask
 getmaskcolor(wc::WC) = getparameter(wc, :maskcolor)
 function getbackgroundcolor(wc::WC)
     c = getparameter(wc, :backgroundcolor)
-    c == :maskcolor && (c = getmaskcolor(wc))
+    c == :maskcolor ? getmaskcolor(wc) : c
 end
 setbackgroundcolor!(wc::WC, v) = (setparameter!(wc, v, :backgroundcolor); v)
 @doc getdoc * " Keyword argment `type` can be `getshift` or `getcenter`."
