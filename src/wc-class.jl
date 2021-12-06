@@ -117,11 +117,11 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
                 outline=:default, linecolor=:auto, font=:auto,
                 transparent=:auto, params=Dict{Symbol,Any}(), kargs...)
     merge!(params, kargs)
-    colors = colors in DEFAULTSYMBOLS ? randomscheme() : colors
-    angles = angles in DEFAULTSYMBOLS ? randomangles() : angles
+    colors in DEFAULTSYMBOLS && (colors = randomscheme())
+    angles in DEFAULTSYMBOLS && (angles = randomangles())
     maskcolor0 = maskcolor
     backgroundcolor0 = backgroundcolor
-    colors = colors isa Symbol ? (colorschemes[colors].colors...,) : colors
+    colors isa Symbol && (colors = (colorschemes[colors].colors...,))
     colors = Iterators.take(iter_expand(colors), length(words)) |> collect
     angles = Iterators.take(iter_expand(angles), length(words)) |> collect
     if mask == :auto
@@ -135,7 +135,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         if keepmaskarea in DEFAULTSYMBOLS
             keepmaskarea = masksize in DEFAULTSYMBOLS
         end
-        masksize = masksize in DEFAULTSYMBOLS ? contentsize_proposal(words, weights) : masksize
+        masksize in DEFAULTSYMBOLS && (masksize = contentsize_proposal(words, weights))
         if backgroundcolor in DEFAULTSYMBOLS
             backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1, 1, 1, 0), :maskcolor)) : (1, 1, 1, 0)
         end
@@ -155,7 +155,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
             push!(kg, :outline => outline)
             push!(kg, :linecolor => linecolor)
         end
-        padding = padding in DEFAULTSYMBOLS ? round(Int, maximum(masksize) ÷ 10) : padding
+        padding in DEFAULTSYMBOLS && (padding = round(Int, maximum(masksize) ÷ 10))
         mask = randommask(masksize, color=maskcolor; padding=padding, keeparea=keepmaskarea, kg..., kargs...)
     else
         ms = masksize in DEFAULTSYMBOLS ? () : masksize
@@ -185,7 +185,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         if linecolor in DEFAULTSYMBOLS && outline != 0
             linecolor = randomlinecolor(colors)
         end
-        padding = padding in DEFAULTSYMBOLS ? 0 : padding
+        padding in DEFAULTSYMBOLS && (padding = 0)
         mask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, 
             outline=outline, linecolor=linecolor,padding=padding, kargs...)
     end
@@ -208,7 +208,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
             Render.recolor!(mask, maskcolor) # svg2bitmap后有杂色 https://github.com/JuliaGraphics/Luxor.jl/issues/160
         end
     end
-    font = font in DEFAULTSYMBOLS ? randomfont() : font
+    font in DEFAULTSYMBOLS && (font = randomfont())
     colors, angles, mask, svgmask, font, transparent
 end
 Base.length(wc::WC) = length(wc.words)
@@ -298,7 +298,7 @@ getsvgmask(wc::WC) = wc.svgmask
 getmaskcolor(wc::WC) = getparameter(wc, :maskcolor)
 function getbackgroundcolor(wc::WC)
     c = getparameter(wc, :backgroundcolor)
-    c = c == :maskcolor ? getmaskcolor(wc) : c
+    c == :maskcolor && (c = getmaskcolor(wc))
 end
 setbackgroundcolor!(wc::WC, v) = (setparameter!(wc, v, :backgroundcolor); v)
 @doc getdoc * " Keyword argment `type` can be `getshift` or `getcenter`."

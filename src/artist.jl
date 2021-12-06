@@ -60,7 +60,7 @@ function randomscheme()
         scheme = rand(Schemes)
         c = Render.colorschemes[scheme].colors
         colors = randsubseq(c, rand())
-        colors = isempty(colors) ? c : colors
+        isempty(colors) &&  (colors = c)
         println("color scheme: ", repr(scheme), ", length: ", length(colors))
     else
         colors = rand((0, 1, 0, 1, 0, 1, (0, 1), rand(), (rand(), rand())))
@@ -71,7 +71,7 @@ end
 function randomwh(sz::Number=800)
     s = sz * sz
     ratio = (9/16 + rand()*7/16)
-    ratio = ratio > 0.9 ? 1.0 : ratio
+    ratio > 0.9 && (ratio = 1.0)
     h = round(Int, sqrt(s * ratio))
     w = round(Int, h / ratio)
     w, h
@@ -102,7 +102,7 @@ end
 function randombox(w, h; cornerradius=:rand, keeparea=false, kargs...)
     if cornerradius == :rand
         r = rand() * 0.5 - 0.05 # up to 0.45
-        r = r < 0. ? 0. : r # 10% for 0.
+        r < 0. && (r = 0.) # 10% for 0.
         r = round(Int, h * r)
     else
         r = cornerradius
@@ -148,16 +148,16 @@ function randomorientation(n)
     return ori
 end
 function randomngon(w, h; npoints=:rand, orientation=:rand, keeparea=false, kargs...)
-    npoints = npoints == :rand ? rand(3:12) : npoints
-    orientation = orientation == :rand ? randomorientation(npoints) : orientation
+    npoints == :rand && (npoints = rand(3:12))
+    orientation == :rand && (orientation = randomorientation(npoints))
     sc = keeparea ? sqrt(w*h/ngon_area(w, h, npoints=npoints)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
     showcallshape(ngon, w, h; npoints=npoints, orientation=orientation, kargs...)
     return shape(ngon, w, h; npoints=npoints, orientation=orientation, kargs...)
 end
 function randomstar(w, h; npoints=:rand, starratio=:rand, orientation=:rand, keeparea=false, kargs...)
-    npoints = npoints == :rand ? rand(5:12) : npoints
-    orientation = orientation == :rand ? randomorientation(npoints) : orientation
+    npoints == :rand && (npoints = rand(5:12))
+    orientation == :rand && (orientation = randomorientation(npoints))
     if starratio == :rand
         starratio = cos(π/npoints) * (0.7 + 0.25rand())
         starratio = round(starratio, digits=3)

@@ -272,7 +272,7 @@ function overlay(color1::TransparentRGB, color2::TransparentRGB)
     c1 = [Colors.red(color1), Colors.green(color1), Colors.blue(color1)]
     c2 = [Colors.red(color2), Colors.green(color2), Colors.blue(color2)]
     a = a1 + a2 - a1 * a2
-    c = (c1 .* a1 .* (1 - a2) .+ c2 .* a2) ./ (a > 0 ? a : 1)
+    c = (c1 .* a1 .* (1 - a2) .+ c2 .* a2) ./ ifelse(a > 0, a, 1)
 #     @show c, a
     typeof(color1)(min.(1, c)..., min(1, a))
 end

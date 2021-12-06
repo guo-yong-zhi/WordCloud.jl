@@ -43,7 +43,7 @@ end
 initword! = initwords!
 function printfontsizes(wc)
     nsmall = findlast(i->getfontsizes(wc, i)<=wc.params[:minfontsize], length(wc):-1:1)
-    nsmall = nsmall === nothing ? 0 : nsmall
+    nsmall === nothing && (nsmall = 0)
     println("fontsize ∈ [$(getfontsizes(wc, length(wc))), $(getfontsizes(wc, 1))]")
     if nsmall > 0
         perc = round(Int, nsmall/length(wc)*100)
@@ -245,7 +245,7 @@ end
 * trainer: appoint a training engine
 """
 function fit!(wc, args...; reposition=true, krags...)
-    reposition = reposition isa Union{Function,Number} ? reposition : index(wc, reposition) # Bool <: Number
+    reposition isa Union{Function,Number} || (reposition = index(wc, reposition)) # Bool <: Number
     if STATEIDS[getstate(wc)] < STATEIDS[:placewords!]
         placewords!(wc)
     end

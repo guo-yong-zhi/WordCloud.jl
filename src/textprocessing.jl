@@ -125,7 +125,7 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     maxnum=500,
     minweight=1 / maxnum, maxweight=:auto,
     process=casemerge! ∘ lemmatize!)
-    stopwords = stopwords isa AbstractSet ? stopwords : Set(stopwords)
+    stopwords isa AbstractSet || (stopwords = Set(stopwords))
     counter = process(counter)
     print("$(sum(values(counter))) words, ")
     print("$(length(counter)) different words, ")
@@ -145,7 +145,7 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     weights = weights[inds]
     @assert !isempty(weights)
     weights = weights ./ sum(weights)
-    maxweight = maxweight == :auto ? max(20minweight, 20 / maxnum) : maxweight
+    maxweight == :auto && (maxweight = max(20minweight, 20 / maxnum))
     m = weights .> maxweight
     weights[m] .= log1p.(weights[m] .- maxweight) ./ 10 .+ maxweight
     weights .+= minweight

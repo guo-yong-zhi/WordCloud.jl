@@ -51,7 +51,7 @@ function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...;
         transparent=transparent)
     end
     if padding != 0
-        bc = backgroundcolor in DEFAULTSYMBOLS ? :auto : bc
+        bc = backgroundcolor in DEFAULTSYMBOLS ? :auto : backgroundcolor
         img = Render.padding(img, padding, backgroundcolor=bc)
     end
     img
@@ -65,7 +65,7 @@ function loadmask(img::SVGImageType, args...; padding=0, transparent=:auto, outl
     end
     if padding != 0
         bc = get(kargs, :backgroundcolor, (0,0,0,0))
-        bc = bc in DEFAULTSYMBOLS ? (0,0,0,0) : bc
+        bc in DEFAULTSYMBOLS && (bc = (0,0,0,0))
         img = Render.padding(img, padding, backgroundcolor=bc)
     end
     img
@@ -85,7 +85,7 @@ function paintsvg(wc::WC; background=true)
     else
         if background == true
             bgcolor = getbackgroundcolor(wc)
-            bgcolor = bgcolor in DEFAULTSYMBOLS ? (1,1,1,0) : bgcolor
+            bgcolor in DEFAULTSYMBOLS && (bgcolor = (1,1,1,0))
             background = getsvgmask(wc)
             if background === nothing
                 @warn "embed bitmap into SVG. You can set `background=false` to remove background."
@@ -118,7 +118,7 @@ end
 function paint(wc::WC, args...; background=true, kargs...)
     if background == true
         bgcolor = getbackgroundcolor(wc)
-        bgcolor = bgcolor in DEFAULTSYMBOLS ? (1,1,1,0) : bgcolor
+        bgcolor in DEFAULTSYMBOLS && (bgcolor = (1,1,1,0))
         background = fill(convert(eltype(wc.mask), parsecolor(bgcolor)), size(wc.mask))
         overlay!(background, wc.mask)
     elseif background == false || background === nothing
