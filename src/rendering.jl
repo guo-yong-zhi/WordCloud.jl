@@ -383,17 +383,14 @@ function shape(shape_, width, height, args...;
 end
 
 using Printf
-function gif_callback_factory()
-    counter = Iterators.Stateful(0:typemax(Int))
-    pic -> save(gifdirectory * @sprintf("/%010d.png", popfirst!(counter)), pic)
-end
 function try_gif_gen(gifdirectory; framerate=4)
     try
         pipeline(`ffmpeg -f image2 -i $(gifdirectory)/%010d.png -vf 
-            palettegen -y $(gifdirectory)/result-palette.png`, stdout=devnull, stderr=devnull) |> run
+            palettegen -y $(gifdirectory)/palette.png`, stdout=devnull, stderr=devnull) |> run
         pipeline(`ffmpeg -framerate $(framerate) -f image2 -i $(gifdirectory)/%010d.png 
-            -i $(gifdirectory)/result-palette.png -lavfi paletteuse -y $(gifdirectory)/result.gif`,
+            -i $(gifdirectory)/palette.png -lavfi paletteuse -y $(gifdirectory)/animation.gif`,
             stdout=devnull, stderr=devnull) |> run
+        try rm("$(gifdirectory)/palette.png", force=true) catch end
     catch e
         @warn "You need to have FFmpeg manually installed to use this function."
         @warn e
@@ -404,7 +401,8 @@ struct GIF
     directory::String
 end
 function GIF(directory)
-    try mkpath(directory) catch end
+    ispath(directory) && @warn "Directory `$directory` already exists."
+    mkpath(directory)
     GIF(Iterators.Stateful(0:typemax(Int)), directory)
 end
 Base.push!(gif::GIF, img) = save(gif.directory * @sprintf("/%010d.png", popfirst!(gif.counter)), img)

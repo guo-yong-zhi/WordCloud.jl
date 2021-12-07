@@ -18,8 +18,8 @@ include("test_textprocessing.jl")
     @test getparameter(wc, :contentarea) == WordCloud.occupying(WordCloud.QTrees.kernel(wc.maskqtree[1]), WordCloud.QTrees.FULL)
     # animation
     setpositions!(wc, :, (-1000,-1000))
-    record(placewords!, wc, style=:gathering, outputdir="animation1-test", filter=i->i%(2^(i÷100+3))==0)
-    record(generate!, wc, 100, outputdir="animation2-test", filter=i->i%10==0)
+    record(placewords!, wc, style=:gathering, outputdir="animation1-test", filter=i->i%(2^(i÷100+3))==0, overwrite=true)
+    record(generate!, wc, 100, outputdir="animation2-test", filter=i->i%10==0, overwrite=true)
     show(wc)
 
     # placewords!

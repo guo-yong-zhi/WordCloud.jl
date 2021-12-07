@@ -22,7 +22,7 @@ shapes = WordCloud.svg2bitmap.([shape(ellipse, round(sz[i]), round(sz[i]), color
 setimages!(wc, :, shapes)
 
 setstate!(wc, :initwords!) # set the state flag after manual initialization
-# record(generate!, wc, retry=1, outputdir="pattern_animation")
+# record(generate!, wc, retry=1, outputdir="pattern_animation", overwrite=true)
 generate!(wc, retry=1) # turn off rescale attempts. manually set images can't be rescaled
 println("results are saved to pattern.png")
 paint(wc, "pattern.png")

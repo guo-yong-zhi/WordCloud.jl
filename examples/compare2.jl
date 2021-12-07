@@ -94,4 +94,4 @@ WordCloud.Render.generate(gif, framerate=1)
 wca, wcb
 #eval# runexample(:compare2)
 #md# ![](address_compare2/compare2.png)  
-#md# ![](address_compare2/result.gif)  
+#md# ![](address_compare2/animation.gif)  

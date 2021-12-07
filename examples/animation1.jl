@@ -11,13 +11,13 @@ wc = wordcloud(
 #md# ### uniform style
 gifdirectory = "animation1/uniform"
 setpositions!(wc, :, (-1000,-1000))
-record(placewords!, wc, style=:uniform, outputdir=gifdirectory, filter=i->i%(2^(i÷100))==0)
-#md# ![](animation1/uniform/result.gif)  
+record(placewords!, wc, style=:uniform, outputdir=gifdirectory, filter=i->i%(2^(i÷100))==0, overwrite=true)
+#md# ![](animation1/uniform/animation.gif)  
 #md# ### gathering style
 gifdirectory = "animation1/gathering"
 setpositions!(wc, :, (-1000,-1000))
-record(placewords!, wc, style=:gathering, outputdir=gifdirectory, filter=i->i%(2^(i÷100))==0)
-#md# ![](animation1/gathering/result.gif)  
+record(placewords!, wc, style=:gathering, outputdir=gifdirectory, filter=i->i%(2^(i÷100))==0, overwrite=true)
+#md# ![](animation1/gathering/animation.gif)  
 #md# 
 println("results are saved in animation1")
 wc
