@@ -78,7 +78,7 @@ Unlike most other implementations, WordCloud.jl is programmed based on image loc
 * [x] 使用重新放置策略跳出局部最优
 * [x] 使用缩放策略降低训练难度
 * [x] 训练失败检测和提前中断
-* [x] 文字颜色和方向
+* [x] 主题配色等
 * [x] 并行计算
 # Note
 linux添加中文字体  
