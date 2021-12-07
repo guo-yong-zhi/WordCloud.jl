@@ -16,7 +16,11 @@ include("test_textprocessing.jl")
     paint(wc, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2), ratio=0.5)
     paint(wc, "test.svg")
     @test getparameter(wc, :contentarea) == WordCloud.occupying(WordCloud.QTrees.kernel(wc.maskqtree[1]), WordCloud.QTrees.FULL)
-    
+    # animation
+    setpositions!(wc, :, (-1000,-1000))
+    record(placewords!, wc, style=:gathering, outputdir="animation1-test", filter=i->i%(2^(i÷100+3))==0)
+    record(generate!, wc, 100, outputdir="animation2-test", filter=i->i%10==0)
+
     # placewords!
     placewords!(wc, style=:gathering)
     words = ["." for i in 1:500]

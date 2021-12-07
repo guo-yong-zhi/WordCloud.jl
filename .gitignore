@@ -10,3 +10,4 @@ address_compare*
 /*.ipynb
 test/*.jpg
 test/*.svg
+test/animation*
