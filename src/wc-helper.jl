@@ -128,6 +128,7 @@ function paint(wc::WC, args...; background=true, kargs...)
     end
     overlay!(background, wc.imgs, getpositions(wc))
     if !(isempty(args) && isempty(kargs))
+        background = ARGB.(background) #https://github.com/JuliaImages/ImageTransformations.jl/issues/97
         background = imresize(background, args...; kargs...)
     end
     background
