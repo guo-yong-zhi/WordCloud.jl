@@ -20,6 +20,7 @@ include("test_textprocessing.jl")
     setpositions!(wc, :, (-1000,-1000))
     record(placewords!, wc, style=:gathering, outputdir="animation1-test", filter=i->i%(2^(i÷100+3))==0)
     record(generate!, wc, 100, outputdir="animation2-test", filter=i->i%10==0)
+    show(wc)
 
     # placewords!
     placewords!(wc, style=:gathering)
@@ -120,7 +121,7 @@ include("test_textprocessing.jl")
     setsvgimages!(wc, 6, wc.svgs[6]) # the results of setsvgimages! and initword! may not be identical
     @test wc.imgs[1] == wc.imgs[6]
 
-    for s = [:reset, :average, :clipping, :blending, :reset]
+    for s = [:main, :reset, :average, :clipping, :blending, :reset]
         recolor!(wc, style=s)
     end
 

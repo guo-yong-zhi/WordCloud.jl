@@ -1,6 +1,6 @@
 @testset "textprocessing.jl" begin
     text = "So dim, so dark, So dense, so dull, So damp, so dank, so dead! The weather, now warm, now cold, Makes it harder Than ever to forget!"
-    c = WordCloud.TextProcessing.countwords(text)
+    c = countwords(text)
     @test c["so"] == 4
     @test c["Makes"] == 1
     WordCloud.TextProcessing.casemerge!(c)
