@@ -10,9 +10,10 @@ using ColorSchemes
 using FileIO
 import ImageTransformations.imresize
 
-parsecolor(c) = parse(Colorant, c)
-parsecolor(tp::Tuple) = ARGB(tp...)
-parsecolor(gray::Real) = Gray(gray)
+# because of float error, (randommask(color=Gray(0.3))|>svg2bitmap)[300,300]|>torgba != Gray(0.3)|>torgba
+parsecolor(c) = ARGB{Colors.N0f8}(parse(Colorant, c))
+parsecolor(tp::Tuple) = ARGB{Colors.N0f8}(tp...)
+parsecolor(gray::Real) = ARGB{Colors.N0f8}(Gray(gray))
 parsecolor(sc::Symbol) = parsecolor.(colorschemes[sc].colors)
 parsecolor(sc::AbstractArray) = parsecolor.(sc)
 

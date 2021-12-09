@@ -144,8 +144,8 @@ function paint(wc::WC, file, args...; kargs...)
     img
 end
         
-function frame(wc::WC, label::AbstractString)
-    overlay!(paint(wc), rendertextoutlines(label, 32, color="black", linecolor="white", linewidth=1), 20, 20)
+function frame(wc::WC, label::AbstractString, args...; kargs...)
+    overlay!(paint(wc, args...; kargs...), rendertextoutlines(label, 32, color="black", linecolor="white", linewidth=1), 20, 20)
 end
 
 function record(func::Function, wc::WC, args...; outputdir="record_output", overwrite=false, filter=i->true, kargs...)
