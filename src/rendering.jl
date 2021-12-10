@@ -162,9 +162,8 @@ function _backgroundcolor(img, c=:auto)
     end
 end
 imagemask(img::AbstractArray{Bool,2}) = img
-function imagemask(img, istransparent::Function)
-    .! istransparent.(torgba.(img))
-end
+imagemask(img, istransparent::Function) = .!istransparent.(torgba.(img))
+imagemask(img, transparent::AbstractArray{Bool,2}) = .!transparent
 function imagemask(img, transparent=:auto)
     if transparent == :auto
         if img[1] == img[end] && any(c -> c != img[1], img)

@@ -158,6 +158,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         end
         padding in DEFAULTSYMBOLS && (padding = round(Int, maximum(masksize) ÷ 10))
         mask = randommask(masksize; maskshape=mask ,color=maskcolor, padding=padding, keeparea=keepmaskarea, kg..., kargs...)
+        transparent = c -> c != torgba(maskcolor)
     else
         ms = masksize in DEFAULTSYMBOLS ? () : masksize
         if maskcolor == :auto && !issvg(loadmask(mask))
@@ -187,9 +188,11 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
             linecolor = randomlinecolor(colors)
         end
         padding in DEFAULTSYMBOLS && (padding = 0)
-        mask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, 
-            outline=outline, linecolor=linecolor,padding=padding, kargs...)
+        mask, binarymask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, 
+            outline=outline, linecolor=linecolor,padding=padding, return_binarymask=true, kargs...)
+        binarymask === nothing || (transparent = .!binarymask)
     end
+    # under this line: both mask == :auto or not
     if transparent == :auto
         if maskcolor ∉ DEFAULTSYMBOLS
             transparent = c -> c[4] == 0 || c[1:3] != WordCloud.torgba(maskcolor)[1:3] #ignore the alpha channel when alpha!=0
