@@ -6,7 +6,7 @@ weights = (1:200) .% 11 .+ 1
 #md# ```julia
 #md# wc1 = wordcloud(
 #md#     words, weights,
-#md#     maskshape = squircle, rt=0.5,
+#md#     mask = squircle, rt=0.5,
 #md#     masksize = (300, 200),
 #md#     maskcolor = "AliceBlue",
 #md#     outline = 6, linecolor = "navy"

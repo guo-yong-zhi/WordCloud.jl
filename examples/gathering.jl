@@ -3,7 +3,7 @@ using WordCloud
 wc = wordcloud(
     processtext(open(pkgdir(WordCloud) * "/res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
     angles=0, density=0.55,
-    maskshape=squircle, rt=2.5 * rand(),
+    mask=squircle, rt=2.5 * rand(),
     state=initwords!)
 placewords!(wc, style=:gathering, level=5, centerlargestword=true)
 pin(wc, "Alice") do # keep "Alice" in the center

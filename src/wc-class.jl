@@ -31,10 +31,11 @@ Positional arguments are used to specify words and weights, and can be in differ
 * spacing = 1  #minimum spacing between words
 
 ### mask keyword arguments
-* mask = loadmask("res/heart.jpg", 256, 256) #see doc of `loadmask`  
-* mask = loadmask("res/heart.jpg", color="red", ratio=2) #see doc of `loadmask`  
-* mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #see doc of `shape`
-* maskshape: `box`, `ellipse`, `squircle`, `ngon` or `star`.  See `shape`. 
+* mask = loadmask("res/heart.jpg", 256, 256) #see the doc of `loadmask`  
+* mask = loadmask("res/heart.jpg", color="red", ratio=2) #see the doc of `loadmask`
+* mask = "res/heart.jpg" #shorthand for loadmask("res/heart.jpg")
+* mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #See the doc of `shape`.
+* mask = box #mask can alse be one of `box`, `ellipse`, `squircle`, `ngon` and `star`.  See the doc of `shape`. 
 * masksize: Can be a tuple `(width, height)` or just a single number as a side length hint. 
 * backgroundsize: See `shape`. Need to be used with `masksize` to specify the padding size.
 * maskcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original (keep it unchanged), :auto (auto recolor the mask).
@@ -124,7 +125,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
     colors isa Symbol && (colors = (colorschemes[colors].colors...,))
     colors = Iterators.take(iter_expand(colors), length(words)) |> collect
     angles = Iterators.take(iter_expand(angles), length(words)) |> collect
-    if mask == :auto
+    if mask == :auto || mask isa Function
         if maskcolor in DEFAULTSYMBOLS
             if backgroundcolor in DEFAULTSYMBOLS || backgroundcolor == :maskcolor
                 maskcolor = randommaskcolor(colors)
@@ -156,7 +157,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
             push!(kg, :linecolor => linecolor)
         end
         padding in DEFAULTSYMBOLS && (padding = round(Int, maximum(masksize) ÷ 10))
-        mask = randommask(masksize, color=maskcolor; padding=padding, keeparea=keepmaskarea, kg..., kargs...)
+        mask = randommask(masksize; maskshape=mask ,color=maskcolor, padding=padding, keeparea=keepmaskarea, kg..., kargs...)
     else
         ms = masksize in DEFAULTSYMBOLS ? () : masksize
         if maskcolor == :auto && !issvg(loadmask(mask))

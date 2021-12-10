@@ -31,7 +31,7 @@ embedded = tsne(vectors', 2)
 #md# 
 wc = wordcloud(
     words_weights,
-    maskshape=box,
+    mask=box,
     masksize=(1000, 1000),
     cornerradius=0,
     density=0.3,

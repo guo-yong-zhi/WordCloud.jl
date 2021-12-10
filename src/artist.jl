@@ -82,7 +82,8 @@ equalwh(sz::Number=800) = sz, sz
 equalwh(sz::Tuple) = sz
 equalwh(arg...) = arg
 function randommask(args...; maskshape=:rand, kargs...)
-    ran = Dict(squircle => 0.4, box => 0.6, ellipse => 0.8, ngon => 0.9, star => 1, :rand => rand())[maskshape]
+    rd = Dict(squircle => 0.4, box => 0.6, ellipse => 0.8, ngon => 0.9, star => 1)
+    ran = get(rd, maskshape, rand())
     if ran <= 0.4
         return randomsquircle(randomwh(args...)...; kargs...)
     elseif ran <= 0.6
