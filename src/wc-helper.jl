@@ -153,7 +153,7 @@ end
 
 function record(func::Function, wc::WC, args...; outputdir="record_output", overwrite=false, filter=i->true, kargs...)
     if overwrite
-        try rm(outputdir, force=true, recursive=true) catch end
+        rm(outputdir, force=true, recursive=true)
     end
     gif = GIF(outputdir)
     callback = i -> (filter(i) && gif(frame(wc, string(i))))
@@ -161,6 +161,12 @@ function record(func::Function, wc::WC, args...; outputdir="record_output", over
     re = func(wc, args...; callback=callback, kargs...)
     Render.generate(gif)
     re
+end
+record(outputdir::AbstractString, args...; kargs...) = record(args...; outputdir=outputdir, kargs...)
+macro record(x...)
+    kwargs = [Expr(:kw, e.args...) for e in x[1:end-1] if e isa Expr]
+    args = [e for e in x[1:end-1] if !(e isa Expr)]
+    esc(:(record($(args...), $(x[end].args...), $(kwargs...))))
 end
 
 runexample(example=:random) = @time evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")

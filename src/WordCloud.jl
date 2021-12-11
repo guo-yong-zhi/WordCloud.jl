@@ -13,7 +13,7 @@ module WordCloud
 export wordcloud, processtext, html2text, countwords, lemmatize, lemmatize!, casemerge!
 export parsecolor, rendertext, shape, ellipse, box, squircle, star, ngon, loadmask, outline, padding, paint, paintsvg, svgstring
 export imageof, showmask, showmask!
-export record, placewords!, rescale!, recolor!, take, keep, ignore, pin, runexample, showexample, generate!, fit!
+export record, @record, placewords!, rescale!, recolor!, take, keep, ignore, pin, runexample, showexample, generate!, fit!
 export getparameter, setparameter!, hasparameter, getstate, setstate!,
     getcolors, getangles, getwords, getweights, setcolors!, setangles!, setwords!, setweights!,
     getpositions, setpositions!, getimages, getsvgimages, setimages!, setsvgimages!, getmask, getsvgmask, 
