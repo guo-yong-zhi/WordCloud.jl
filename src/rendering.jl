@@ -8,6 +8,7 @@ using Luxor
 using Colors
 using ColorSchemes
 using FileIO
+using LightXML
 import ImageTransformations.imresize
 
 # because of float error, (randommask(color=Gray(0.3))|>svg2bitmap)[300,300]|>torgba != Gray(0.3)|>torgba
@@ -290,13 +291,59 @@ function overlay!(img::AbstractMatrix, imgs, pos)
     end
     img
 end
+function xml_wraper(wrapers)
+    parent = child = nothing
+    for (e, attrs) in wrapers
+        if child === nothing
+            ele = new_element(e)
+            parent = ele
+        else
+            ele = new_child(child, e)
+        end
+        set_attributes(ele, attrs)
+        child = ele
+    end
+    parent, child
+end
+function xml_wrapchild(parent, wrapers)
+    wraper_parent, wraper_child = xml_wraper(wrapers)
+    for c in child_nodes(parent)
+        unlink(c)
+        is_elementnode(c) && add_child(wraper_child, c)
+    end
+    add_child(parent, wraper_parent)
+    parent
+end
+function svg_wrap(svg, wrapers)
+    xml_wrapchild(root(svg), wrapers)
+    svg
+end
+function svg_stack!(svgs)
+    @assert !isempty(svgs)
+    bg, rest = Iterators.peel(svgs)
+    rt = root(bg)
+    for svg in rest
+        for c in child_nodes(root(svg))
+            unlink(c) 
+            add_child(rt, c)
+        end
+        free(svg)
+    end
+    bg
+end
 
 function overlay(imgs, poss; backgroundcolor=(1, 1, 1, 0), size=size(imgs[1]))
-    d = Drawing(size..., :svg)
+    bg = Drawing(size..., :svg)
     Luxor.background(parsecolor(backgroundcolor))
-    placeimage.(imgs, (Point(x - 1, y - 1) for (x, y) in poss))# (x,y)=(1,1)时左上角重合，此时Point(0,0)
     finish()
-    d
+    # (x,y)=(1,1)时左上角重合，此时Point(0,0)
+    svgs = (svg_wrap(parse_string(svgstring(img)), 
+    ["a"=>[("href", "https://fanyi.baidu.com")], 
+    "svg"=>[("x", string(x-1)), ("y", string(y-1))]
+    ]) for (img, (x, y)) in zip(imgs, poss))
+    bg = svg_stack!(Iterators.flatten(((parse_string(svgstring(bg)),), svgs)))
+    # loadsvg(strip(string(bg)))
+    string(bg)
 end
 function recolor!(img::AbstractArray, color)
     c = parsecolor(color)
