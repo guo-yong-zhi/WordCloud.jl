@@ -3,13 +3,13 @@ export rendertext, overlay!,
     shape, ellipse, box, squircle, star, ngon, bezistar, bezingon, ellipse_area, box_area, squircle_area,
     star_area, ngon_area, GIF, generate, parsecolor, rendertextoutlines,
     colorschemes, torgba, imagemask, outline, pad, dilate!, imresize, recolor!, recolor
-export issvg, save, load, tobitmap, SVGImageType, svgstring
+export issvg, save, load, tobitmap, tosvg, SVG, svg_wrap, svg_add, svg_stack
 using Luxor
 using Colors
 using ColorSchemes
 using FileIO
-using ImageTransformations
-
+using  ImageTransformations
+include("svg.jl")
 # because of float error, (randommask(color=Gray(0.3))|>tobitmap)[300,300]|>torgba != Gray(0.3)|>torgba
 parsecolor(c) = ARGB{Colors.N0f8}(parse(Colorant, c))
 parsecolor(tp::Tuple) = ARGB{Colors.N0f8}(tp...)
@@ -17,20 +17,39 @@ parsecolor(gray::Real) = ARGB{Colors.N0f8}(Gray(gray))
 parsecolor(sc::Symbol) = parsecolor.(colorschemes[sc].colors)
 parsecolor(sc::AbstractArray) = parsecolor.(sc)
 
-issvg(d) = d isa Drawing && d.surfacetype == :svg
-const SVGImageType = Drawing
-Base.broadcastable(s::SVGImageType) = Ref(s)
-Base.size(s::SVGImageType) = (s.height, s.width)
-svgstring(d) = String(copy(d.bufferdata))
+Base.size(s::Drawing) = (s.height, s.width)
+issvg(d) = d isa SVG
+tosvg(s::SVG) = s
+tosvg(d::Drawing) = SVG(String(copy(d.bufferdata)), d.height, d.width)
+tosvg(img::AbstractMatrix) = todrawing(img) |> tosvg
+todrawing(d::Drawing) = d
+function todrawing(img::AbstractMatrix)
+    d = Drawing(size(img)..., :svg)
+    Luxor.background(1, 1, 1, 0)
+    placeimage(img)
+    finish()
+    d
+end
+todrawing(s::SVG) = loaddrawing(string(s))
+tobitmap(img::AbstractMatrix) = img
+function tobitmap(svg::Drawing)
+    Drawing(ceil(svg.width), ceil(svg.height), :image)
+    placeimage(svg)
+    m = image_as_matrix()
+    finish()
+    m
+end
+tobitmap(svg::SVG) = tobitmap(todrawing(svg))
 
-function loadsvg(svg)
+
+function loaddrawing(svg)
     p = readsvg(svg)
     d = Drawing(p.width, p.height, :svg)
     placeimage(p)
     finish()
     d
 end
-
+loadsvg(svg) = loaddrawing(svg) |> tosvg
 function load(fn::AbstractString)
     if endswith(fn, r".svg|.SVG")
         loadsvg(fn)
@@ -47,13 +66,6 @@ function load(file::IO)
         seekstart(file)
         loadsvg(read(file, String))
     end
-end
-function tobitmap(svg::SVGImageType)
-    Drawing(ceil(svg.width), ceil(svg.height), :image)
-    placeimage(svg)
-    m = image_as_matrix()
-    finish()
-    m
 end
 
 function boundingbox(p::AbstractMatrix, bgcolor; border=0)
@@ -81,15 +93,13 @@ function boundingbox(p::AbstractMatrix, bgcolor; border=0)
     return a, b, c, d
 end
 
-"a, b, c, d are all inclusive"
-function crop(img::SVGImageType, a, b, c, d)
-    imgnew = Drawing(d - c + 1, b - a + 1, :svg)
-    placeimage(img, Point(-c + 1, -a + 1))
+function clipdrawing(m, a, b, c, d) # a, b, c, d are all inclusive
+    m2 = Drawing(d - c + 1, b - a + 1, :svg)
+    placeimage(m, Point(-c + 1, -a + 1))
     finish()
     imgnew
 end
-"a, b, c, d are all inclusive"
-crop(img::AbstractMatrix, a, b, c, d) = img[a:b, c:d]
+crop(img::AbstractMatrix, a, b, c, d) = img[a:b, c:d] # a, b, c, d are all inclusive
 
 function imresize(img::AbstractMatrix, sz...; ratio=1)
     rt = ratio isa Number ? ratio : reverse(ratio)
@@ -137,7 +147,7 @@ function rendertext(str::AbstractString, size::Real;
     if type == :bitmap
         Drawing(l, l, :image)
     else
-        svg = Drawing(l, l, :svg) # svg is slow
+        drawing = Drawing(l, l, :svg) # svg is slow
     end
     origin()
     bgcolor = parsecolor(backgroundcolor)
@@ -149,18 +159,18 @@ function rendertext(str::AbstractString, size::Real;
     end
     finish()
     if type != :bitmap
-        mat = tobitmap(svg)
+        mat = tobitmap(drawing)
     end
-    # bgcolor = Luxor.ARGB32(bgcolor...) # https://github.com/JuliaGraphics/Luxor.jl/issues/107
+    #     bgcolor = Luxor.ARGB32(bgcolor...) #https://github.com/JuliaGraphics/Luxor.jl/issues/107
     bgcolor = mat[1]
     box = boundingbox(mat, bgcolor, border=border)
     mat = crop(mat, box...)
     if type == :bitmap
         return mat
     elseif type == :svg
-        return crop(svg, box...)
+        return tosvg(clipdrawing(drawing, box...))
     else
-        return mat, crop(svg, box...)
+        return mat, tosvg(clipdrawing(drawing, box...))
     end
 end
 
@@ -288,7 +298,7 @@ function pad(img::AbstractMatrix, r=maximum(size(img)) ÷ 10; backgroundcolor=:a
     bg = fill(color, size(img) .+ 2 .* r)
     overlay!(bg, img, reverse((0, 0) .+ r)...)
 end
-function pad(img::SVGImageType, r=maximum(size(img)) ÷ 10; backgroundcolor=(0, 0, 0, 0))
+function pad(img::Drawing, r=maximum(size(img)) ÷ 10; backgroundcolor=(0, 0, 0, 0))
     color = parsecolor(backgroundcolor)
     sz = size(img) .+ 2 .* ceil.(Int, r)
     m2 = Drawing(reverse(sz)..., :svg)
@@ -298,6 +308,7 @@ function pad(img::SVGImageType, r=maximum(size(img)) ÷ 10; backgroundcolor=(0, 
     finish()
     m2
 end
+padding(img::SVG, args...; kargs...) = padding(todrawing(img), args...; kargs...) |> tosvg
 "Return the intersecting region `view`s of img1 and img2, where img2 is positioned in img1 with its top left corner located at coordinates (x, y)."
 function intersection_region(img1, img2, x=1, y=1)
     h1, w1 = size(img1)
@@ -340,11 +351,14 @@ function overlay!(img::AbstractMatrix, imgs, pos)
 end
 
 function overlay(imgs, poss; backgroundcolor=(1, 1, 1, 0), size=size(imgs[1]))
-    d = Drawing(size..., :svg)
+    bg = Drawing(size..., :svg)
     Luxor.background(parsecolor(backgroundcolor))
-    placeimage.(imgs, (Point(x - 1, y - 1) for (x, y) in poss))# (x,y)=(1,1)时左上角重合，此时Point(0,0)
     finish()
-    d
+    bg = tosvg(bg)
+    # (x,y)=(1,1)时左上角重合，此时Point(0,0)
+    svgs = (svg_wrap(img, ["svg"=>[("x", string(x-1)), ("y", string(y-1))]]) for (img, (x, y)) in zip(imgs, poss))
+    bg = svg_stack(Iterators.flatten(((bg,), svgs)))
+    bg
 end
 function recolor!(img::AbstractArray, color)
     c = parsecolor(color)
@@ -444,7 +458,7 @@ function shape(shape_, width, height, args...;
     setcolor(parsecolor(color))
     shape_(Point(0, 0), width, height, args...; action=:fill, kargs...)
     finish()
-    d
+    d |> tosvg
 end
 
 using Printf
