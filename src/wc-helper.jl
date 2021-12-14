@@ -61,7 +61,7 @@ end
 function loadmask(img::AbstractMatrix{<:Colorant}, args...; kargs...)
     loadmask(ARGB.(img), args...; kargs...)
 end
-function loadmask(img::SVGImageType, args...; 
+function loadmask(img::SVG, args...; 
     padding=0, transparent=:auto, outline=0, linecolor=:auto, return_binarymask=false, kargs...)
     if !isempty(args) || !isempty(v for v in values(values(kargs)) if v ∉ DEFAULTSYMBOLS) || outline != 0
         @warn "editing svg file is not supported: $args $kargs"
@@ -92,7 +92,7 @@ function paintsvg(wc::WC; background=true)
             background = getsvgmask(wc)
             if background === nothing
                 @warn "embed bitmap into SVG. You can set `background=false` to remove background."
-                background = getmask(wc)
+                background = tosvg(getmask(wc))
             end
         else
             bgcolor = (1,1,1,0)

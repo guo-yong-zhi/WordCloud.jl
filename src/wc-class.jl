@@ -105,7 +105,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:scale] = -1
     params[:wordids] = collect(1:length(words))
     l = length(words)
-    wc = WC(copy(words), float.(weights), Vector(undef, l), Vector{SVGImageType}(undef, l), 
+    wc = WC(copy(words), float.(weights), Vector(undef, l), Vector{SVG}(undef, l), 
     mask, svgmask, Vector(undef, l), maskqtree, params)
     if state != wordcloud
         state(wc)
@@ -207,7 +207,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
     svgmask = nothing
     if issvg(mask)
         svgmask = mask
-        mask = svg2bitmap(mask)
+        mask = tobitmap(mask)
         if maskcolor ∉ DEFAULTSYMBOLS && (:outline ∉ keys(params) || params[:outline] <= 0)
             Render.recolor!(mask, maskcolor) # svg2bitmap后有杂色 https://github.com/JuliaGraphics/Luxor.jl/issues/160
         end
@@ -269,7 +269,7 @@ setimages!(wc::WC, w, v::AbstractVector) = setimages!.(wc, index(wc, w), v)
 @doc setdoc
 function setsvgimages!(wc::WC, w, v)
     @view(wc.svgs[index(wc, w)]) .= v
-    setimages!(wc::WC, w, svg2bitmap.(v))
+    setimages!(wc::WC, w, tobitmap.(v))
 end
 
 @doc getdoc
