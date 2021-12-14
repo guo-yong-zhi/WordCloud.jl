@@ -8,7 +8,7 @@ using Luxor
 using Colors
 using ColorSchemes
 using FileIO
-using LightXML
+using EzXML
 import ImageTransformations.imresize
 
 # because of float error, (randommask(color=Gray(0.3))|>svg2bitmap)[300,300]|>torgba != Gray(0.3)|>torgba
@@ -294,24 +294,29 @@ end
 function xml_wraper(wrapers)
     parent = child = nothing
     for (e, attrs) in wrapers
-        if child === nothing
-            ele = new_element(e)
-            parent = ele
-        else
-            ele = new_child(child, e)
+        ele = ElementNode(e)
+        if child !== nothing
+            ele = ElementNode(e)
+            link!(child, ele)
         end
-        set_attributes(ele, attrs)
+        if parent === nothing
+            parent = ele
+        end
+        for attr in attrs
+            an = AttributeNode(attr...)
+            link!(ele, an)
+        end
         child = ele
     end
     parent, child
 end
 function xml_wrapchild(parent, wrapers)
     wraper_parent, wraper_child = xml_wraper(wrapers)
-    for c in child_nodes(parent)
-        unlink(c)
-        is_elementnode(c) && add_child(wraper_child, c)
+    for c in eachelement(parent)
+        unlink!(c)
+        link!(wraper_child, c)
     end
-    add_child(parent, wraper_parent)
+    link!(parent, wraper_parent)
     parent
 end
 function svg_wrap(svg, wrapers)
@@ -323,27 +328,33 @@ function svg_stack!(svgs)
     bg, rest = Iterators.peel(svgs)
     rt = root(bg)
     for svg in rest
-        for c in child_nodes(root(svg))
-            unlink(c) 
-            add_child(rt, c)
+        for c in eachelement(root(svg))
+            unlink!(c) 
+            link!(rt, c)
         end
-        free(svg)
     end
     bg
 end
-
+struct SVG
+    data::String
+end
+SVG(str::AbstractString) = SVG(str)
+SVG(str) = SVG(string(str))
+function Base.show(f::IO, ::MIME"image/svg+xml", svg::SVG)
+    write(f, svg.data)
+end
 function overlay(imgs, poss; backgroundcolor=(1, 1, 1, 0), size=size(imgs[1]))
     bg = Drawing(size..., :svg)
     Luxor.background(parsecolor(backgroundcolor))
     finish()
     # (x,y)=(1,1)时左上角重合，此时Point(0,0)
-    svgs = (svg_wrap(parse_string(svgstring(img)), 
+    svgs = (svg_wrap(parsexml(svgstring(img)), 
     ["a"=>[("href", "https://fanyi.baidu.com")], 
     "svg"=>[("x", string(x-1)), ("y", string(y-1))]
     ]) for (img, (x, y)) in zip(imgs, poss))
-    bg = svg_stack!(Iterators.flatten(((parse_string(svgstring(bg)),), svgs)))
-    # loadsvg(strip(string(bg)))
-    string(bg)
+    bg = svg_stack!(Iterators.flatten(((parsexml(svgstring(bg)),), svgs)))
+    # loadsvg(string(bg))
+    SVG(bg)
 end
 function recolor!(img::AbstractArray, color)
     c = parsecolor(color)
