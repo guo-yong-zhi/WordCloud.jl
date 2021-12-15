@@ -169,6 +169,39 @@ macro record(x...)
     esc(:(record($(args...), $(x[end].args...), $(kwargs...))))
 end
 
+function svgimage_wrap!(wc::WC, i::Integer, wrappers)
+    svg = getsvgimages(wc, i)
+    svg = svg_wrap(svg, wrappers)
+    setsvgimages!(wc, i, svg)
+end
+function svgimages_add!(wc::WC, i::Integer, children)
+    svg = getsvgimages(wc, i)
+    svg = svg_add(svg, children)
+    setsvgimages!(wc, i, svg)
+end
+"""
+For editing SVGs of words.  
+The 1st argument is wordcloud, the 2nd optional argument is index which can be string, number, list, or any other standard supported index.  
+There are two kinds of keyword arguments, `children` and `wrappers`. 
+The nodes in `children` will be linked under the root node of the SVG. 
+The nodes in `wrappers` will be inserted between the SVG root node and all its child nodes. The children will be wraped by the wrapper node.
+A node is represented as a String Pair. e.g.
+* child `"title"=>"word"` for `<title>word</title>`
+* wrapper `"a"=>("href"=>"https://www.google.com)` for `<a href="https://www.google.com">` and `</a>`
+* child `"animate" => ["attributeName"=>"opacity", "to"=>"0", "dur"=>"6s"]` for `<animate attributeName="opacity" to="0" dur="6s"/>`
+Arguments `children` and `wrappers` can be a Pair, or a Tuple of Pairs to add multiple nodes to a SVG. 
+Again, giving a list of Tuples of Pairs is ok to edit multiple SVGs corresponding to the index argument.
+"""
+function configsvgimages!(wc, w=:, args...; children=nothing, wrappers=nothing, kargs...)
+    if children !== nothing
+        children isa AbstractVector || (children = Ref(children))
+        svgimages_add!.(wc, index(wc, w), children, args...; kargs...)
+    end
+    if wrappers !== nothing
+        wrappers isa AbstractVector || (wrappers = Ref(wrappers))
+        svgimage_wrap!.(wc, index(wc, w), wrappers, args...; kargs...)
+    end
+end
 runexample(example=:random) = @time evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
 showexample(example=:random) = read(pkgdir(WordCloud)*"/examples/$(example).jl", String)|>print
 examples = [e[1:prevind(e, end, 3)] for e in basename.(readdir(pkgdir(WordCloud)*"/examples")) if endswith(e, ".jl")]

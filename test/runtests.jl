@@ -114,6 +114,8 @@ include("test_textprocessing.jl")
     w = getweights(wc, getwords(wc, [1,2]))
     setwords!(wc, [1,2], ["zz","yy"])
     @test getweights(wc, "zz") == w[1]
+    configsvgimages!(wc, wrapers=["a"=>("href"=>"https://www.google.com/search?q=$w") for w in getwords(wc)])
+    configsvgimages!(wc, ["zz","yy"], children=("animate"=>["attributeName" => "opacity", "to"=>"0.5", "dur"=>"6s"], "title"=>"tooltip"))
     setimages!(wc, [1,2], wc.imgs[[4,5]])
     setimages!(wc, 1, wc.imgs[[4,5]])
     setimages!(wc, 1, wc.imgs[4])

@@ -18,7 +18,7 @@ export getparameter, setparameter!, hasparameter, getstate, setstate!,
     getcolors, getangles, getwords, getweights, setcolors!, setangles!, setwords!, setweights!,
     getpositions, setpositions!, getimages, getsvgimages, setimages!, setsvgimages!, getmask, getsvgmask, 
     getfontsizes, setfontsizes!, getfonts, setfonts!, getmaskcolor, getbackgroundcolor, setbackgroundcolor!, 
-    initword!, initwords!
+    initword!, initwords!, configsvgimages!
 export getshift, getcenter, setshift!, setcenter!
 
 using Stuffing

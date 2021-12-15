@@ -3,7 +3,7 @@ export rendertext, overlay!,
     shape, ellipse, box, squircle, star, ngon, ellipse_area, box_area, squircle_area, star_area, ngon_area,
     GIF, generate, parsecolor, rendertextoutlines,
     colorschemes, torgba, imagemask, outline, padding, dilate, imresize, recolor!, recolor
-export issvg, save, load, tobitmap, tosvg, SVG
+export issvg, save, load, tobitmap, tosvg, SVG, svg_wrap, svg_add, svg_stack
 using Luxor
 using Colors
 using ColorSchemes
@@ -311,7 +311,7 @@ function overlay(imgs, poss; backgroundcolor=(1, 1, 1, 0), size=size(imgs[1]))
     bg = tosvg(bg)
     # (x,y)=(1,1)时左上角重合，此时Point(0,0)
     svgs = (svg_wrap(img, ["svg"=>[("x", string(x-1)), ("y", string(y-1))]]) for (img, (x, y)) in zip(imgs, poss))
-    bg = svg_stack!(Iterators.flatten(((bg,), svgs)))
+    bg = svg_stack(Iterators.flatten(((bg,), svgs)))
     bg
 end
 function recolor!(img::AbstractArray, color)
