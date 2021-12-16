@@ -5,8 +5,8 @@ mutable struct WC
     svgs
     mask
     svgmask
-    qtrees
-    maskqtree
+    qtrees::Vector{Stuffing.QTrees.U8SQTree}
+    maskqtree::Stuffing.QTrees.U8SQTree
     params::Dict{Symbol,Any}
 end
 
@@ -106,7 +106,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:wordids] = collect(1:length(words))
     l = length(words)
     wc = WC(copy(words), float.(weights), Vector(undef, l), Vector{SVGImageType}(undef, l), 
-    mask, svgmask, Vector(undef, l), maskqtree, params)
+    mask, svgmask, Vector{Stuffing.QTrees.U8SQTree}(undef, l), maskqtree, params)
     if state != wordcloud
         state(wc)
     end
