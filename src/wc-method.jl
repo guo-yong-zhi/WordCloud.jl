@@ -231,13 +231,13 @@ end
 * reposition: a Bool value to turn on/off teleport, a Float number `p` between 0~1 indicating the repositioning ratio (Minimum `p`), a Int number `n` equivalent to `i -> i >= n`, a Function index::Int -> doteleport::Boll, or a white list collision.
 * trainer: appoint a training engine
 """
-function fit!(wc, args...; reposition=true, krags...)
+function fit!(wc, args...; reposition=true, optimiser=SGD(), krags...)
     reposition isa Union{Function,Number} || (reposition = index(wc, reposition)) # Bool <: Number
     if STATEIDS[getstate(wc)] < STATEIDS[:placewords!]
         placewords!(wc)
     end
     qtrees = [wc.maskqtree, wc.qtrees...]
-    ep, nc = train!(qtrees, args...; reposition=reposition, krags...)
+    ep, nc = train!(qtrees, args...; reposition=reposition, optimiser=optimiser, krags...)
     wc.params[:epoch] += ep
     if nc == 0
         setstate!(wc, nameof(fit!))

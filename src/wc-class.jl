@@ -5,7 +5,7 @@ mutable struct WC
     svgs
     mask
     svgmask
-    qtrees::Vector{Stuffing.QTrees.U8SQTree}
+    qtrees #::Vector{Stuffing.QTrees.U8SQTree} be Any to keep the SubArray from @view
     maskqtree::Stuffing.QTrees.U8SQTree
     params::Dict{Symbol,Any}
 end
