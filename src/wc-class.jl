@@ -238,8 +238,8 @@ wordid(wc, w) = wordid.(wc, index(wc, w))
 getparameter(wc, args...) = getindex(wc.params, args...)
 setparameter!(wc, args...) = setindex!(wc.params, args...)
 hasparameter(wc, args...) = haskey(wc.params, args...)
-getdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index and ignored to return all."
-setdoc = "The 1st arg is a wordcloud, the 2nd arg can be a word string(list) or a standard supported index, the 3rd arg is the value to assign."
+getdoc = "The 1st argument is wordcloud, the 2nd argument is index which can be string, number, list, or any other standard supported index. And the index argument can be ignored to get all values."
+setdoc = "The 1st argument is wordcloud, the 2nd argument is index which can be string, number, list, or any other standard supported index, the 3rd argument is the value to assign."
 @doc getdoc getcolors(wc::WC, w=:) = wc.params[:colors][index(wc, w)]
 @doc getdoc getangles(wc::WC, w=:) = wc.params[:angles][index(wc, w)]
 @doc getdoc getwords(wc::WC, w=:) = wc.words[index(wc, w)]
