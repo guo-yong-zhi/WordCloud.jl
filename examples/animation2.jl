@@ -7,7 +7,7 @@ df = CSV.File(pkgdir(WordCloud) * "/res/guxiang_frequency.txt", header=false) |>
 words = df[!, "Column2"]
 weights = df[!, "Column3"]
 
-wc = wordcloud(words, weights, density=0.65)
+wc = wordcloud(words, weights, density=0.6)
 gifdirectory = "animation2"
 @record gifdirectory overwrite=true generate!(wc, 100, optimiser=WordCloud.Momentum())
 println("results are saved in animation2")

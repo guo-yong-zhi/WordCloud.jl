@@ -18,12 +18,12 @@ sz ./= √(sum(π * (sz ./ 2).^2 ./ dens) / prod(size(wc.mask))) # set a proper 
 # shapes = [shape(ellipse, round(sz[i]), round(sz[i]), color=rand(sc)) for i in 1:l]
 # setsvgimages!(wc, :, shapes)
 ## bitmap version
-shapes = WordCloud.svg2bitmap.([shape(ellipse, round(sz[i]), round(sz[i]), color=rand(sc)) for i in 1:l])
+shapes = WordCloud.tobitmap.([shape(ellipse, round(sz[i]), round(sz[i]), color=rand(sc)) for i in 1:l])
 setimages!(wc, :, shapes)
 
 setstate!(wc, :initwords!) # set the state flag after manual initialization
 # @record "pattern_animation" overwrite=true generate!(wc, retry=1)
-generate!(wc, retry=1) # turn off rescale attempts. manually set images can't be rescaled
+generate!(wc, retry=1, optimiser=WordCloud.Momentum(η=1/8)) # turn off rescale attempts. manually set images can't be rescaled
 println("results are saved to pattern.png")
 paint(wc, "pattern.png")
 wc

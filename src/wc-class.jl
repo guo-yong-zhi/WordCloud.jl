@@ -207,9 +207,9 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
     svgmask = nothing
     if issvg(mask)
         svgmask = mask
-        mask = svg2bitmap(mask)
+        mask = tobitmap(mask)
         if maskcolor ∉ DEFAULTSYMBOLS && (:outline ∉ keys(params) || params[:outline] <= 0)
-            Render.recolor!(mask, maskcolor) # svg2bitmap后有杂色 https://github.com/JuliaGraphics/Luxor.jl/issues/160
+            Render.recolor!(mask, maskcolor) # tobitmap后有杂色 https://github.com/JuliaGraphics/Luxor.jl/issues/160
         end
     end
     font in DEFAULTSYMBOLS && (font = randomfont())
@@ -269,7 +269,7 @@ setimages!(wc::WC, w, v::AbstractVector) = setimages!.(wc, index(wc, w), v)
 @doc setdoc
 function setsvgimages!(wc::WC, w, v)
     @view(wc.svgs[index(wc, w)]) .= v
-    setimages!(wc::WC, w, svg2bitmap.(v))
+    setimages!(wc::WC, w, tobitmap.(v))
 end
 
 @doc getdoc

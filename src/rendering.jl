@@ -3,14 +3,14 @@ export rendertext, overlay!,
     shape, ellipse, box, squircle, star, ngon, ellipse_area, box_area, squircle_area, star_area, ngon_area,
     GIF, generate, parsecolor, rendertextoutlines,
     colorschemes, torgba, imagemask, outline, padding, dilate, imresize, recolor!, recolor
-export issvg, save, load, svg2bitmap, SVGImageType, svgstring
+export issvg, save, load, tobitmap, SVGImageType, svgstring
 using Luxor
 using Colors
 using ColorSchemes
 using FileIO
 import ImageTransformations.imresize
 
-# because of float error, (randommask(color=Gray(0.3))|>svg2bitmap)[300,300]|>torgba != Gray(0.3)|>torgba
+# because of float error, (randommask(color=Gray(0.3))|>tobitmap)[300,300]|>torgba != Gray(0.3)|>torgba
 parsecolor(c) = ARGB{Colors.N0f8}(parse(Colorant, c))
 parsecolor(tp::Tuple) = ARGB{Colors.N0f8}(tp...)
 parsecolor(gray::Real) = ARGB{Colors.N0f8}(Gray(gray))
@@ -46,7 +46,7 @@ function load(file::IO)
         loadsvg(read(file, String))
     end
 end
-function svg2bitmap(svg::Drawing)
+function tobitmap(svg::Drawing)
     Drawing(ceil(svg.width), ceil(svg.height), :image)
     placeimage(svg)
     m = image_as_matrix()
@@ -112,7 +112,7 @@ function rendertext(str::AbstractString, size::Real;
     drawtext(str, size, pos, angle, color, font)
     if type == :bitmap mat = image_as_matrix() end
     finish()
-    if type != :bitmap mat = svg2bitmap(svg) end
+    if type != :bitmap mat = tobitmap(svg) end
     #     bgcolor = Luxor.ARGB32(bgcolor...) #https://github.com/JuliaGraphics/Luxor.jl/issues/107
     bgcolor = mat[1]
     box = boundbox(mat, bgcolor, border=border)

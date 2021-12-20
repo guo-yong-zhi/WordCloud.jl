@@ -23,7 +23,7 @@ println("results are saved to outline.svg")
 #md# ![](outline.svg)  
 #md# ### Bitmap
 #md# If you already have a bitmap mask without outline, you can outline it before painting
-bitmapmask = WordCloud.svg2bitmap(shape(squircle, 300, 200, color="AliceBlue", backgroundsize=(312, 212)))
+bitmapmask = WordCloud.tobitmap(shape(squircle, 300, 200, color="AliceBlue", backgroundsize=(312, 212)))
 wc2 = wordcloud(
     words, weights,
     mask = bitmapmask,
