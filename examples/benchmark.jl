@@ -18,7 +18,7 @@ wc3 = wordcloud(words, weights, mask=shape(box, 2000, 2000, cornerradius=100, co
 
 wcs = [wc1, wc1, wc2, wc3] # repeat wc1 to trigger compiling
 ts = [WordCloud.Stuffing.trainepoch_E!,WordCloud.Stuffing.trainepoch_EM!,
-WordCloud.Stuffing.trainepoch_EM2!,WordCloud.Stuffing.trainepoch_EM3!,
+WordCloud.Stuffing.trainepoch_EM2!,WordCloud.Stuffing.trainepoch_EM3!,WordCloud.Stuffing.trainepoch_D!,
 WordCloud.Stuffing.trainepoch_P!,WordCloud.Stuffing.trainepoch_P2!,WordCloud.Stuffing.trainepoch_Px!]
 es = [[] for i in 1:length(wcs)]
 for (i, wc) in enumerate(wcs)
