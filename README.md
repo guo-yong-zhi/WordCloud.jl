@@ -36,7 +36,7 @@ stopwords = WordCloud.stopwords_en ∪ ["said"]
 textfile = pkgdir(WordCloud)*"/res/alice.txt"
 maskfile = pkgdir(WordCloud)*"/res/alice_mask.png"
 wc = wordcloud(
-    processtext(open(textfile), stopwords=stopwords), 
+    processtext(open(textfile), stopwords=stopwords, maxnum=500), 
     mask = maskfile,
     maskcolor="#faeef8",
     outline = 4,
