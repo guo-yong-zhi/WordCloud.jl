@@ -22,21 +22,22 @@ end
 initwords!(wc, i; kargs...) = initword!.(wc, index(wc, i); kargs...)
 function initwords!(wc::WC; maxiter=5, tolerance=0.02)
     params = wc.params
-    
+    weights = wc.weights
+    wc.weights .= weights ./ √(sum(weights.^2 .* length.(wc.words)) / length(weights))
     si = sortperm(wc.weights, rev=true)
-    words = wc.words[si]
-    weights = wc.weights[si]
-    weights = weights ./ √(sum(weights.^2 .* length.(words)) / length(weights))
-    wc.words .= words
-    wc.weights .= weights
-    wc.params[:colors] .= wc.params[:colors][si]
-    wc.params[:angles] .= wc.params[:angles][si]
-    wc.params[:wordids] .= wc.params[:wordids][si]
+    wc.words = @view wc.words[si]
+    wc.weights = @view wc.weights[si]
+    wc.imgs = @view wc.imgs[si]
+    wc.svgs = @view wc.svgs[si]
+    wc.qtrees = @view wc.qtrees[si]
+    wc.params[:colors] = @view wc.params[:colors][si]
+    wc.params[:angles] = @view wc.params[:angles][si]
+    wc.params[:wordids] = @view wc.params[:wordids][si]
     wc.params[:indsmap] = nothing
     println("set density = $(params[:density])")
-    scale = find_weight_scale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
+    find_weight_scale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
     printfontsizes(wc)
-    initword!.(wc, 1:length(words))
+    initword!.(wc, 1:length(wc.words))
     setstate!(wc, nameof(initwords!))
     wc
 end

@@ -6,7 +6,7 @@ mutable struct WC
     mask
     svgmask
     qtrees #::Vector{Stuffing.QTrees.U8SQTree} be Any to keep the SubArray from @view
-    maskqtree::Stuffing.QTrees.U8SQTree
+    maskqtree #::Stuffing.QTrees.U8SQTree
     params::Dict{Symbol,Any}
 end
 
@@ -61,6 +61,7 @@ wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter) |> collect, values(counter) |> collect; kargs...)
 wordcloud(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
 wordcloud(text; kargs...) = wordcloud(processtext(text); kargs...)
+wordcloud(words, weight::Number; kargs...) = wordcloud(words, repeat([weight], length(words)); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=:auto, angles=:auto, 
                 mask=:auto, font=:auto,
