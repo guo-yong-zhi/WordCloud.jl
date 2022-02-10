@@ -11,7 +11,7 @@ initqtree!(wc, i; kargs...) = initqtree!.(wc, index(wc, i); kargs...)
 "Initialize word's images and other resources with specified style"
 function initwords!(wc, i::Integer; backgroundcolor=(0, 0, 0, 0), spacing=getparameter(wc, :spacing),
                     fontsize=getfontsizes(wc, i), color=wc.params[:colors][i],
-                    angle=wc.params[:angles][i], font=getfonts(wc, i))
+                    angle=wc.params[:angles][i], font=wc.params[:fonts][i])
     img, svg = prepareword(wc.words[i], fontsize, color, angle,
         font=font, backgroundcolor=backgroundcolor, border=spacing)
     wc.imgs[i] = img
@@ -32,6 +32,7 @@ function initwords!(wc::WC; maxiter=5, tolerance=0.02)
     wc.qtrees = @view wc.qtrees[si]
     wc.params[:colors] = @view wc.params[:colors][si]
     wc.params[:angles] = @view wc.params[:angles][si]
+    wc.params[:fonts] = @view wc.params[:fonts][si]
     wc.params[:wordids] = @view wc.params[:wordids][si]
     wc.params[:indsmap] = nothing
     println("set density = $(params[:density])")
@@ -312,7 +313,8 @@ keep some words and ignore the others, then execute the function. It's the oppos
 """
 function keep(fun, wc::WC, mask::AbstractArray{Bool})
     mem = [wc.words, wc.weights, wc.imgs, wc.svgs, wc.qtrees, 
-            wc.params[:colors], wc.params[:angles], wc.params[:wordids], wc.params[:indsmap]]
+            wc.params[:colors], wc.params[:angles], wc.params[:fonts], 
+            wc.params[:wordids], wc.params[:indsmap]]
     wc.words = @view wc.words[mask]
     wc.weights = @view wc.weights[mask]
     wc.imgs = @view wc.imgs[mask]
@@ -320,6 +322,7 @@ function keep(fun, wc::WC, mask::AbstractArray{Bool})
     wc.qtrees = @view wc.qtrees[mask]
     wc.params[:colors] = @view wc.params[:colors][mask]
     wc.params[:angles] = @view wc.params[:angles][mask]
+    wc.params[:fonts] = @view wc.params[:fonts][mask]
     wc.params[:wordids] = @view wc.params[:wordids][mask]
     wc.params[:indsmap] = nothing
     r = nothing
@@ -333,8 +336,9 @@ function keep(fun, wc::WC, mask::AbstractArray{Bool})
         wc.qtrees = mem[5]
         wc.params[:colors] = mem[6]
         wc.params[:angles] = mem[7]
-        wc.params[:wordids] = mem[8]
-        wc.params[:indsmap] = mem[9]
+        wc.params[:fonts] = mem[8]
+        wc.params[:wordids] = mem[9]
+        wc.params[:indsmap] = mem[10]
     end
     r
 end

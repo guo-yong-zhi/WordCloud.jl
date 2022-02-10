@@ -5,6 +5,7 @@ using WordCloud
 stwords = ["us"];
 cs = WordCloud.randomscheme() # :Set1_8#
 as = WordCloud.randomangles() # (0,90,45,-45)#
+fs = WordCloud.randomfonts()
 dens = 0.5 # not too high
 wca = wordcloud(
     processtext(open(pkgdir(WordCloud) * "/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords), 
@@ -12,6 +13,7 @@ wca = wordcloud(
     angles=as,
     density=dens,
     backgroundcolor=:maskcolor,
+    fonts=fs,
     state=identity, # turn off the initword! and placewords! in advance
 )
 wcb = wordcloud(
@@ -22,7 +24,7 @@ wcb = wordcloud(
     density=dens,
     backgroundcolor=:maskcolor,
     maskcolor=getmaskcolor(wca),
-    font=getparameter(wca, :font),
+    fonts=fs,
     state=identity, 
 )
 #md# ### Make the same words the same style

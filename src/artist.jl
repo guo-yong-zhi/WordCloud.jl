@@ -227,8 +227,13 @@ function randomlinecolor(colors)
     linecolor
 end
 randomoutline() = rand((0, 0, 0, rand(2:10)))
-function randomfont()
-    font = rand(AvailableFonts)
-    @show font
-    font
+function randomfonts()
+    if rand() < 0.8
+        fonts = rand(AvailableFonts)
+    else
+        fonts = rand(AvailableFonts, 2 + floor(Int, 2randexp()))
+        fonts = Tuple(fonts)
+    end
+    @show fonts
+    fonts
 end

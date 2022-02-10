@@ -43,7 +43,7 @@ wc = wordcloud(
     linecolor = "purple",
     colors = :Set1_5,
     angles = (0, 90),
-    font = "Tahoma",
+    fonts = "Tahoma",
     density = 0.55) |> generate!
 paint(wc, "alice.png", ratio=0.5)
 ```

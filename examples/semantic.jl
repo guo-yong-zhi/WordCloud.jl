@@ -38,7 +38,7 @@ wc = wordcloud(
     colors=0.3,
     backgroundcolor=:maskcolor,
     state=initwords!,
-    # angles = (0,45), font = "Helvetica thin", maskcolor=0.98,
+    # angles = (0,45), fonts = "Helvetica thin", maskcolor=0.98,
 )
 
 pos = embedded

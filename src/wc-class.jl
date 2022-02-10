@@ -27,6 +27,9 @@ Positional arguments are used to specify words and weights, and can be in differ
 * angles = (0, 90, 45) #choose entries randomly  
 * angles = 0:180 #choose entries randomly  
 * angles = [0, 22, 4, 1, 100, 10, ......] #use entries sequentially in cycle  
+* fonts = "Serif Bold" #all same font  
+* fonts = ("Arial", "Times New Roman", "Tahoma") #choose entries randomly  
+* fonts = ["Arial", "Times New Roman", "Tahoma", ......] #use entries sequentially in cycle  
 * density = 0.55 #default 0.5  
 * spacing = 1  #minimum spacing between words
 
@@ -64,13 +67,13 @@ wordcloud(text; kargs...) = wordcloud(processtext(text); kargs...)
 wordcloud(words, weight::Number; kargs...) = wordcloud(words, repeat([weight], length(words)); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=:auto, angles=:auto, 
-                mask=:auto, font=:auto,
+                mask=:auto, fonts=:auto,
                 transparent=:auto, minfontsize=:auto, maxfontsize=:auto, spacing::Integer=1, density=0.5,
                 state=placewords!, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol,Any}()
-    colors, angles, mask, svgmask, font, transparent = getstylescheme(words, weights; colors=colors, angles=angles, 
-                                                    mask=mask, font=font, transparent=transparent, params=params, kargs...)
+    colors, angles, mask, svgmask, fonts, transparent = getstylescheme(words, weights; colors=colors, angles=angles, 
+                                                    mask=mask, fonts=fonts, transparent=transparent, params=params, kargs...)
     params[:colors] = Any[colors...]
     params[:angles] = angles
     params[:transparent] = transparent
@@ -97,12 +100,12 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:maxfontsize] = maxfontsize
     params[:spacing] = spacing
     params[:density] = density
-    params[:font] = font
+    params[:fonts] = fonts
     
     params[:state] = nameof(wordcloud)
     params[:epoch] = 0
     params[:indsmap] = nothing
-    params[:custom] = Dict(:fontsize => Dict(), :font => Dict())
+    params[:custom] = Dict(:fontsize => Dict())
     params[:scale] = -1
     params[:wordids] = collect(1:length(words))
     l = length(words)
@@ -116,7 +119,7 @@ end
 function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
                 masksize=:default, maskcolor=:default, keepmaskarea=:auto,
                 backgroundcolor=:default, padding=:default,
-                outline=:default, linecolor=:auto, font=:auto,
+                outline=:default, linecolor=:auto, fonts=:auto,
                 transparent=:auto, params=Dict{Symbol,Any}(), kargs...)
     merge!(params, kargs)
     colors in DEFAULTSYMBOLS && (colors = randomscheme())
@@ -213,8 +216,9 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
             Render.recolor!(mask, maskcolor) # tobitmap后有杂色 https://github.com/JuliaGraphics/Luxor.jl/issues/160
         end
     end
-    font in DEFAULTSYMBOLS && (font = randomfont())
-    colors, angles, mask, svgmask, font, transparent
+    fonts in DEFAULTSYMBOLS && (fonts = randomfonts())
+    fonts = Iterators.take(iter_expand(fonts), length(words)) |> collect
+    colors, angles, mask, svgmask, fonts, transparent
 end
 Base.length(wc::WC) = length(wc.words)
 Base.getindex(wc::WC, inds...) = wc.words[inds...] => wc.weights[inds...]
@@ -243,10 +247,15 @@ getdoc = "The 1st argument is wordcloud, the 2nd argument is index which can be 
 setdoc = "The 1st argument is wordcloud, the 2nd argument is index which can be string, number, list, or any other standard supported index, the 3rd argument is the value to assign."
 @doc getdoc getcolors(wc::WC, w=:) = wc.params[:colors][index(wc, w)]
 @doc getdoc getangles(wc::WC, w=:) = wc.params[:angles][index(wc, w)]
+@doc getdoc getfonts(wc::WC, w=:) = wc.params[:fonts][index(wc, w)]
 @doc getdoc getwords(wc::WC, w=:) = wc.words[index(wc, w)]
 @doc getdoc getweights(wc::WC, w=:) = wc.weights[index(wc, w)]
 @doc setdoc setcolors!(wc::WC, w, c) = @view(wc.params[:colors][index(wc, w)]) .= parsecolor(c)
 @doc setdoc setangles!(wc::WC, w, a::Union{Number,AbstractVector{<:Number}}) = @view(wc.params[:angles][index(wc, w)]) .= a
+@doc setdoc
+function setfonts!(wc::WC, w, v::Union{AbstractString,AbstractVector{<:AbstractString}})
+    @view(wc.params[:fonts][index(wc, w)]) .= v
+end
 @doc setdoc 
 function setwords!(wc::WC, w, v::Union{AbstractString,AbstractVector{<:AbstractString}})
     m = getindsmap(wc)
@@ -289,14 +298,6 @@ end
 @doc setdoc
 function setfontsizes!(wc::WC, w, v::Union{Number,AbstractVector{<:Number}})
     push!.(Ref(wc.params[:custom][:fontsize]), wordid(wc, w) .=> v)
-end
-@doc getdoc
-function getfonts(wc::WC, w=:)
-    get.(Ref(wc.params[:custom][:font]), wordid(wc, w), wc.params[:font])
-end
-@doc setdoc
-function setfonts!(wc::WC, w, v::Union{AbstractString,AbstractVector{<:AbstractString}})
-    push!.(Ref(wc.params[:custom][:font]), wordid(wc, w) .=> v)
 end
 getmask(wc::WC) = wc.mask
 getsvgmask(wc::WC) = wc.svgmask

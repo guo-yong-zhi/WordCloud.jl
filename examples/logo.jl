@@ -24,7 +24,7 @@ wc = wordcloud(
     transparent=(0, 0, 0, 0),
     colors=1,
     angles=-90:0,
-    font="JuliaMono Black",
+    fonts="JuliaMono Black",
     density=0.7,
     )
 generate!(wc, 2000, retry=1)
