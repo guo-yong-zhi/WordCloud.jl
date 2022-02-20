@@ -87,13 +87,19 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     avgsize = round(Int, sqrt(contentarea / length(words)))
     println("mask size: $(size(mask, 1))×$(size(mask, 2)), content area: $(contentsize)² ($(avgsize)²/word)")
     
+    if maxfontsize == :auto
+        i = argmax(weights)
+        θ = angles[i] / 180 * π
+        m,n = size(mask)
+        w = split(words[i], "\n")
+        a = max(1, length(w))
+        b = max(1, length.(w)...)
+        maxfontsize = min(n / max(a*abs(sin(θ)), b*abs(cos(θ))), m / max(a*abs(cos(θ)), b*abs(sin(θ)))) * 0.8
+    end
     @assert contentarea > 0
     if minfontsize == :auto
-        minfontsize = min(8, sqrt(contentarea / length(words) / 8))
+        minfontsize = min(maxfontsize, 8, sqrt(contentarea / length(words) / 8))
         #只和单词数量有关，和单词长度无关。不管单词多长，字号小了依然看不见。
-    end
-    if maxfontsize == :auto
-        maxfontsize = minimum(size(mask)) / 2
     end
     println("set fontsize ∈ [$minfontsize, $maxfontsize]")
     params[:minfontsize] = minfontsize

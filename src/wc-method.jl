@@ -200,7 +200,7 @@ recolor the words in `wc` in different styles with the background picture.
 The styles supported are `:average`, `:main`, `:clipping`, `:blending`, and :reset (to undo all effects of others).
 e.g.  
 * recolor!(wc, style=:average)
-* recolor!(wc, style=:mian)
+* recolor!(wc, style=:main)
 * recolor!(wc, style=:clipping, background=blur(getmask(wc))) # `background` is optional
 * recolor!(wc, style=:blending, alpha=0.3) # `background` and `alpha` are optional
 * recolor!(wc, style=:reset)

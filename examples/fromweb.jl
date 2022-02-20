@@ -7,11 +7,11 @@ try
     println(resp.request)
     content = resp.body |> String
     wc = wordcloud(content |> html2text |> processtext) |> generate!
-    println("results are saved to fromweb.png")
-    paint(wc, "fromweb.png")
+    println("results are saved to fromweb.svg")
+    paint(wc, "fromweb.svg")
     wc
 catch e
     println(e)
 end
 #eval# runexample(:fromweb)
-#md# ![](fromweb.png)  
+#md# ![](fromweb.svg)  
