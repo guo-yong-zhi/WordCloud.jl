@@ -35,6 +35,7 @@ println(length(samewords), " same words")
 for w in samewords
     setcolors!(wcb, w, getcolors(wca, w))
     setangles!(wcb, w, getangles(wca, w))
+    setfonts!(wcb, w, getfonts(wca, w))
 end
 initwords!(wcb)
 

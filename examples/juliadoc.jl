@@ -28,6 +28,7 @@ wc = wordcloud(
     colors=((0.796, 0.235, 0.20), (0.584, 0.345, 0.698), (0.22, 0.596, 0.149)),
     angles=(0, -45, 45),
     # fonts = "Verdana Bold",
+    maxfontsize = 300,
 )
 setangles!(wc, "julia", 0)
 # setangles!(wc, "function", 45)
