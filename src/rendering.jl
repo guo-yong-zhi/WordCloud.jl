@@ -54,22 +54,22 @@ function tobitmap(svg::Drawing)
     m
 end
 
-function boundbox(p::AbstractMatrix, bgcolor; border=0)
+function boundingbox(p::AbstractMatrix, bgcolor; border=0)
     a = c = 1
     b = d = 0
-    while a < size(p, 1) && all(p[a,:] .== bgcolor)
+    while a < size(p, 1) && all(@view(p[a,:]) .== bgcolor)
         a += 1
     end
-    while b < size(p, 1) && all(p[end - b,:] .== bgcolor)
+    while b < size(p, 1) && all(@view(p[end - b,:]) .== bgcolor)
         b += 1
     end
     a = max(1, a - border)
     b = min(size(p, 1), max(size(p, 1) - b + border, a))
     p = @view p[a:b, :]
-    while c < size(p, 2) && all(p[:,c] .== bgcolor)
+    while c < size(p, 2) && all(@view(p[:,c]) .== bgcolor)
         c += 1
     end
-    while d < size(p, 2) && all(p[:, end - d] .== bgcolor)
+    while d < size(p, 2) && all(@view(p[:, end - d]) .== bgcolor)
         d += 1
     end
     # @show a,b,c,d,border,bgcolor
@@ -115,7 +115,7 @@ function rendertext(str::AbstractString, size::Real;
     if type != :bitmap mat = tobitmap(svg) end
     #     bgcolor = Luxor.ARGB32(bgcolor...) #https://github.com/JuliaGraphics/Luxor.jl/issues/107
     bgcolor = mat[1]
-    box = boundbox(mat, bgcolor, border=border)
+    box = boundingbox(mat, bgcolor, border=border)
     mat = clipbitmap(mat, box...)
     if type == :bitmap
         return mat
@@ -145,7 +145,7 @@ function rendertextoutlines(str::AbstractString, size::Real; color="black", bgco
     strokepath()
     mat = image_as_matrix()
     finish()
-    mat = clipbitmap(mat, boundbox(mat, mat[1])...)
+    mat = clipbitmap(mat, boundingbox(mat, mat[1])...)
 end
 
 function torgba(c)

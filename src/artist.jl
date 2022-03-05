@@ -63,7 +63,7 @@ function randomscheme()
         isempty(colors) &&  (colors = c)
         println("color scheme: ", repr(scheme), ", length: ", length(colors))
     else
-        colors = rand((0, 1, 0, 1, 0, 1, (0, 1), rand(), (rand(), rand())))
+        colors = rand((0, 1, 0, 1, 0, 1, rand(), (rand(), rand())))
         @show colors
     end
     (colors...,)

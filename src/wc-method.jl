@@ -279,7 +279,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
     for r in 1:retry
         if r != 1
             rescale!(wc, 0.97)
-            dens = textoccupying(getwords(wc), getfontsizes(wc), getfonts(wc)) / wc.params[:contentarea]
+            dens = textoccupancy(getwords(wc), getfontsizes(wc), getfonts(wc)) / wc.params[:contentarea]
             println("▸$r. try scale = $(wc.params[:scale]). The density is reduced to $dens")
             printfontsizes(wc)
         else
@@ -361,7 +361,7 @@ function pin(fun, wc::WC, mask::AbstractArray{Bool})
     wc.maskqtree = maskqtree2
     resultpic = copy(wc.mask)
     wc.mask = overlay!(resultpic, wc.imgs[mask], getpositions(wc, mask))
-    wc.params[:contentarea] = occupying(QTrees.kernel(wc.maskqtree[1]), QTrees.FULL)
+    wc.params[:contentarea] = occupancy(QTrees.kernel(wc.maskqtree[1]), QTrees.FULL)
     r = nothing
     try
         r = ignore(fun, wc, mask)

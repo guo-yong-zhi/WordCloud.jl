@@ -1,22 +1,22 @@
-## occupying
+## occupancy
 import Statistics.quantile
-function occupying(img::AbstractMatrix, bgvalue=img[1])
+function occupancy(img::AbstractMatrix, bgvalue=img[1])
     return sum(img .!= bgvalue)
 end
-function occupying(imgs::AbstractVector, bgvalue=imgs[1][1])
+function occupancy(imgs::AbstractVector, bgvalue=imgs[1][1])
     if isempty(imgs) return 0 end
-    return sum(p -> occupying(p, bgvalue), imgs)
+    return sum(p -> occupancy(p, bgvalue), imgs)
 end
-function boxoccupying(img::AbstractMatrix, border=0)
+function boxoccupancy(img::AbstractMatrix, border=0)
     return (size(img, 1) - 2border) * (size(img, 2) - 2border)
 end
-function boxoccupying(imgs::AbstractVector, border=0)
+function boxoccupancy(imgs::AbstractVector, border=0)
     if isempty(imgs) return 0 end
-    return sum(p -> boxoccupying(p, border), imgs)
+    return sum(p -> boxoccupancy(p, border), imgs)
 end
-function feelingoccupying(imgs, border=0, bgvalue=imgs[1][1])
-    bs = boxoccupying.(imgs, border)
-    os = occupying.(imgs, bgvalue)
+function feelingoccupancy(imgs, border=0, bgvalue=imgs[1][1])
+    bs = boxoccupancy.(imgs, border)
+    os = occupancy.(imgs, bgvalue)
     s = (0.8 * sum(bs) + 0.2 * sum(os)) / 0.93 # 兼顾饱满字体（华文琥珀）和清瘦字体（仿宋）
     # sum(os) ≈ 2/3 sum(bs), 故除以0.93还原到sum(bs)的大小
     th = 10quantile(bs, 0.1)
@@ -26,7 +26,7 @@ function feelingoccupying(imgs, border=0, bgvalue=imgs[1][1])
     (s - er)
 end
 
-function textoccupying(words, fontsizes, fonts)
+function textoccupancy(words, fontsizes, fonts)
     border = 1
     imgs = []
     for (c, sz, ft) in zip(words, fontsizes, fonts)
@@ -34,7 +34,7 @@ function textoccupying(words, fontsizes, fonts)
         img = Render.rendertext(string(c), sz, backgroundcolor=(0, 0, 0, 0), font=ft, border=border)
         push!(imgs, img)
     end
-    feelingoccupying(imgs, border) # border>0 以获取背景色imgs[1]
+    feelingoccupancy(imgs, border) # border>0 以获取背景色imgs[1]
 end
 
 ## prepare
@@ -42,8 +42,8 @@ function preparemask(img, bgcolor)
     mask = imagemask(img, bgcolor)
     maskqt = maskqtree(mask)
     groundsize = size(maskqt[1], 1)
-    contentarea = occupying(mask, false)
-    @assert contentarea == occupying(QTrees.kernel(maskqt[1]), QTrees.FULL)
+    contentarea = occupancy(mask, false)
+    @assert contentarea == occupancy(QTrees.kernel(maskqt[1]), QTrees.FULL)
     return img, maskqt, groundsize, contentarea
 end
 
@@ -99,7 +99,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
         end
         # cal tg1
         setparameter!(wc, sc1, :scale)
-        tg1 = textoccupying(words, getfontsizes(wc), fonts)
+        tg1 = textoccupancy(words, getfontsizes(wc), fonts)
         dens = tg1 / area
         println("⋯scale=$(getparameter(wc, :scale)), density=$dens\t", dens > density ? "↑" : "↓")
         if tg1 > target
