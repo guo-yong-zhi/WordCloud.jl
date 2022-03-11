@@ -96,20 +96,26 @@ include("test_textprocessing.jl")
     @test (size(wc3.mask) .> (572, 640)) == (false, true)
     wc = wordcloud(["test"], [1], mask=pngfile, padding=100)
     @test all(size(wc.mask) .> 700)
-    # get&set
+    # get & set & id
+    words, weights = processtext(open("../res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxnum=300)
     wc = wordcloud(
-            processtext(open("../res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"], maxnum=300), 
+            words, weights, 
             mask="../res/alice_mask.png", maskcolor="#faeef8", backgroundcolor=0.97,
             colors=(WordCloud.colorschemes[:Set1_5].colors...,),
             angles=(0, 90));
     rescale!(wc, 1.23)
+    @test getwords(wc, WordCloud.ID(2)) == words[2]
     pin(wc, ["little", "know"]) do 
         @test length(wc) == 298
         setpositions!(wc, 1, (2, 2))
         setpositions!(wc, [1, "Alice", "one"], (-1, -2))
         setpositions!(wc, [1, "Alice", "one"], [(10, 10),(10, 20),(21, 2)])
         setpositions!(wc, "time", (0, 0), type=setcenter!)
+        setfontsizes!(wc, [WordCloud.ID(66), "Alice", "one"], [9, 8, 7.6])
+        @test getwords(wc, WordCloud.ID(12:14)) == words[12:14]
     end
+    @test getfontsizes(wc, [WordCloud.ID(66), "Alice", "one"]) == [9, 8, 7.6]
+    @test getwords(wc, WordCloud.ID([112,1])) == words[[112,1]]
     @test getpositions(wc, [1, "Alice", "one"])[3] == (21, 2)
     @test WordCloud.QTrees.kernelsize(wc.qtrees[WordCloud.index(wc, "time")]) == size(getimages(wc, "time"))
     @test .-reverse(size(getimages(wc, "time"))) .÷ 2 == getpositions(wc, ["time", getwords(wc, 9)])[1]
@@ -136,4 +142,3 @@ include("test_textprocessing.jl")
     @test all(bg[mask] .== s[mask])
     @test all(bg[.!mask] .!= s[.!mask])
 end
-

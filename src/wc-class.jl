@@ -110,7 +110,8 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     
     params[:state] = nameof(wordcloud)
     params[:epoch] = 0
-    params[:indsmap] = nothing
+    params[:word2index] = nothing
+    params[:id2index] = nothing
     params[:custom] = Dict(:fontsize => Dict())
     params[:scale] = -1
     params[:wordids] = collect(1:length(words))
@@ -227,25 +228,42 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
     colors, angles, mask, svgmask, fonts, transparent
 end
 Base.length(wc::WC) = length(wc.words)
-Base.getindex(wc::WC, inds...) = wc.words[inds...] => wc.weights[inds...]
+Base.getindex(wc::WC, i::Integer) = wc.words[i] => wc.weights[i]
+Base.getindex(wc::WC, i) = getindex.(wc, index(wc, i))
 Base.lastindex(wc::WC) = lastindex(wc.words)
 Base.broadcastable(wc::WC) = Ref(wc)
 getstate(wc::WC) = wc.params[:state]
 setstate!(wc::WC, st::Symbol) = wc.params[:state] = st
-function getindsmap(wc::WC)
-    if wc.params[:indsmap] === nothing
-        wc.params[:indsmap] = Dict(zip(wc.words, Iterators.countfrom(1)))
+struct ID{T} 
+    id::T
+end
+wordids(wc, i::Integer) = wc.params[:wordids][i]
+wordids(wc, w) = wordids.(wc, index(wc, w))
+wordids(wc, id::ID) = id.id
+wordids(wc, id::ID{Colon}) = sort(wc.params[:wordids])
+function id2index(wc::WC)
+    if wc.params[:id2index] === nothing
+        wc.params[:id2index] = Dict(zip(wc.params[:wordids], Iterators.countfrom(1)))
     end
-    wc.params[:indsmap]
+    wc.params[:id2index]
+end
+function index(wc::WC, id::ID)
+    mp = id2index(wc)
+    getindex.(Ref(mp), wordids(wc, id))
+end
+function word2index(wc::WC)
+    if wc.params[:word2index] === nothing
+        wc.params[:word2index] = Dict(zip(wc.words, Iterators.countfrom(1)))
+    end
+    wc.params[:word2index]
 end
 function index(wc::WC, w::AbstractString)
-    getindsmap(wc)[w]
+    word2index(wc)[w]
 end
 index(wc::WC, w::AbstractVector) = index.(wc, w)
 index(wc::WC, i::Colon) = eachindex(wc.words)
 index(wc::WC, i) = i
-wordid(wc, i::Integer) = wc.params[:wordids][i]
-wordid(wc, w) = wordid.(wc, index(wc, w))
+
 getparameter(wc, args...) = getindex(wc.params, args...)
 setparameter!(wc, args...) = setindex!(wc.params, args...)
 hasparameter(wc, args...) = haskey(wc.params, args...)
@@ -264,7 +282,7 @@ function setfonts!(wc::WC, w, v::Union{AbstractString,AbstractVector{<:AbstractS
 end
 @doc setdoc 
 function setwords!(wc::WC, w, v::Union{AbstractString,AbstractVector{<:AbstractString}})
-    m = getindsmap(wc)
+    m = word2index(wc)
     @assert !any(v .∈ Ref(keys(m)))
     i = index(wc, w)
     Broadcast.broadcast((old, new) -> m[new] = pop!(m, old), wc.words[i], v)
@@ -291,7 +309,7 @@ end
 @doc getdoc
 function getfontsizes(wc::WC, w=:)
     inds = index(wc, w)
-    ids = wordid(wc, inds)
+    ids = wordids(wc, inds)
     Broadcast.broadcast(inds, ids) do ind, id
         cf = wc.params[:custom][:fontsize]
         if id in keys(cf)
@@ -303,7 +321,7 @@ function getfontsizes(wc::WC, w=:)
 end
 @doc setdoc
 function setfontsizes!(wc::WC, w, v::Union{Number,AbstractVector{<:Number}})
-    push!.(Ref(wc.params[:custom][:fontsize]), wordid(wc, w) .=> v)
+    push!.(Ref(wc.params[:custom][:fontsize]), wordids(wc, w) .=> v)
 end
 getmask(wc::WC) = wc.mask
 getsvgmask(wc::WC) = wc.svgmask

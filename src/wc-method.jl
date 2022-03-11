@@ -34,7 +34,8 @@ function initwords!(wc::WC; maxiter=5, tolerance=0.02)
     wc.params[:angles] = @view wc.params[:angles][si]
     wc.params[:fonts] = @view wc.params[:fonts][si]
     wc.params[:wordids] = @view wc.params[:wordids][si]
-    wc.params[:indsmap] = nothing
+    wc.params[:word2index] = nothing
+    wc.params[:id2index] = nothing
     println("set density = $(params[:density])")
     find_weight_scale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
     printfontsizes(wc)
@@ -314,7 +315,7 @@ keep some words and ignore the others, then execute the function. It's the oppos
 function keep(fun, wc::WC, mask::AbstractArray{Bool})
     mem = [wc.words, wc.weights, wc.imgs, wc.svgs, wc.qtrees, 
             wc.params[:colors], wc.params[:angles], wc.params[:fonts], 
-            wc.params[:wordids], wc.params[:indsmap]]
+            wc.params[:wordids], wc.params[:word2index], wc.params[:id2index]]
     wc.words = @view wc.words[mask]
     wc.weights = @view wc.weights[mask]
     wc.imgs = @view wc.imgs[mask]
@@ -324,7 +325,8 @@ function keep(fun, wc::WC, mask::AbstractArray{Bool})
     wc.params[:angles] = @view wc.params[:angles][mask]
     wc.params[:fonts] = @view wc.params[:fonts][mask]
     wc.params[:wordids] = @view wc.params[:wordids][mask]
-    wc.params[:indsmap] = nothing
+    wc.params[:word2index] = nothing
+    wc.params[:id2index] = nothing
     r = nothing
     try
         r = fun()
@@ -338,7 +340,8 @@ function keep(fun, wc::WC, mask::AbstractArray{Bool})
         wc.params[:angles] = mem[7]
         wc.params[:fonts] = mem[8]
         wc.params[:wordids] = mem[9]
-        wc.params[:indsmap] = mem[10]
+        wc.params[:word2index] = mem[10]
+        wc.params[:id2index] = mem[11]
     end
     r
 end
