@@ -127,8 +127,8 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     process=casemerge! ∘ lemmatize!)
     stopwords isa AbstractSet || (stopwords = Set(stopwords))
     counter = process(counter)
-    print("$(sum(values(counter))) words, ")
-    print("$(length(counter)) different words, ")
+    print("Total words: $(sum(values(counter))). ")
+    print("Unique words: $(length(counter)). ")
     for (w, c) in counter
         if (c < minfrequency 
             || length(w) < minlength || length(w) > maxlength 
@@ -138,7 +138,7 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     end
     words = keys(counter) |> collect
     weights = values(counter) |> collect
-    print("$(length(words)) legal words, ")
+    println("After filtration: $(length(words)).")
     maxnum = min(maxnum, length(weights))
     inds = partialsortperm(weights, 1:maxnum, rev=true)
     words = words[inds]
@@ -151,9 +151,9 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     weights .+= minweight
     nhuge = sum(m)
     if nhuge > 0
-        print("$nhuge huge words, ")
+        print("Reduced the weights of $nhuge huge words. ")
     end
-    println("keep the top $(length(words)) words.")
+    println("Kept the top $(length(words)) words.")
     words, weights
 end
 

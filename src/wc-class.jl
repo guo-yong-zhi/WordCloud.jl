@@ -38,7 +38,7 @@ Positional arguments are used to specify words and weights, and can be in differ
 * mask = loadmask("res/heart.jpg", color="red", ratio=2) #see the doc of `loadmask`
 * mask = "res/heart.jpg" #shorthand for loadmask("res/heart.jpg")
 * mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #See the doc of `shape`.
-* mask = box #mask can alse be one of `box`, `ellipse`, `squircle`, `ngon` and `star`.  See the doc of `shape`. 
+* mask = box #mask can also be one of `box`, `ellipse`, `squircle`, `ngon` and `star`.  See the doc of `shape`. 
 * masksize: Can be a tuple `(width, height)` or just a single number as a side length hint. 
 * backgroundsize: See `shape`. Need to be used with `masksize` to specify the padding size.
 * maskcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original (keep it unchanged), :auto (auto recolor the mask).
@@ -48,7 +48,7 @@ Positional arguments are used to specify words and weights, and can be in differ
 * transparent = nothing #no transparent color  
 * transparent = c->(c[1]+c[2]+c[3])/3*(c[4]/255)>128) #set transparent with a Function. `c` is a (r,g,b,a) Tuple.
 ---NOTE
-Some arguments depend on whether or not the `mask` is given or the type of the `mask` given.
+Some arguments depend on whether or not the `mask` is given or the type of the given `mask`.
 
 ### other keyword arguments
 The keyword argument `state` is a function. It will be called after the `wordcloud` object constructed. This will set the object to a specific state.
@@ -58,7 +58,7 @@ The keyword argument `state` is a function. It will be called after the `wordclo
 * state = identity #do nothing
 ---NOTE
 * After getting the `wordcloud` object, these steps are needed to get the result picture: initwords! -> placewords! -> generate! -> paint
-* You can skip `placewords!` and/or `initwords!`, and the default action will be performed
+* You can skip `placewords!` and/or `initwords!`, and these operations will be performed automatically with default parameters
 """
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter) |> collect, values(counter) |> collect; kargs...)
@@ -86,15 +86,9 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     contentsize = round(Int, √contentarea)
     avgsize = round(Int, sqrt(contentarea / length(words)))
     println("mask size: $(size(mask, 1))×$(size(mask, 2)), content area: $(contentsize)² ($(avgsize)²/word)")
-    
+    params[:maxfontsize0] = maxfontsize
     if maxfontsize == :auto
-        i = argmax(weights)
-        θ = angles[i] / 180 * π
-        m,n = size(mask)
-        w = split(words[i], "\n")
-        a = max(1, length(w))
-        b = max(1, length.(w)...)
-        maxfontsize = min(n / max(a*abs(sin(θ)), b*abs(cos(θ))), m / max(a*abs(cos(θ)), b*abs(sin(θ)))) * 0.8
+        maxfontsize = minimum(size(mask))
     end
     @assert contentarea > 0
     if minfontsize == :auto
@@ -168,7 +162,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
             push!(kg, :linecolor => linecolor)
         end
         padding in DEFAULTSYMBOLS && (padding = round(Int, maximum(masksize) ÷ 10))
-        mask = randommask(masksize; maskshape=mask ,color=maskcolor, padding=padding, keeparea=keepmaskarea, kg..., kargs...)
+        mask = randommask(masksize; maskshape=mask, color=maskcolor, padding=padding, keeparea=keepmaskarea, kg..., kargs...)
         transparent = c -> c != torgba(maskcolor)
     else
         ms = masksize in DEFAULTSYMBOLS ? () : masksize

@@ -26,13 +26,34 @@ function feelingoccupancy(imgs, border=0, bgvalue=imgs[1][1])
     (s - er)
 end
 
-function textoccupancy(words, fontsizes, fonts)
+function textoccupancy!(wc)
+    words = wc.words
+    fonts = getfonts(wc)
+    angles = getangles(wc) ./ 180 .* π
     border = 1
+    sizemax = size(wc.mask) .* √(getparameter(wc, :contentarea) / prod(size(wc.mask))) .* 0.8
+    check = getparameter(wc, :maxfontsize0) == :auto
     imgs = []
-    for (c, sz, ft) in zip(words, fontsizes, fonts)
-#         print(c)
-        img = Render.rendertext(string(c), sz, backgroundcolor=(0, 0, 0, 0), font=ft, border=border)
-        push!(imgs, img)
+    for i in 1:3
+        empty!(imgs)
+        fontsizes = getfontsizes(wc)
+        success = true
+        for (c, sz, ft, θ) in zip(words, fontsizes, fonts, angles)
+            img = Render.rendertext(string(c), sz, backgroundcolor=(0, 0, 0, 0), font=ft, border=border)
+            a, b = size(img)
+            imsz = max(a*abs(cos(θ)), b*abs(sin(θ))), max(a*abs(sin(θ)), b*abs(cos(θ)))
+            if check && i < 3 && any(imsz .> sizemax)
+                mfz = sz * minimum(sizemax ./ imsz) * 0.95
+                if mfz < getparameter(wc, :maxfontsize)
+                    setparameter!(wc, mfz, :maxfontsize)
+                    println("The word \"$c\"($sz) is too big. Set maxfontsize = $mfz.")
+                    success = false
+                    break
+                end
+            end
+            push!(imgs, img)
+        end
+        success && break
     end
     feelingoccupancy(imgs, border) # border>0 以获取背景色imgs[1]
 end
@@ -73,7 +94,7 @@ end
 function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tolerance=0.05)
     area = getparameter(wc, :contentarea)
     words = wc.words
-        if initialscale <= 0
+    if initialscale <= 0
         initialscale = √(area / length(words) / 0.45 * density) # 初始值假设字符的字面框面积占正方格比率为0.45（低估了汉字）
     end
     @assert sum(wc.weights.^2 .* length.(words)) / length(wc.weights) ≈ 1.0
@@ -87,7 +108,6 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
     best_scale_L = -Inf
     step = 0
     sc1 = initialscale
-    fonts = getfonts(wc)
     sc0 = 0.
     tg0 = 0.
     oneway_count = 1
@@ -99,7 +119,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
         end
         # cal tg1
         setparameter!(wc, sc1, :scale)
-        tg1 = textoccupancy(words, getfontsizes(wc), fonts)
+        tg1 = textoccupancy!(wc)
         dens = tg1 / area
         println("⋯scale=$(getparameter(wc, :scale)), density=$dens\t", dens > density ? "↑" : "↓")
         if tg1 > target

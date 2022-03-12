@@ -80,7 +80,7 @@ while getparameter(wca, :epoch) < 2000 && getparameter(wcb, :epoch) < 2000
         break
     end
 end
-println("Takes $(getparameter(wca, :epoch)) and $(getparameter(wca, :epoch)) epochs")
+println("Takes $(getparameter(wca, :epoch)) and $(getparameter(wcb, :epoch)) epochs")
 WordCloud.printcollisions(wca)
 WordCloud.printcollisions(wcb)
 #md# 

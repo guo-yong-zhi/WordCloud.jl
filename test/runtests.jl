@@ -34,6 +34,7 @@ include("test_textprocessing.jl")
     # wordcloud factory
     wc = wordcloud(["singleword" => 12], mask=star, masksize=100, density=0.55, state=generate!) # singleword & Pair
     wc = wordcloud([("loooooooooongword", 42)], mask=shape(box, 200, 150, cornerradius=40, color=0.15), maxfontsize=80, density=0.55)
+    wc = wordcloud([("loooooooooongword", 42)], mask=shape(box, 200, 150, cornerradius=40, color=0.15), density=0.55)
 
     wc = wordcloud("giving a single word is ok. giving several words is ok too", 
             mask=shape(squircle, 200, 150, color=0.15, rt=2.2), density=0.45, transparent=(1, 1, 1, 0)) # String & small mask
