@@ -181,6 +181,7 @@ end
 function dilate(mat, r)
     r == 0 && return mat
     mat2 = copy(mat)
+    @views begin
     mat2[1:end - r, :] .|= mat[1 + r:end, :]
     mat2[1 + r:end, : ] .|= mat[1:end - r, :]
     mat2[:, 1:end - r] .|= mat[:, 1 + r:end]
@@ -190,6 +191,7 @@ function dilate(mat, r)
     mat2[1 + r:end, 1 + r:end ] .|= mat[1:end - r, 1:end - r]
     mat2[1:end - r, 1 + r:end ] .|= mat[1 + r:end, 1:end - r]
     mat2[1 + r:end, 1:end - r ] .|= mat[1:end - r, 1 + r:end]
+    end
     mat2
 end
 
@@ -269,8 +271,8 @@ function overlay(color1::TransparentRGB, color2::TransparentRGB)
     if a2 == 0 return color1 end
     if a2 == 1 return color2 end
     a1 = Colors.alpha(color1) |> Float64
-    c1 = [Colors.red(color1), Colors.green(color1), Colors.blue(color1)]
-    c2 = [Colors.red(color2), Colors.green(color2), Colors.blue(color2)]
+    c1 = (Colors.red(color1), Colors.green(color1), Colors.blue(color1))
+    c2 = (Colors.red(color2), Colors.green(color2), Colors.blue(color2))
     a = a1 + a2 - a1 * a2
     c = (c1 .* a1 .* (1 - a2) .+ c2 .* a2) ./ ifelse(a > 0, a, 1)
 #     @show c, a
