@@ -143,6 +143,7 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     inds = partialsortperm(weights, 1:maxnum, rev=true)
     words = words[inds]
     weights = weights[inds]
+    print("The top $(length(words)) words are kept. ")
     @assert !isempty(weights)
     weights = weights ./ sum(weights)
     maxweight == :auto && (maxweight = max(20minweight, 20 / maxnum))
@@ -150,10 +151,12 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     weights[m] .= log1p.(weights[m] .- maxweight) ./ 10 .+ maxweight
     weights .+= minweight
     nhuge = sum(m)
-    if nhuge > 0
-        print("Reduced the weights of $nhuge huge words. ")
+    if nhuge ==  1
+        print("The weight of the biggest word $(repr(only(words[m]))) is reduced.")
+    elseif nhuge > 1
+        print("The weights of the biggest $nhuge words are reduced.")
     end
-    println("Kept the top $(length(words)) words.")
+    print("\n")
     words, weights
 end
 

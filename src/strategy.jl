@@ -1,5 +1,5 @@
 ## occupancy
-import Statistics.quantile
+import Statistics.mean
 function occupancy(img::AbstractMatrix, bgvalue=img[1])
     return sum(img .!= bgvalue)
 end
@@ -14,19 +14,40 @@ function boxoccupancy(imgs::AbstractVector, border=0)
     if isempty(imgs) return 0 end
     return sum(p -> boxoccupancy(p, border), imgs)
 end
+function cumsum2d!(B, A)
+    cumsum!(B, A, dims=1)
+    cumsum!(B, B, dims=2)
+end
+function sum2d(S, a, b, c, d)
+    a = min(a-1, lastindex(S, 1))
+    b = min(b-1, lastindex(S, 2))
+    c = min(c, lastindex(S, 1))
+    d = min(d, lastindex(S, 2))
+    ans = 0
+    a>0 && b>0 && (ans += @inbounds S[a, b])
+    c>0 && d>0 && (ans += @inbounds S[c, d])
+    a>0 && d>0 && (ans -= @inbounds S[a, d])
+    c>0 && b>0 && (ans -= @inbounds S[c, b])
+    return ans
+end
+function dilatedoccupancy(img::AbstractMatrix, r, bgvalue=img[1], border=0)
+    mask = img .!= bgvalue
+    S = cumsum2d!(similar(mask, Int), mask)
+    sum(sum2d(S, i-r, j-r, i+r, j+r)>0 for i in 1+border:size(S, 1)-border for j in 1+border:size(S, 2)-border; init=0)
+end
+function dilatedoccupancy(imgs::AbstractVector, r, bgvalue=imgs[1][1], border=0)
+    if isempty(imgs) return 0 end
+    return sum(p -> dilatedoccupancy(p, r, bgvalue, border), imgs)
+end
 function feelingoccupancy(imgs, border=0, bgvalue=imgs[1][1])
-    bs = boxoccupancy.(imgs, border)
-    os = occupancy.(imgs, bgvalue)
-    s = (0.8 * sum(bs) + 0.2 * sum(os)) / 0.93 # 兼顾饱满字体（华文琥珀）和清瘦字体（仿宋）
-    # sum(os) ≈ 2/3 sum(bs), 故除以0.93还原到sum(bs)的大小
-    th = 10quantile(bs, 0.1)
-    bigind = findall(x -> x > th, bs)
-#     @show length(bigind)
-    er = (sum(bs[bigind]) - sum(os[bigind])) * 0.2 # 兼顾大字的内隙和小字的占据
-    (s - er)
+    s = minimum.(size.(imgs))
+    r = round(Int, mean(@view(s[end-end÷10:end]))/3*2)
+    big = s .> 3r
+    oc = dilatedoccupancy(@view(imgs[big]), r, bgvalue, border) + boxoccupancy(@view(imgs[.!big]), border)
+    oc * 0.93
 end
 
-function textoccupancy!(wc)
+function wordsoccupancy!(wc)
     words = wc.words
     fonts = getfonts(wc)
     angles = getangles(wc) ./ 180 .* π
@@ -55,7 +76,7 @@ function textoccupancy!(wc)
         end
         success && break
     end
-    feelingoccupancy(imgs, border) # border>0 以获取背景色imgs[1]
+    feelingoccupancy(imgs, border) # border>0 以获取背景色img[1]
 end
 
 ## prepare
@@ -83,19 +104,19 @@ function contentsize_proposal(words, weights)
     12 * √sum(length.(words) .* weights .^ 2) #中等大小的单词其每个字母占据12 pixel*12 pixel 
 end
 
-## weight_scale
-function scalestep(x₀, y₀, x₁, y₁, y)
+## findscale!
+function scaleiterstep(x₀, y₀, x₁, y₁, y)
     x₀ = x₀^2
     x₁ = x₁^2
-    x = ((x₁ - x₀) * y + x₀ * y₁ - x₁ * y₀) / (y₁ - y₀) # 假设y=k*x^2+b
+    x = ((x₁ - x₀) * y + x₀ * y₁ - x₁ * y₀) / (y₁ - y₀) # 假设y=k*x^2+b，割线法
     (x > 0) ? √x : (√min(x₀, x₁)) / 2
 end
 
-function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tolerance=0.05)
+function findscale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tolerance=0.05)
     area = getparameter(wc, :contentarea)
     words = wc.words
     if initialscale <= 0
-        initialscale = √(area / length(words) / 0.45 * density) # 初始值假设字符的字面框面积占正方格比率为0.45（低估了汉字）
+        initialscale = √(area / length(words) / 0.4 * density) # 初始值假设字符的字面框面积占正方格比率为0.4（低估了汉字）
     end
     @assert sum(wc.weights.^2 .* length.(words)) / length(wc.weights) ≈ 1.0
     target = density * area
@@ -114,12 +135,12 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
     while true
         step = step + 1
         if step > maxiter
-            @warn "find_weight_scale! reach the `maxiter`. The `density` may be inaccurate. This may be caused by too small background, too many words or too big `minfontsize`."
+            @warn "`findscale!` reach the `maxiter`. The `density` may be inaccurate. This may be caused by too small background, too many words or too big `minfontsize`."
             break
         end
         # cal tg1
         setparameter!(wc, sc1, :scale)
-        tg1 = textoccupancy!(wc)
+        tg1 = wordsoccupancy!(wc)
         dens = tg1 / area
         println("⋯scale=$(getparameter(wc, :scale)), density=$dens\t", dens > density ? "↑" : "↓")
         if tg1 > target
@@ -134,7 +155,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
             end
         end
         # cal sc2
-        sc2 = scalestep(sc0, tg0, sc1, tg1, target)
+        sc2 = scaleiterstep(sc0, tg0, sc1, tg1, target)
 #         @show sc0, tg0, sc1, tg1, sc2
         if !(best_scale_L < sc2 < best_scale_H)
             if isfinite(best_tar_H + best_tar_L)
@@ -153,7 +174,7 @@ function find_weight_scale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tole
                 println("one-way search takes effect: scale $sc2 -> $sc2_")
                 sc2 = sc2_
             else
-                error("find_weight_scale! failed")
+                error("`findscale!` failed")
             end
         end
         if sc2 >= 50initialscale # 防止空白words的输入，计算出sc过大渲染字体耗尽内存

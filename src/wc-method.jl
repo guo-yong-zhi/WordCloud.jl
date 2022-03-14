@@ -37,7 +37,7 @@ function initwords!(wc::WC; maxiter=5, tolerance=0.02)
     wc.params[:word2index] = nothing
     wc.params[:id2index] = nothing
     println("set density = $(params[:density])")
-    find_weight_scale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
+    findscale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
     printfontsizes(wc)
     initword!.(wc, 1:length(wc.words))
     setstate!(wc, nameof(initwords!))
@@ -280,7 +280,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
     for r in 1:retry
         if r != 1
             rescale!(wc, 0.97)
-            dens = textoccupancy!(wc) / wc.params[:contentarea]
+            dens = wordsoccupancy!(wc) / wc.params[:contentarea]
             println("▸$r. try scale = $(wc.params[:scale]). The density is reduced to $dens")
             printfontsizes(wc)
         else

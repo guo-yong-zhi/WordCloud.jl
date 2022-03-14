@@ -27,7 +27,7 @@ include("test_textprocessing.jl")
     words = ["." for i in 1:500]
     weights = [1 for i in 1:length(words)]
     @test_throws ErrorException begin # no room
-        wc = wordcloud(words, weights, mask=ellipse, masksize=(5, 5), backgroundsize=(10, 10), density=1000, angles=0)
+        wc = wordcloud(words, weights, mask=ellipse, masksize=(5, 5), backgroundsize=(10, 10), density=1000, angles=0, maxfontsize=5)
         placewords!(wc)
     end
 
@@ -133,6 +133,11 @@ include("test_textprocessing.jl")
     for s = [:main, :reset, :average, :clipping, :blending, :reset]
         recolor!(wc, style=s)
     end
+
+    # strategy
+    imgs = wc.imgs
+    @test all(WordCloud.dilatedoccupancy.(imgs, maximum.(size.(imgs))) .== WordCloud.boxoccupancy.(imgs))
+    @test WordCloud.occupancy(imgs) == WordCloud.dilatedoccupancy(imgs, 0)
 
     # utils
     wc.qtrees[1][1] |> imageof
