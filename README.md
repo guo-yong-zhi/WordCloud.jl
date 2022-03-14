@@ -44,7 +44,7 @@ wc = wordcloud(
     colors = :Set1_5,
     angles = (0, 90),
     fonts = "Tahoma",
-    density = 0.55) |> generate!
+    density = 0.5) |> generate!
 paint(wc, "alice.png", ratio=0.5)
 ```
 *Run the command `runexample(:alice)` or `showexample(:alice)` to get the result.*  

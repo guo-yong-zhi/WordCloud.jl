@@ -14,7 +14,7 @@ wc = wordcloud(
     mask=background,
     colors="LimeGreen",
     angles=-30,
-    density=0.45,
+    density=0.4,
     transparent=istrans,
     spacing=1,
 ) |> generate!;
