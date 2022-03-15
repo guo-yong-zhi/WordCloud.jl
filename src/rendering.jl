@@ -2,7 +2,7 @@ module Render
 export rendertext, overlay!, 
     shape, ellipse, box, squircle, star, ngon, ellipse_area, box_area, squircle_area, star_area, ngon_area,
     GIF, generate, parsecolor, rendertextoutlines,
-    colorschemes, torgba, imagemask, outline, padding, dilate, imresize, recolor!, recolor
+    colorschemes, torgba, imagemask, outline, padding, dilate!, imresize, recolor!, recolor
 export issvg, save, load, tobitmap, SVGImageType, svgstring
 using Luxor
 using Colors
@@ -178,21 +178,22 @@ function imagemask(img, transparent=:auto)
     img .!= convert(eltype(img), parsecolor(transparent))    
 end
 
-function dilate(mat, r)
+function dilate!(mat, r)
     r == 0 && return mat
     mat2 = copy(mat)
-    @views begin
-    mat2[1:end - r, :] .|= mat[1 + r:end, :]
-    mat2[1 + r:end, : ] .|= mat[1:end - r, :]
-    mat2[:, 1:end - r] .|= mat[:, 1 + r:end]
-    mat2[:, 1 + r:end] .|= mat[:, 1:end - r]
+    @views for _ in 1:r
+        mat2[1:end - 1, :] .|= mat[1 + 1:end, :]
+        mat2[1 + 1:end, : ] .|= mat[1:end - 1, :]
+        mat2[:, 1:end - 1] .|= mat[:, 1 + 1:end]
+        mat2[:, 1 + 1:end] .|= mat[:, 1:end - 1]
 
-    mat2[1:end - r, 1:end - r] .|= mat[1 + r:end, 1 + r:end]
-    mat2[1 + r:end, 1 + r:end ] .|= mat[1:end - r, 1:end - r]
-    mat2[1:end - r, 1 + r:end ] .|= mat[1 + r:end, 1:end - r]
-    mat2[1 + r:end, 1:end - r ] .|= mat[1:end - r, 1 + r:end]
+        mat2[1:end - 1, 1:end - 1] .|= mat[1 + 1:end, 1 + 1:end]
+        mat2[1 + 1:end, 1 + 1:end ] .|= mat[1:end - 1, 1:end - 1]
+        mat2[1:end - 1, 1 + 1:end ] .|= mat[1 + 1:end, 1:end - 1]
+        mat2[1 + 1:end, 1:end - 1 ] .|= mat[1:end - 1, 1 + 1:end]
+        mat .= mat2
     end
-    mat2
+    mat
 end
 
 function dilate2(mat, r; smoothness=0.5) # better and slower

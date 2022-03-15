@@ -95,7 +95,7 @@ function prepareword(word, fontsize, color, angle; backgroundcolor=(0, 0, 0, 0),
     Render.recolor!(mat, color), svg # 字体边缘有杂色
 end
 
-wordmask(img, bgcolor, border) = dilate(alpha.(img) .!= 0, border)
+wordmask(img, bgcolor, border) = dilate!(alpha.(img) .!= 0, border)
 # use `alpha` instead of `convert(eltype(img), parsecolor(bgcolor))`
 # https://github.com/JuliaGraphics/Luxor.jl/issues/107
 
