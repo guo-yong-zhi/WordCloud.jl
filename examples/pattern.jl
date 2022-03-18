@@ -22,10 +22,11 @@ shapes = WordCloud.tobitmap.([shape(ellipse, round(sz[i]), round(sz[i]), color=r
 setimages!(wc, :, shapes)
 
 setstate!(wc, :initwords!) # set the state flag after manual initialization
-# @record "pattern_animation" overwrite=true generate!(wc, retry=1)
-generate!(wc, retry=1, optimiser=WordCloud.Momentum(η=1/8)) # turn off rescale attempts. manually set images can't be rescaled
+@record "pattern_animation" overwrite=true generate!(wc, retry=1, optimiser=WordCloud.Momentum(η=1/8))
+# generate!(wc, retry=1, optimiser=WordCloud.Momentum(η=1/8)) # turn off rescale attempts. manually set images can't be rescaled
 println("results are saved to pattern.png")
 paint(wc, "pattern.png")
 wc
 #eval# runexample(:pattern)
 #md# ![](pattern.png)  
+#md# ![](pattern_animation/animation.gif)  
