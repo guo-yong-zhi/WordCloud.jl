@@ -46,7 +46,7 @@ Schemes_tableau = filter(s -> occursin("tableau", colorschemes[s].category), col
 Schemes_cvd = filter(s -> occursin("cvd", colorschemes[s].category), collect(keys(colorschemes)))
 Schemes_gnuplot = filter(s -> occursin("gnuplot", colorschemes[s].category), collect(keys(colorschemes)))
 Schemes_MetBrewer = filter(s -> occursin("MetBrewer", colorschemes[s].category), collect(keys(colorschemes)))
-Schemes_general = [:bluegreenyellow, :cmyk, :darkrainbow, :deepsea, :dracula, :fall, :rainbow]
+Schemes_general = [:bluegreenyellow, :cmyk, :darkrainbow, :deepsea, :dracula, :fall, :rainbow, :turbo]
 Schemes = [Schemes_colorbrewer; Schemes_seaborn; Schemes_tableau; Schemes_cvd; Schemes_gnuplot; Schemes_MetBrewer; Schemes_general]
 
 function displayschemes()
@@ -56,25 +56,41 @@ function displayschemes()
         display(colors)
     end
 end
-function randomscheme()
+function randomscheme(wordsnum=100)
     if rand() < 0.95
         scheme = rand(Schemes)
-        c = Render.colorschemes[scheme].colors
-        colors = c
-        if length(colors) < 64
-            colors = randsubseq(colors, rand())
-            isempty(colors) && (colors = c)
+        C = Render.colorschemes[scheme]
+        if length(C) < 64 && rand() < 0.95
+            colors = randsubseq(C.colors, rand())
+            isempty(colors) && (colors = C.colors)
+            print("color scheme: ", repr(scheme), ", random size: ", length(colors))
         else
-            colors = colors[range(minmax(rand(begin:end), rand(begin:end))...; step=1)]
-            length(colors) < length(c)÷10 && (colors = c)
+            if rand() < 0.3
+                a, b = minmax(rand(1:lastindex(C)), rand(1:lastindex(C)))
+                b - a < length(C)÷10 && (a = 1; b = lastindex(C))
+                rg = range(a, b; step=1)
+                print("color scheme: ", repr(scheme), ", random range: $a:$b")
+                rand() > 0.5 && (rg = reverse(rg); print(", reversed"))
+                colors = C.colors[rg]
+            else
+                a, b = round.(minmax(rand(), rand()), digits=3)
+                b - a < 0.1 && (a = 0.; b = 1.)
+                rg = range(a, b, length=max(2, wordsnum))
+                print("color scheme: ", repr(scheme), ", random range: $a:$b")
+                rand() > 0.5 && (rg = reverse(rg); print(", reversed"))
+                colors = get.(Ref(C), rg)
+            end
         end
-        rand() > 0.5 && (colors = tuple(colors...))
-        println("color scheme: ", repr(scheme), ", random size: ", length(colors))
+        if rand() > 0.5
+            colors = tuple(colors...)
+            print(", shuffled")
+        end
+        print("\n")
     else
         colors = rand((0, 1, 0, 1, 0, 1, rand(), (rand(), rand())))
         @show colors
     end
-    (colors...,)
+    colors
 end
 function randomwh(sz::Number=800)
     s = sz * sz
