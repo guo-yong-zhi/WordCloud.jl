@@ -1,9 +1,10 @@
 using Random
 SansSerifFonts = ["Trebuchet MS", "Heiti TC", "微軟正黑體", "Arial Unicode MS", "Droid Fallback Sans", "sans-serif", "Helvetica", "Verdana", "Hei",
-"Arial", "Tahoma", "Trebuchet MS", "Microsoft Yahei", "Comic Sans MS", "Impact", "Segoe Script", "STHeiti", "Apple LiGothic", "MingLiU", "Ubuntu", 
-"Segoe UI", "DejaVu Sans", "DejaVu Sans Mono", "Noto Sans CJK"]
-SerifFonts = ["Baskerville", "Times New Roman", "華康儷金黑 Std", "華康儷宋 Std",  "DFLiKingHeiStd-W8", "DFLiSongStd-W5", "DejaVu Serif", "SimSun",
-    "Hiragino Mincho Pro", "LiSong Pro", "新細明體", "serif", "Georgia", "STSong", "FangSong", "KaiTi", "STKaiti", "Courier New"]
+    "Arial", "Tahoma", "Microsoft Yahei", "Comic Sans MS", "Impact", "Segoe Script", "STHeiti", "Apple LiGothic", "MingLiU", "Ubuntu", "Segoe UI", 
+    "DejaVu Sans", "DejaVu Sans Mono", "Noto Sans CJK", "Arial Black", "Gadget", "cursive", "Charcoal", "Lucida Sans Unicode", "Lucida Grande", "Geneva"]
+SerifFonts = ["Baskerville", "Times New Roman", "Times", "華康儷金黑 Std", "華康儷宋 Std",  "DFLiKingHeiStd-W8", "DFLiSongStd-W5", "DejaVu Serif", "SimSun",
+    "Hiragino Mincho Pro", "LiSong Pro", "新細明體", "serif", "Georgia", "STSong", "FangSong", "KaiTi", "STKaiti", "Courier", "Courier New", "monospace",
+    "Palatino Linotype", "Book Antiqua", "Palatino", "Lucida Console", "Monaco"]
 CandiFonts = union(SansSerifFonts, SerifFonts)
 CandiWeights = ["", " Regular", " Normal", " Medium", " Bold", " Light"]
 function checkfonts(fonts::AbstractVector)
