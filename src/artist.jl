@@ -39,14 +39,14 @@ Schemes_colorbrewer =  filter(s -> (occursin("Accent", String(s))
         || occursin("Pastel", String(s))
         || occursin("Set", String(s))
         || occursin("Spectral", String(s))
-        || occursin("BuPu", String(s))
-        || occursin("PuOr", String(s))
-        || occursin("RdPu", String(s))
         ), Schemes_colorbrewer)
 Schemes_seaborn = filter(s -> occursin("seaborn", colorschemes[s].category), collect(keys(colorschemes)))
 Schemes_tableau = filter(s -> occursin("tableau", colorschemes[s].category), collect(keys(colorschemes)))
 Schemes_cvd = filter(s -> occursin("cvd", colorschemes[s].category), collect(keys(colorschemes)))
-Schemes = [Schemes_colorbrewer..., Schemes_seaborn..., Schemes_tableau..., Schemes_cvd...]
+Schemes_gnuplot = filter(s -> occursin("gnuplot", colorschemes[s].category), collect(keys(colorschemes)))
+Schemes_MetBrewer = filter(s -> occursin("MetBrewer", colorschemes[s].category), collect(keys(colorschemes)))
+Schemes_general = [:bluegreenyellow, :cmyk, :darkrainbow, :deepsea, :dracula, :fall, :rainbow]
+Schemes = [Schemes_colorbrewer; Schemes_seaborn; Schemes_tableau; Schemes_cvd; Schemes_gnuplot; Schemes_MetBrewer; Schemes_general]
 
 function displayschemes()
     for scheme in Schemes
@@ -59,9 +59,16 @@ function randomscheme()
     if rand() < 0.95
         scheme = rand(Schemes)
         c = Render.colorschemes[scheme].colors
-        colors = randsubseq(c, rand())
-        isempty(colors) &&  (colors = c)
-        println("color scheme: ", repr(scheme), ", length: ", length(colors))
+        colors = c
+        if length(colors) < 64
+            colors = randsubseq(colors, rand())
+            isempty(colors) && (colors = c)
+        else
+            colors = colors[range(minmax(rand(begin:end), rand(begin:end))...; step=1)]
+            length(colors) < length(c)÷10 && (colors = c)
+        end
+        rand() > 0.5 && (colors = tuple(colors...))
+        println("color scheme: ", repr(scheme), ", random size: ", length(colors))
     else
         colors = rand((0, 1, 0, 1, 0, 1, rand(), (rand(), rand())))
         @show colors
@@ -169,9 +176,24 @@ function randomstar(w, h; npoints=:rand, starratio=:rand, orientation=:rand, kee
     return shape(star, w, h; npoints=npoints, starratio=starratio, orientation=orientation, kargs...)
 end
 function randomangles()
-    a = rand((-1, 1)) .* rand((0, (0, 90), (0, 90, 45), (0, 90, 45, -45), (0, 45, -45), (45, -45), -90:90, 0:90))
-    println("angles = ", a)
-    a
+    θ = rand((30, 45, 60))
+    st = rand((5, 10, 15))
+    angles = rand((0, (0, 90), (0, 45, 90), (0, 45, 90, -45), -90:90, -90:st:90,
+        -5:5, (0, θ, -θ), (θ, -θ), -θ:θ, -θ:st:θ))
+    if length(angles) > 1 && rand() > 0.5
+        0 in angles && maximum(abs, angles)>10 && (angles = angles .- first(angles))
+        if angles isa Tuple
+            angles = collect(angles)
+            println("angles = ", angles)
+        else
+            println("angles = collect($angles)")
+            angles = collect(angles)
+        end
+    else
+        rand() > 0.7 && (angles =  -1 .* angles)
+        println("angles = ", angles)
+    end
+    angles
 end
 function randommaskcolor(colors)
     colors = parsecolor.(unique(colors))
@@ -232,7 +254,7 @@ function randomfonts()
         fonts = rand(AvailableFonts)
     else
         fonts = rand(AvailableFonts, 2 + floor(Int, 2randexp()))
-        fonts = Tuple(fonts)
+        rand() > 0.5 && (fonts = tuple(fonts...))
     end
     @show fonts
     fonts

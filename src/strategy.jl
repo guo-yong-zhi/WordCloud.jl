@@ -135,7 +135,7 @@ function findscale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tolerance=0.
     while true
         step = step + 1
         if step > maxiter
-            @warn "`findscale!` reach the `maxiter`. The `density` may be inaccurate. This may be caused by too small background, too many words or too big `minfontsize`."
+            @warn "The `findscale!` has performed `maxiter`($maxiter) iterations. The set `density` is not reached. This may be caused by too small background, too big `minfontsize` or unsuitable number of words."
             break
         end
         # cal tg1

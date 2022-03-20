@@ -258,7 +258,7 @@ function printcollisions(wc)
     get_text(i) = i > 1 ? wc.words[i - 1] : "#MASK#"
     collwords = [(get_text(i), get_text(j)) for (i, j) in colllist]
     if length(colllist) > 0
-        @warn "Have $(length(colllist)) collisions. Try setting a larger `nepoch` and `retry`, or lower `density` in `wordcloud` to fix that"
+        @warn "Have $(length(colllist)) collisions. Try setting a larger `nepoch` and `retry`, or lower `density` and `spacing` in `wordcloud` to fix it."
         println("$collwords")
     end
 end
