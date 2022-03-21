@@ -75,7 +75,7 @@ There is also a bool keyword argument `centerlargestword`, which can be set to c
 When you have set `style=:gathering`, you should disable repositioning in `generate!` at the same time, especially for big words. e.g. `generate!(wc, reposition=0.7)`.
 The keyword argument `reorder` is a function to reorder the words, which affects the order of placement. Like `reverse`, `WordCloud.shuffle`.
 """
-function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, reorder=identity, callback=x->x, kargs...)
+function placewords!(wc::WC; style=rand()<0.8 ? :uniform : :gathering, rt=:auto, centerlargestword=:auto, reorder=identity, callback=x->x, kargs...)
     if STATEIDS[getstate(wc)] < STATEIDS[:initwords!]
         initwords!(wc)
     end
@@ -104,10 +104,10 @@ function placewords!(wc::WC; style=:uniform, rt=:auto, centerlargestword=:auto, 
             if rt == :auto
                 if hasparameter(wc, :rt)
                     rt = getparameter(wc, :rt)
-                    println("use wordcloud's parameter `:rt=>$rt` to place words")
+                    println("gathering style: use the parameter in wordcloud `:rt=>$rt`")
                 else
                     rt = 1
-                    println("rt = 1, ellipse")
+                    println("gathering style: rt = 1, ellipse")
                 end
             end
             p = min(50, 2 / rt)

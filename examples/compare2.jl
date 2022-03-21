@@ -43,16 +43,16 @@ end
 initwords!(wca)
 initwords!(wcb)
 keep(wca, samewords) do
-    placewords!(wca)
+    placewords!(wca, style=:uniform)
     fit!(wca, 1000)
 end
 pin(wca, samewords) do
-    placewords!(wca) # place other words
+    placewords!(wca, style=:uniform) # place other words
 end
 centers = getpositions(wca, samewords, type=getcenter)
 setpositions!(wcb, samewords, centers, type=setcenter!) # manually initialize the position,
 pin(wcb, samewords) do
-    placewords!(wcb) # place other words
+    placewords!(wcb, style=:uniform) # place other words
 end
 #md# ### Fit them all
 function syncposition(samewords, pos, wca, wcb)

@@ -14,7 +14,9 @@ wca = wordcloud(
     density=dens,
     backgroundcolor=:maskcolor,
     fonts=fs,
-    ) |> generate!
+    )
+placewords!(wca, style=:uniform)
+generate!(wca)
 #md# ### Then generate the wordcloud on the right      
 println("==Trump's==")
 wcb = wordcloud(
@@ -50,7 +52,7 @@ end
 
 println("=pin same words=")
 pin(wcb, samewords) do
-    placewords!(wcb)
+    placewords!(wcb, style=:uniform)
     generate!(wcb, 1000, retry=1) # allow teleport but don‘t allow rescale
 end
 

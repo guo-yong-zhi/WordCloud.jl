@@ -37,6 +37,7 @@ end
 #md# These two functions are ussed to forcing large words to the center, but are not essential.
 wc = wordcloud(df.country, 1, angles=0)
 gif = WordCloud.GIF("series")
+println("results are saved in series")
 @assert length(unique(df[!, 1])) == length(df[!, 1])
 initialized = false
 for name in names(df)[2:end] #the first column is word list
