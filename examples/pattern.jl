@@ -1,7 +1,7 @@
 #md# The [engine](https://github.com/guo-yong-zhi/Stuffing.jl) is designed for general purpose, so the outputs don't have to be text, and shapes are OK
 using WordCloud
 
-sc = WordCloud.randomscheme()
+sc = WordCloud.randomscheme() |> unique #unique makes Int -> Vector{Int}
 l = 200
 wc = wordcloud(
     repeat(["placeholder"], l), repeat([1], l), 

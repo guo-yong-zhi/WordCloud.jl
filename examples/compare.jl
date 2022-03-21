@@ -14,9 +14,8 @@ wca = wordcloud(
     density=dens,
     backgroundcolor=:maskcolor,
     fonts=fs,
-    )
-placewords!(wca, style=:uniform)
-generate!(wca)
+    style=:uniform,
+    ) |> generate!
 #md# ### Then generate the wordcloud on the right      
 println("==Trump's==")
 wcb = wordcloud(

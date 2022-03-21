@@ -71,35 +71,49 @@ end
 * placewords!(wc, style=:gathering)
 * placewords!(wc, style=:gathering, level=5) #`level` controls the intensity of gathering, typically between 4 and 6, defaults to 5.
 * placewords!(wc, style=:gathering, level=6, rt=0) #rt=0, rectangle; rt=1, ellipse; rt=2, rhombus. defaults to 1.  
-There is also a bool keyword argument `centerlargestword`, which can be set to center the largest word.
+There is also a keyword argument `centeredword`. e.g. `centeredword=1`, `centeredword="Alice"`, `centeredword=false`
 When you have set `style=:gathering`, you should disable repositioning in `generate!` at the same time, especially for big words. e.g. `generate!(wc, reposition=0.7)`.
 The keyword argument `reorder` is a function to reorder the words, which affects the order of placement. Like `reverse`, `WordCloud.shuffle`.
 """
-function placewords!(wc::WC; style=rand()<0.8 ? :uniform : :gathering, rt=:auto, centerlargestword=:auto, reorder=identity, callback=x->x, kargs...)
+function placewords!(wc::WC; style=:auto, rt=:auto, centeredword=:auto, reorder=:auto, level=:auto, callback=x->x, kargs...)
     if STATEIDS[getstate(wc)] < STATEIDS[:initwords!]
         initwords!(wc)
     end
-    @assert style in [:uniform, :gathering]
-    if centerlargestword == :auto
-        c = wc.params[:groundsize] ÷ 2 # can't wc.maskqtree[1][end÷2]. 1D index goes wrong.
-        kernelsize = Stuffing.kernelsize
-        centerlargestword = wc.maskqtree[1][c, c] == QTrees.EMPTY && (
-            length(wc.qtrees) < 2 
-            || (length(wc.qtrees) >= 2 
-                && wc.weights[2] / wc.weights[1] < 0.5 
-                && prod(kernelsize(wc.qtrees[2])) / prod(kernelsize(wc.qtrees[1])) < 0.5))
-        if centerlargestword
-            println("center the largest word $(repr(getwords(wc, 1)))")
+    @assert style in [:uniform, :gathering, :auto]
+    centeredword == :auto && hasparameter(wc, :centeredword) && (centeredword = getparameter(wc, :centeredword))
+    if centeredword == :auto || centeredword === true
+        max_i = argmax(wc.weights)
+        max_i2 = length(wc)>1 ? partialsortperm(wc.weights, 2, rev=true) : max_i
+        if centeredword == :auto
+            c = wc.params[:groundsize] ÷ 2 # can't wc.maskqtree[1][end÷2]. 1D index goes wrong.
+            kernelsize = Stuffing.kernelsize
+            centeredword = wc.maskqtree[1][c, c] == QTrees.EMPTY && (
+                length(wc.qtrees) < 2 
+                || (wc.weights[max_i2] / wc.weights[max_i] < 0.5 
+                    && prod(kernelsize(wc.qtrees[max_i2])) / prod(kernelsize(wc.qtrees[max_i])) < 0.5))
         end
+        if centeredword #Bool
+            centeredword = max_i
+        end
+        #false or Int
     end
     arg = ()
-    if centerlargestword
-        setcenter!(wc.qtrees[1],  wc.params[:groundsize] .÷ 2)
+    qtrees = wc.qtrees
+    if centeredword !== false #Bool, Int or string...
+        centeredword = index(wc, centeredword)
+        setcenter!(wc.qtrees[centeredword],  wc.params[:groundsize] .÷ 2)
+        println("center the word $(repr(getwords(wc, centeredword)))")
         arg = (2:length(wc.qtrees) |> collect,)
+        qtrees = [wc.qtrees[i] for i in 1:length(wc.qtrees) if i != centeredword]
         callback(1)
     end
-    qtrees = reorder(wc.qtrees)
-    if length(wc.qtrees) > 0 + centerlargestword
+    reorder == :auto && hasparameter(wc, :reorder) && (reorder = getparameter(wc, :reorder))
+    reorder == :auto && (reorder=identity)
+    qtrees = reorder(qtrees)
+    centeredword !== false && (qtrees = [wc.qtrees[centeredword], qtrees...])
+    if length(wc.qtrees) > 0 + (centeredword !== false)
+        style == :auto && hasparameter(wc, :style) && (style = getparameter(wc, :style))
+        style == :auto && (style = rand()<0.8 ? :uniform : :gathering)
         if style == :gathering
             if rt == :auto
                 if hasparameter(wc, :rt)
@@ -111,8 +125,10 @@ function placewords!(wc::WC; style=rand()<0.8 ? :uniform : :gathering, rt=:auto,
                 end
             end
             p = min(50, 2 / rt)
+            level == :auto && hasparameter(wc, :level) && (level = getparameter(wc, :level))
+            level == :auto && (level=5)
             ind = Stuffing.place!(deepcopy(wc.maskqtree), qtrees, arg...; 
-                    roomfinder=findroom_gathering, p=p, callback=callback, kargs...)
+                    roomfinder=findroom_gathering, p=p, level=level, callback=callback, kargs...)
         else
             ind = Stuffing.place!(deepcopy(wc.maskqtree), qtrees, arg...;
                     roomfinder=findroom_uniform, callback=callback, kargs...)

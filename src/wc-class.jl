@@ -51,11 +51,12 @@ Positional arguments are used to specify words and weights, and can be in differ
 Some arguments depend on whether or not the `mask` is given or the type of the given `mask`.
 
 ### other keyword arguments
-The keyword argument `state` is a function. It will be called after the `wordcloud` object constructed. This will set the object to a specific state.
+* style, centeredword, reorder, rt, level: config the style of `placewords!`. See the doc of `placewords!`.  
 * state = placewords! #default setting, will initialize word's position
 * state = generate! #get result directly
 * state = initwords! #only initialize resources, such as rendering word images
 * state = identity #do nothing
+The keyword argument `state` is a function. It will be called after the `wordcloud` object constructed. This will set the object to a specific state.
 ---NOTE
 * After getting the `wordcloud` object, these steps are needed to get the result picture: initwords! -> placewords! -> generate! -> paint
 * You can skip `placewords!` and/or `initwords!`, and these operations will be performed automatically with default parameters
@@ -69,9 +70,16 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
                 colors=:auto, angles=:auto, 
                 mask=:auto, fonts=:auto,
                 transparent=:auto, minfontsize=:auto, maxfontsize=:auto, spacing::Integer=1, density=0.5,
-                state=placewords!, kargs...)
+                state=placewords!, style=:auto, centeredword=:auto, reorder=:auto, level=:auto, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol,Any}()
+
+    # parameters for placewords!
+    params[:style] = style
+    params[:centeredword] = centeredword
+    params[:reorder] = reorder
+    params[:level] = level
+
     colors, angles, mask, svgmask, fonts, transparent = getstylescheme(words, weights; colors=colors, angles=angles, 
                                                     mask=mask, fonts=fonts, transparent=transparent, params=params, kargs...)
     params[:colors] = Any[colors...]

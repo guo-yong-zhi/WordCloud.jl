@@ -92,6 +92,14 @@ function randomscheme(wordsnum=100)
     end
     colors
 end
+function randomfilteredscheme(args...; filter=colors->Gray(parsecolor(randommaskcolor(colors)))>0.5, maxiter=100)
+    for _ in 1:maxiter
+        colors = randomscheme(args...)
+        filter(colors) && return colors
+    end
+    @warn "randomfilteredscheme reach the `maxiter`."
+    return colors
+end
 function randomwh(sz::Number=800)
     s = sz * sz
     ratio = (9/16 + rand()*7/16)
