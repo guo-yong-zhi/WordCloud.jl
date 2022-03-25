@@ -61,7 +61,7 @@ paint(wc, "alice.png", ratio=0.5)
 [![semantic](res/semantic.png)](./examples/semantic.jl)  
 *Run the command `runexample(:semantic)` or `showexample(:semantic)` to get the result.*  
 *The variable `WordCloud.examples` holds all available examples.* 
-You can also [**see more examples**](https://github.com/guo-yong-zhi/WordCloud-Gallery) or [**try it online**](https://mybinder.org/v2/gh/guo-yong-zhi/WordCloud.jl/master?filepath=examples.ipynb).  
+You can also [**see more examples**](https://github.com/guo-yong-zhi/WordCloud-Gallery) or [**try it online**](https://mybinder.org/v2/gh/guo-yong-zhi/pluto-on-jupyterlab/HEAD?urlpath=pluto/open?url=https%3A%2F%2Fraw.githubusercontent.com%2Fguo-yong-zhi%2FWordCloud.jl%2Fmaster%2Fplutoapp.jl).
 # About Implementation
 Unlike most other implementations, WordCloud.jl is programmed based on image local gradient optimization. It’s a non-greedy algorithm in which words can be further [moved](res/animation2.gif) after they are positioned. This means shrinking words is unnecessary, thus the word size can be kept unchanged during the adjustment. In addition, it allows words to be assigned to any initial position whether or not there will be an overlap. This enables the program to achieve the maximum flexibility. See also [Stuffing.jl - Algorithm Description](https://github.com/guo-yong-zhi/Stuffing.jl#algorithm-description).  
 * [x] 权重计算和单词位置初始化

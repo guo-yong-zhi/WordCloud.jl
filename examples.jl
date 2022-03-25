@@ -17,9 +17,8 @@ md"# Basic Usage"
 text = """
 A word cloud (tag cloud or wordle) is a novelty visual representation of text data, 
 typically used to depict keyword metadata (tags) on websites, or to visualize free form text. 
-Tags are usually single words, and the importance of each tag is shown with font size or color. 
+Tags are usually single words, and the importance of each tag is shown with font size or color. Bigger term means greater weight. 
 This format is useful for quickly perceiving the most prominent terms to determine its relative prominence. 
-Bigger term means greater weight.
 """
 
 # ╔═╡ f22485b9-cbbe-4d19-8354-8e6b22ccd398
