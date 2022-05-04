@@ -63,9 +63,8 @@ end
 
 raw"""
 countwords(text; regexp=r"\w[\w']+", lemmatizer=lemmatize, counter=Dict{String,Int}(), kargs...)
-Count words in text. And use `regexp` to split. And save results in `counter`. 
-`lemmatizer` can be `nothing` or a String-to-String function to do lemmatization.
-`text` can be a String, a Vector of String, or a opend file(IO).
+Count words in text. And use `regexp` to split. And save results into `counter`. 
+`text` can be a String, a Vector of String, or an opend file (IO).
 """
 function countwords(textfile::IO; counter=Dict{String,Int}(), kargs...)
     for l in eachline(textfile)
