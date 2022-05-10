@@ -18,16 +18,23 @@ using WordCloud
 using Random
 words = [randstring(rand(1:8)) for i in 1:300]
 weights = randexp(length(words))
-wc1 = wordcloud(words, weights)
-generate!(wc1)
-paint(wc1, "random.svg")
+wc = wordcloud(words, weights)
+generate!(wc)
+paint(wc, "random.svg")
 ```
-Or it could be
+Alternatively, it could be
 ```julia
-wc2 = wordcloud("It's easy to generate word clouds") |> generate!
+wc = wordcloud("It's easy to generate word clouds") |> generate! #from a string
 ```
 ```julia
-wc3 = wordcloud(open(pkgdir(WordCloud)*"/res/alice.txt")) |> generate!
+wc = wordcloud(open(pkgdir(WordCloud)*"/res/alice.txt")) |> generate! #from a file
+```
+```julia
+wc = wordcloud(["中文", "需要", "提前", "分词"], fonts="") |> generate! #from a list
+```
+```julia
+wc = wordcloud(["the"=>1.0, "to"=>0.51, "and"=>0.50,
+                  "of"=>0.47, "a"=>0.44, "in"=>0.33]) |> generate! #from pairs or a dict
 ```
 # More Advanced Usage
 ```julia
