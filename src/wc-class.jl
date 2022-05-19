@@ -170,7 +170,9 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
             push!(kg, :linecolor => linecolor)
         end
         padding in DEFAULTSYMBOLS && (padding = round(Int, maximum(masksize) ÷ 10))
-        mask = randommask(masksize; maskshape=mask, color=maskcolor, padding=padding, keeparea=keepmaskarea, kg..., kargs...)
+        mask, maskkw = randommask(masksize; maskshape=mask, color=maskcolor, padding=padding,
+         keeparea=keepmaskarea, returnkwargs=true, kg..., kargs...)
+        merge!(params, maskkw)
         transparent = c -> c != torgba(maskcolor)
     else
         ms = masksize in DEFAULTSYMBOLS ? () : masksize

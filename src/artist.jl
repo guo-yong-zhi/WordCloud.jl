@@ -113,24 +113,26 @@ randomwh(arg...) = arg
 equalwh(sz::Number=800) = sz, sz
 equalwh(sz::Tuple) = sz
 equalwh(arg...) = arg
-function randommask(args...; maskshape=:rand, kargs...)
+function randommask(args...; maskshape=:rand, returnkwargs=false, kargs...)
     rd = Dict(squircle => 0.4, box => 0.6, ellipse => 0.8, ngon => 0.9, star => 1)
     ran = get(rd, maskshape, rand())
     if ran <= 0.4
-        return randomsquircle(randomwh(args...)...; kargs...)
+        s, k = randomsquircle(randomwh(args...)...; kargs...)
     elseif ran <= 0.6
-        return randombox(randomwh(args...)...; kargs...)
+        s, k = randombox(randomwh(args...)...; kargs...)
     elseif ran <= 0.8
-        return randomellipse(randomwh(args...)...; kargs...)
+        s, k = randomellipse(randomwh(args...)...; kargs...)
     elseif ran <= 0.9
-        return randomngon(equalwh(args...)...; kargs...)
+        s, k = randomngon(equalwh(args...)...; kargs...)
     else
-        return randomstar(equalwh(args...)...; kargs...)
+        s, k = randomstar(equalwh(args...)...; kargs...)
     end
+    return returnkwargs ? (s, k) : s
 end
-function showcallshape(args...; kargs...)
+function callshape(args...; kargs...)
     ags = [string(args[1]), repr.(args[2:end])..., ("$k=$(repr(v))" for (k, v) in kargs)...]
     println("shape(", join(ags, ", "), ")")
+    shape(args...; kargs...), kargs
 end
 function randombox(w, h; cornerradius=:rand, keeparea=false, kargs...)
     if cornerradius == :rand
@@ -142,8 +144,7 @@ function randombox(w, h; cornerradius=:rand, keeparea=false, kargs...)
     end
     sc = keeparea ? sqrt(w*h/box_area(w, h, cornerradius=r)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc); r = round(Int, r*sc)
-    showcallshape(box, w, h; cornerradius=r, kargs...)
-    return shape(box, w, h; cornerradius=r, kargs...)
+    return callshape(box, w, h; cornerradius=r, kargs...)
 end
 function randomsquircle(w, h; rt=:rand, keeparea=false, kargs...)
     if rt == :rand
@@ -161,14 +162,12 @@ function randomsquircle(w, h; rt=:rand, keeparea=false, kargs...)
     end
     sc = keeparea ? sqrt(w*h/squircle_area(w, h, rt=rt)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
-    showcallshape(squircle, w, h, rt=rt; kargs...)
-    return shape(squircle, w, h, rt=rt; kargs...)
+    return callshape(squircle, w, h, rt=rt; kargs...)
 end
 function randomellipse(w, h; keeparea=false, kargs...)
     sc = keeparea ? sqrt(w*h/ellipse_area(w, h)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
-    showcallshape(ellipse, w, h; kargs...)
-    return shape(ellipse, w, h; kargs...)
+    return callshape(ellipse, w, h; kargs...)
 end
 function randomorientation(n)
     if n == 3
@@ -185,8 +184,7 @@ function randomngon(w, h; npoints=:rand, orientation=:rand, keeparea=false, karg
     orientation == :rand && (orientation = randomorientation(npoints))
     sc = keeparea ? sqrt(w*h/ngon_area(w, h, npoints=npoints)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
-    showcallshape(ngon, w, h; npoints=npoints, orientation=orientation, kargs...)
-    return shape(ngon, w, h; npoints=npoints, orientation=orientation, kargs...)
+    return callshape(ngon, w, h; npoints=npoints, orientation=orientation, kargs...)
 end
 function randomstar(w, h; npoints=:rand, starratio=:rand, orientation=:rand, keeparea=false, kargs...)
     npoints == :rand && (npoints = rand(5:12))
@@ -197,8 +195,7 @@ function randomstar(w, h; npoints=:rand, starratio=:rand, orientation=:rand, kee
     end
     sc = keeparea ? sqrt(w*h/star_area(w, h, npoints=npoints, starratio=starratio)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
-    showcallshape(star, w, h; npoints=npoints, starratio=starratio, orientation=orientation, kargs...)
-    return shape(star, w, h; npoints=npoints, starratio=starratio, orientation=orientation, kargs...)
+    return callshape(star, w, h; npoints=npoints, starratio=starratio, orientation=orientation, kargs...)
 end
 function randomangles()
     θ = rand((30, 45, 60))
