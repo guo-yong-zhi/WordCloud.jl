@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.4
+# v0.19.4
 
 using Markdown
 using InteractiveUtils
@@ -16,10 +16,14 @@ end
 
 # ╔═╡ daf38998-c448-498a-82e2-b48a6a2b9c27
 begin
+import Pkg; Pkg.activate()
 using PlutoUI
 using WordCloud 
 using HTTP
 end
+
+# ╔═╡ 46b9c3f5-49a9-4852-bc67-27c4795960fe
+md" $(@bind useurl CheckBox(default=false))Use URL"
 
 # ╔═╡ f4844a5f-260b-4713-84bf-69cd8123c7fc
 md"**mask:** $(@bind mask Select([:auto, box, ellipse, squircle, ngon, star])) $(@bind configshape CheckBox(default=false))config"
@@ -68,23 +72,26 @@ md"""**density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　
 # ╔═╡ 2870a2ee-aa99-48ec-a26d-fed7b040e6de
 @bind go Button("   Go!   ")
 
-# ╔═╡ 456d1448-a17f-4e5f-8998-f1306c621ac4
-md"""**URL:** $(@bind url TextField(80, default="http://en.wikipedia.org/wiki/Special:random"))"""
-
-# ╔═╡ 71b59dfe-8a87-4c7a-81c0-ac68c5c0f0ec
-@bind web_go CounterButton("   Go!   ")
-
-# ╔═╡ 7f67b50c-8800-45d6-a39c-c3b70307efa5
-
-
-# ╔═╡ 52e65934-f9a5-4ad3-971f-076070080e8c
-
-
-# ╔═╡ 3968aaa2-aa49-40b1-a81f-6e8f2fc9a71b
-
-
 # ╔═╡ 72dec223-fa62-4771-9d7d-c7c4eeec9e87
 md"---"
+
+# ╔═╡ 21ba4b81-07aa-4828-875d-090e0b918c76
+begin
+	defaulttext = """
+	A word cloud (tag cloud or wordle) is a novelty visual representation of text data, 
+	typically used to depict keyword metadata (tags) on websites, or to visualize free form text. 
+	Tags are usually single words, and the importance of each tag is shown with font size or color. Bigger term means greater weight. 
+	This format is useful for quickly perceiving the most prominent terms to determine its relative prominence.  
+	"""
+	nothing
+end
+
+# ╔═╡ 9191230b-b72a-4707-b7cf-1a51c9cdb217
+if useurl
+	md"""**URL:** $(@bind url TextField(80, default="http://en.wikipedia.org/wiki/Special:random"))"""
+else
+	@bind text TextField((80, 10), defaulttext)
+end
 
 # ╔═╡ 74bd4779-c13c-4d16-a90d-597db21eaa39
 begin
@@ -108,16 +115,17 @@ else
 	angles
 end
 
-# ╔═╡ 21ba4b81-07aa-4828-875d-090e0b918c76
-defaulttext = """
-A word cloud (tag cloud or wordle) is a novelty visual representation of text data, 
-typically used to depict keyword metadata (tags) on websites, or to visualize free form text. 
-Tags are usually single words, and the importance of each tag is shown with font size or color. Bigger term means greater weight. 
-This format is useful for quickly perceiving the most prominent terms to determine its relative prominence.  
-"""
-
-# ╔═╡ 9191230b-b72a-4707-b7cf-1a51c9cdb217
-@bind text TextField((80, 10), defaulttext)
+# ╔═╡ 4016ae0f-dcd6-4aea-b5e9-f06c69a692b1
+function text_from_url(url)
+	resp = nothing
+	try
+		resp = HTTP.request("GET", url, redirect=true)
+	catch e
+		return e
+	end
+	println(resp.request)
+	resp.body |> String |> html2text
+end
 
 # ╔═╡ 0bf2ba32-321a-470d-8224-700cbc29cd7a
 function scaleweights(dict, scale)
@@ -150,48 +158,10 @@ else
 	fonts = fonts_
 end
 
-# ╔═╡ 11ce5ff1-d594-4636-91dd-4bed3b463658
-dict_process = scaleweight(scale_) ∘ casemerge! ∘ lemmatize!
-
-# ╔═╡ 4016ae0f-dcd6-4aea-b5e9-f06c69a692b1
-function fromURL(url)
-	resp = nothing
-	try
-		resp = HTTP.request("GET", url, redirect=true)
-	catch e
-		return e
-	end
-	println(resp.request)
-	content = resp.body |> String
-	words_weights = processtext(html2text(content), maxnum=maxnum, process=dict_process);
-	wc = wordcloud(
-		words_weights;
-		colors=colors,
-		angles=angles,
-		fonts=fonts,
-        mask=mask,
-		density=density,
-		spacing=spacing,
-		maskkwargs...
-	) |> generate!
-	wc
-end
-
-# ╔═╡ 091212c9-828f-4568-89cb-595d29631755
-begin
-	(web_go > 0 && url isa String && !isempty(url)) ? (wc2=fromURL(url)) : md""
-end
-
-# ╔═╡ 94d53b64-508c-49a5-a6c2-ad02dc481952
-web_go > 0 && wc2 isa WordCloud.WC && (wordcloudname2 = getwords(wc2, 1))
-
-# ╔═╡ bad0f581-dfe2-4c8c-b821-dd73bcc2f4a5
- web_go > 0 && wc2 isa WordCloud.WC ? DownloadButton(svgstring(paintsvg(wc2)), "wordcloud-$(wordcloudname2).svg") : md"Fill in a web url and click the button."
-
 # ╔═╡ 27fb4920-d120-43f6-8a03-0b09877c99c4
-function fromtext(text)
+function gen_cloud(text)
 	try
-		go
+		dict_process = scaleweight(scale_) ∘ casemerge! ∘ lemmatize!
 		words_weights = processtext(text, maxnum=maxnum, process = dict_process)
 		wordcloud(
 			words_weights;
@@ -202,7 +172,7 @@ function fromtext(text)
 			density=density,
 			spacing=spacing,
 			maskkwargs...
-		) |>  generate!
+		) |> generate!
 	catch e
 		if !(e isa AssertionError)
 			throw(e)
@@ -212,17 +182,30 @@ end
 
 # ╔═╡ fa6b3269-357e-4bf9-8514-70aff9df427f
 begin
-	wc1 = fromtext(text)
-	wc1
+	go
+	if useurl
+		wc = nothing
+		if !isempty(url)
+			t = text_from_url(url)
+			if t isa String
+				wc = gen_cloud(t)
+			end
+		end
+		wc
+	else
+		wc = gen_cloud(text)
+	end
 end
 
-# ╔═╡ bcb2b087-ba7c-4f5d-aa6b-44c3545f6409
-wordcloudname1 = getwords(wc1, 1)
-
 # ╔═╡ 0ad31e2e-555e-45e9-a6c1-2fe218e77b5e
- wc1!==nothing ? DownloadButton(svgstring(paintsvg(wc1)), "wordcloud-$(wordcloudname1).svg") : md"Please enter some text..."
+if wc!==nothing
+	DownloadButton(svgstring(paintsvg(wc)), "wordcloud-$(getwords(wc, 1)).svg")
+else
+	useurl ? md"Please enter a correct URL." : md"Please enter some text..."
+end
 
 # ╔═╡ Cell order:
+# ╟─46b9c3f5-49a9-4852-bc67-27c4795960fe
 # ╟─9191230b-b72a-4707-b7cf-1a51c9cdb217
 # ╟─f4844a5f-260b-4713-84bf-69cd8123c7fc
 # ╟─1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
@@ -234,24 +217,14 @@ wordcloudname1 = getwords(wc1, 1)
 # ╟─2870a2ee-aa99-48ec-a26d-fed7b040e6de
 # ╟─0ad31e2e-555e-45e9-a6c1-2fe218e77b5e
 # ╟─fa6b3269-357e-4bf9-8514-70aff9df427f
-# ╟─456d1448-a17f-4e5f-8998-f1306c621ac4
-# ╟─71b59dfe-8a87-4c7a-81c0-ac68c5c0f0ec
-# ╟─bad0f581-dfe2-4c8c-b821-dd73bcc2f4a5
-# ╟─091212c9-828f-4568-89cb-595d29631755
-# ╟─7f67b50c-8800-45d6-a39c-c3b70307efa5
-# ╟─52e65934-f9a5-4ad3-971f-076070080e8c
-# ╟─3968aaa2-aa49-40b1-a81f-6e8f2fc9a71b
 # ╟─72dec223-fa62-4771-9d7d-c7c4eeec9e87
-# ╟─4016ae0f-dcd6-4aea-b5e9-f06c69a692b1
-# ╟─94d53b64-508c-49a5-a6c2-ad02dc481952
 # ╟─daf38998-c448-498a-82e2-b48a6a2b9c27
+# ╟─21ba4b81-07aa-4828-875d-090e0b918c76
 # ╟─74bd4779-c13c-4d16-a90d-597db21eaa39
 # ╟─9396cf96-d553-43db-a839-273fc9febd5a
 # ╟─1a4d1e62-6a41-4a75-a759-839445dacf4f
-# ╟─21ba4b81-07aa-4828-875d-090e0b918c76
+# ╟─4016ae0f-dcd6-4aea-b5e9-f06c69a692b1
 # ╟─27fb4920-d120-43f6-8a03-0b09877c99c4
 # ╟─0bf2ba32-321a-470d-8224-700cbc29cd7a
 # ╟─6a8d7068-2975-43ab-a387-7f0e7c2e4262
 # ╟─986cf1a6-8075-48ae-84d9-55ae11a27da1
-# ╟─11ce5ff1-d594-4636-91dd-4bed3b463658
-# ╟─bcb2b087-ba7c-4f5d-aa6b-44c3545f6409
