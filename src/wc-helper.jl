@@ -25,13 +25,13 @@ About orther keyword arguments like outline, linecolor, smoothness, see function
 """
 function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...; 
     color=:auto, backgroundcolor=:auto, transparent=:auto, 
-    outline=0,  linecolor="black", smoothness=0.5, padding=0, return_binarymask=false, kargs...)
+    outline=0, linecolor="black", smoothness=0.5, padding=0, return_bitmask=false, kargs...)
     copied = false
     if !(isempty(args) && isempty(kargs))
         img = imresize(img, args...; kargs...)
         copied = true
     end
-    if return_binarymask || color ∉ DEFAULTSYMBOLS || backgroundcolor ∉ DEFAULTSYMBOLS
+    if return_bitmask || color ∉ DEFAULTSYMBOLS || backgroundcolor ∉ DEFAULTSYMBOLS
         mask = imagemask(img, transparent)
     end
     if color ∉ DEFAULTSYMBOLS || backgroundcolor ∉ DEFAULTSYMBOLS
@@ -56,13 +56,13 @@ function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...;
         bc = backgroundcolor in DEFAULTSYMBOLS ? :auto : backgroundcolor
         img = Render.padding(img, padding, backgroundcolor=bc)
     end
-    return_binarymask ? (img, mask) : img
+    return_bitmask ? (img, mask) : img
 end
 function loadmask(img::AbstractMatrix{<:Colorant}, args...; kargs...)
     loadmask(ARGB.(img), args...; kargs...)
 end
 function loadmask(img::SVGImageType, args...; 
-    padding=0, transparent=:auto, outline=0, linecolor=:auto, return_binarymask=false, kargs...)
+    padding=0, transparent=:auto, outline=0, linecolor=:auto, return_bitmask=false, kargs...)
     if !isempty(args) || !isempty(v for v in values(values(kargs)) if v ∉ DEFAULTSYMBOLS) || outline != 0
         @warn "editing svg file is not supported: $args $kargs"
     end
@@ -71,7 +71,7 @@ function loadmask(img::SVGImageType, args...;
         bc in DEFAULTSYMBOLS && (bc = (0,0,0,0))
         img = Render.padding(img, padding, backgroundcolor=bc)
     end
-    return_binarymask ? (img, nothing) : img
+    return_bitmask ? (img, nothing) : img
 end
 function loadmask(file, args...; kargs...)
     mask = Render.load(file)

@@ -204,7 +204,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         end
         padding in DEFAULTSYMBOLS && (padding = 0)
         mask, binarymask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, 
-            outline=outline, linecolor=linecolor,padding=padding, return_binarymask=true, kargs...)
+            outline=outline, linecolor=linecolor,padding=padding, return_bitmask=true, kargs...)
         binarymask === nothing || (transparent = .!binarymask)
     end
     # under this line: both mask == :auto or not
