@@ -56,7 +56,26 @@ function displayschemes()
         display(colors)
     end
 end
-function randomscheme(wordsnum=100)
+function gradient(weights_or_num; scheme=rand(Schemes), section=(0,1))
+    @assert length(section) == 2
+    a,b = section
+    @assert a <= b
+    C = Render.colorschemes[scheme]
+    if weights_or_num isa Number
+        inds = range(a, b, length=max(2, weights_or_num))
+    else
+        weights = float.(weights_or_num)
+        length(weights) < 2 && (weights = [1.,1.])
+        weights[1] = 0.
+        cumsum!(weights, weights)
+        weights[end] != 0. && (weights ./= weights[end])
+        weights .*= b - a
+        weights .+= a
+        inds = weights
+    end
+    return get.(Ref(C), inds)
+end
+function randomscheme(weights_or_num=100)
     if rand() < 0.95
         scheme = rand(Schemes)
         C = Render.colorschemes[scheme]
@@ -73,12 +92,19 @@ function randomscheme(wordsnum=100)
                 rand() > 0.5 && (rg = reverse(rg); print(", reversed"))
                 colors = C.colors[rg]
             else
+                print("color scheme: ", repr(scheme))
+                if (!(weights_or_num isa Number)) && rand() < 0.3
+                    weights_or_num = length(weights_or_num)
+                end
+                if weights_or_num isa Number
+                    print(", index based gradient")
+                else
+                    print(", weight based gradient")
+                end
                 a, b = round.(minmax(rand(), rand()), digits=3)
-                b - a < 0.1 && (a = 0.; b = 1.)
-                rg = range(a, b, length=max(2, wordsnum))
-                print("color scheme: ", repr(scheme), ", random range: $a:$b")
-                rand() > 0.5 && (rg = reverse(rg); print(", reversed"))
-                colors = get.(Ref(C), rg)
+                rand() < 0.2 && (a = 0.; b = 1.)
+                print(", random section: $a:$b")
+                colors = gradient(weights_or_num; scheme=scheme, section=(a,b))
             end
         end
         if rand() > 0.5

@@ -131,7 +131,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
                 outline=:default, linecolor=:auto, fonts=:auto,
                 transparent=:auto, params=Dict{Symbol,Any}(), kargs...)
     merge!(params, kargs)
-    colors in DEFAULTSYMBOLS && (colors = randomscheme(length(words)))
+    colors in DEFAULTSYMBOLS && (colors = randomscheme(weights))
     angles in DEFAULTSYMBOLS && (angles = randomangles())
     maskcolor0 = maskcolor
     backgroundcolor0 = backgroundcolor

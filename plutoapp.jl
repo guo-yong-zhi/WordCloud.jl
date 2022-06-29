@@ -179,7 +179,7 @@ if colors != :auto
         colors = tuple(colors_vec...)
         colors_vec
     elseif colorstyle == :gradient
-        colors = get.(Ref(C), range(colorstart, colorstop, length=max(2, wordsnum)))
+        colors = WordCloud.gradient(words_weights[end], scheme=colors, section=(colorstart, max(colorstart, colorstop)))
     else
         C
     end
