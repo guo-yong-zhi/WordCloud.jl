@@ -2,12 +2,16 @@
 ![juliadoc](res/juliadoc.png)  
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://guo-yong-zhi.github.io/WordCloud.jl/dev) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/guo-yong-zhi/WordCloud.jl/master?filepath=examples.ipynb) [![CI](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci.yml) [![CI-nightly](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci-nightly.yml/badge.svg)](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci-nightly.yml) [![codecov](https://codecov.io/gh/guo-yong-zhi/WordCloud.jl/branch/master/graph/badge.svg?token=2U0X769Z51)](https://codecov.io/gh/guo-yong-zhi/WordCloud.jl) [![DOI](https://zenodo.org/badge/211266031.svg)](https://zenodo.org/badge/latestdoi/211266031)  
  Word cloud (tag cloud or wordle) is a novelty visual representation of text data. The importance of each word is shown with font size or color. Our generator has the following highlights:
-* **Flexible** Any mask, any color, any angle, adjustable density. You can specify the initial position of some words. Or you can pin some words and adjust others, etc.
-* **Fast**  100% in Julia and efficient implementation based on Quadtree & gradient optimization (see [Stuffing.jl](https://github.com/guo-yong-zhi/Stuffing.jl)). The advantage is more obvious when generating large images.
-* **Exact**  Words with the same weight have the exact same size. The algorithm will never scale the word to fit the blank.  
+* ***Flexible*** - any shape, any color, any angle, adjustable density and spacing. The initial position of words can be set at will. And words can be pinned during fitting.
+* ***Exact*** - not only artistic but also rigorous. Words with the same weight have the exact same size and will never be scaled or repeated to fill in blanks.
+* ***Efficient*** - smart strategy and efficient nesting algorithm, 100% in Julia (see [Stuffing.jl](https://github.com/guo-yong-zhi/Stuffing.jl)). Easily generate high resolution results.  
+
 
  *run `showexample(:juliadoc)` to see how to generate the banner*
-***
+<br>
+<br>
+<br>
+
 # Installation
 ```julia
 import Pkg; Pkg.add("WordCloud")
@@ -36,7 +40,7 @@ wc = wordcloud(["中文", "需要", "提前", "分词"], fonts="") |> generate! 
 wc = wordcloud(["the"=>1.0, "to"=>0.51, "and"=>0.50,
                   "of"=>0.47, "a"=>0.44, "in"=>0.33]) |> generate! #from pairs or a dict
 ```
-# More Advanced Usage
+# Advanced Usage
 ```julia
 using WordCloud
 stopwords = WordCloud.stopwords_en ∪ ["said"]
@@ -54,22 +58,23 @@ wc = wordcloud(
     density = 0.5) |> generate!
 paint(wc, "alice.png", ratio=0.5)
 ```
-*Run the command `runexample(:alice)` or `showexample(:alice)` to get the result.*  
+*try `runexample(:alice)` or `showexample(:alice)`*  
 [![alice](res/alice.png)](./examples/alice.jl)
-
 # More Examples
 ## Gathering style
 [![gathering](res/gathering.png)](./examples/gathering.jl)  
-*Run the command `runexample(:gathering)` or `showexample(:gathering)` to get the result.* 
+*try `runexample(:gathering)` or `showexample(:gathering)`* 
 ## Recolor
 [![recolor](res/recolor.png)](./examples/recolor.jl)  
-*Run the command `runexample(:recolor)` or `showexample(:recolor)` to get the result.* 
+*try `runexample(:recolor)` or `showexample(:recolor)`* 
 ## Semantic
 [![semantic](res/semantic.png)](./examples/semantic.jl)  
-*Run the command `runexample(:semantic)` or `showexample(:semantic)` to get the result.*  
-
+*try `runexample(:semantic)` or `showexample(:semantic)`*  
 The variable `WordCloud.examples` holds all available examples.   
-You can also [**go to the gallery**](https://github.com/guo-yong-zhi/WordCloud-Gallery) or [**try the online generator**](https://mybinder.org/v2/gh/guo-yong-zhi/pluto-on-jupyterlab/HEAD?urlpath=pluto/open?url=https%3A%2F%2Fraw.githubusercontent.com%2Fguo-yong-zhi%2FWordCloud.jl%2Fmaster%2Fplutoapp.jl).  
+# More
+* [**Go to the gallery**](https://github.com/guo-yong-zhi/WordCloud-Gallery)
+* [**Try the online generator**](https://mybinder.org/v2/gh/guo-yong-zhi/pluto-on-jupyterlab/HEAD?urlpath=pluto/open?url=https%3A%2F%2Fraw.githubusercontent.com%2Fguo-yong-zhi%2FWordCloud.jl%2Fmaster%2Fplutoapp.jl) 
+
 # About Implementation
 Unlike most other implementations, WordCloud.jl is programmed based on image local gradient optimization. It’s a non-greedy algorithm in which words can be further [moved](res/animation2.gif) after they are positioned. This means shrinking words is unnecessary, thus the word size can be kept unchanged during the adjustment. In addition, it allows words to be assigned to any initial position whether or not there will be an overlap. This enables the program to achieve the maximum flexibility. See also [Stuffing.jl - Algorithm Description](https://github.com/guo-yong-zhi/Stuffing.jl#algorithm-description).  
 * [x] 权重计算和单词位置初始化
