@@ -52,6 +52,9 @@ md"""
 **angles:** $(@bind anglelength NumberField(0:1000, default=0)) orientations from $(@bind anglestart NumberField(-360:360, default=0))° to $(@bind anglestop NumberField(-360:360, default=0))°  
 """
 
+# ╔═╡ 8f4d9caa-5f0d-405a-9e46-a6953e9fa67c
+md"""**fonts:** $(@bind fonts_ TextField(default="auto"))　[*browse fonts*](https://fonts.google.com)"""
+
 # ╔═╡ 23b925d3-b94f-487b-a213-f1e365ff9415
 md"""**density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　**spacing:** $(@bind spacing NumberField(0:100, default=1))"""
 
@@ -101,6 +104,17 @@ else
     angles
 end
 
+# ╔═╡ 1a4d1e62-6a41-4a75-a759-839445dacf4f
+if fonts_ == "auto"
+    fonts = Symbol(fonts_)
+elseif fonts_ === nothing
+    fonts = ""
+elseif occursin(",", fonts_)
+    fonts = tuple(split(fonts_, ",")...)
+else
+    fonts = fonts_
+end
+
 # ╔═╡ 4016ae0f-dcd6-4aea-b5e9-f06c69a692b1
 function text_from_url(url)
     resp = HTTP.request("GET", url, redirect=true)
@@ -125,8 +139,8 @@ weightscalelist = [
     expm1 => "exp n",
     ]
 
-# ╔═╡ 8f4d9caa-5f0d-405a-9e46-a6953e9fa67c
-md"""**fonts:** $(@bind fonts_ TextField(default="serif bold"))　　**word count:** $(@bind maxnum NumberField(1:5000, default=500))　　**scale:** $(@bind scale_ Select(weightscalelist))"""
+# ╔═╡ 4d7cb093-f953-4fc0-bb5e-92e7c1716fd7
+md"**word count:** $(@bind maxnum NumberField(1:5000, default=500))　　**scale:** $(@bind scale_ Select(weightscalelist))"
 
 # ╔═╡ f9e0e9a1-2b44-4ef9-a846-92a6aa08fb40
 begin
@@ -188,17 +202,6 @@ else
 end
 end
 
-# ╔═╡ 1a4d1e62-6a41-4a75-a759-839445dacf4f
-if fonts_ == "auto"
-    fonts = Symbol(fonts_)
-elseif fonts_ === nothing
-    fonts = ""
-elseif occursin(",", fonts_)
-    fonts = tuple(split(fonts_, ",")...)
-else
-    fonts = fonts_
-end
-
 # ╔═╡ 27fb4920-d120-43f6-8a03-0b09877c99c4
 function gen_cloud(words_weights)
     try
@@ -243,6 +246,7 @@ end
 # ╟─529ca925-422d-4c36-bc35-9e28a484aab0
 # ╟─7993fd44-2fcf-488e-9280-4b4d0bf0e22c
 # ╟─8f4d9caa-5f0d-405a-9e46-a6953e9fa67c
+# ╟─4d7cb093-f953-4fc0-bb5e-92e7c1716fd7
 # ╟─23b925d3-b94f-487b-a213-f1e365ff9415
 # ╟─2870a2ee-aa99-48ec-a26d-fed7b040e6de
 # ╟─0ad31e2e-555e-45e9-a6c1-2fe218e77b5e
