@@ -22,8 +22,8 @@ using WordCloud
 using HTTP
 end
 
-# ╔═╡ 46b9c3f5-49a9-4852-bc67-27c4795960fe
-md" $(@bind useurl CheckBox(default=false))Use URL"
+# ╔═╡ f83db0a7-9a83-4c41-8fb1-c2a75317deec
+md"""$(Resource("https://raw.githubusercontent.com/guo-yong-zhi/WordCloud.jl/master/docs/src/assets/logo.svg", :width => 90)) **From** $(@bind texttype Select(["Text", "File", "URL"]))"""
 
 # ╔═╡ f4844a5f-260b-4713-84bf-69cd8123c7fc
 md"**mask:** $(@bind mask Select([:auto, box, ellipse, squircle, ngon, star])) $(@bind configshape CheckBox(default=false))config"
@@ -59,10 +59,7 @@ md"""**fonts:** $(@bind fonts_ TextField(default="auto"))　[*browse fonts*](htt
 md"""**density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　**spacing:** $(@bind spacing NumberField(0:100, default=1))"""
 
 # ╔═╡ 2870a2ee-aa99-48ec-a26d-fed7b040e6de
-@bind go Button("   Go!   ")
-
-# ╔═╡ 72dec223-fa62-4771-9d7d-c7c4eeec9e87
-md"---"
+@bind go Button("    Go!    ")
 
 # ╔═╡ 21ba4b81-07aa-4828-875d-090e0b918c76
 begin
@@ -76,10 +73,12 @@ begin
 end
 
 # ╔═╡ 9191230b-b72a-4707-b7cf-1a51c9cdb217
-if useurl
+if texttype == "URL"
     md"""**URL:** $(@bind url TextField(80, default="http://en.wikipedia.org/wiki/Special:random"))"""
-else
+elseif texttype == "Text"
     @bind text_ TextField((80, 10), defaulttext)
+else
+	@bind uploadedfile FilePicker()
 end
 
 # ╔═╡ 74bd4779-c13c-4d16-a90d-597db21eaa39
@@ -98,13 +97,15 @@ end
 # ╔═╡ 9396cf96-d553-43db-a839-273fc9febd5a
 if anglelength == 0
     angles = :auto
+	nothing
 else
     angles = range(anglestart, anglestop, length=anglelength)
     isempty(angles) && (angles = :auto)
-    angles
+    nothing
 end
 
 # ╔═╡ 1a4d1e62-6a41-4a75-a759-839445dacf4f
+begin
 if fonts_ == "auto"
     fonts = Symbol(fonts_)
 elseif fonts_ === nothing
@@ -114,23 +115,25 @@ elseif occursin(",", fonts_)
 else
     fonts = fonts_
 end
+nothing
+end
 
 # ╔═╡ 4016ae0f-dcd6-4aea-b5e9-f06c69a692b1
+begin
 function text_from_url(url)
     resp = HTTP.request("GET", url, redirect=true)
     println(resp.request)
     resp.body |> String |> html2text
 end
-
-# ╔═╡ 0bf2ba32-321a-470d-8224-700cbc29cd7a
 function scaleweights(dict, scale)
     Dict(k=>scale(v) for (k, v) in dict)
 end
-
-# ╔═╡ 6a8d7068-2975-43ab-a387-7f0e7c2e4262
 scaleweight(scale) = dict -> scaleweights(dict, scale)
+nothing
+end
 
 # ╔═╡ 986cf1a6-8075-48ae-84d9-55ae11a27da1
+begin
 weightscalelist = [
     identity => "n", 
     (√) => "√n", 
@@ -138,6 +141,8 @@ weightscalelist = [
     (n->n^2) => "n²",
     expm1 => "exp n",
     ]
+nothing
+end
 
 # ╔═╡ 4d7cb093-f953-4fc0-bb5e-92e7c1716fd7
 md"**word count:** $(@bind maxnum NumberField(1:5000, default=500))　　**scale:** $(@bind scale_ Select(weightscalelist))"
@@ -148,12 +153,16 @@ begin
     words_weights = ([],[])
     wordsnum = 0
     try
-        if useurl
+        if texttype == "URL"
             if !isempty(url)
                 text = text_from_url(url)
             end
-        else
+        elseif texttype == "Text"
             text = text_
+		else
+			if uploadedfile !== nothing
+				text = read(IOBuffer(uploadedfile["data"]), String)
+			end
         end
         dict_process = scaleweight(scale_) ∘ casemerge! ∘ lemmatize!
         global words_weights = processtext(text, maxnum=maxnum, process = dict_process)
@@ -203,22 +212,25 @@ end
 end
 
 # ╔═╡ 27fb4920-d120-43f6-8a03-0b09877c99c4
+begin
 function gen_cloud(words_weights)
-    try
-        return wordcloud(
-            words_weights;
-            colors=colors,
-            angles=angles,
-            fonts=fonts,
-            mask=mask,
-            density=density,
-            spacing=spacing,
-            style=style,
-            maskkwargs...
-        ) |> generate!
-    catch
-    end
-    return nothing
+try
+	return wordcloud(
+		words_weights;
+		colors=colors,
+		angles=angles,
+		fonts=fonts,
+		mask=mask,
+		density=density,
+		spacing=spacing,
+		style=style,
+		maskkwargs...
+	) |> generate!
+catch
+end
+return nothing
+end
+nothing
 end
 
 # ╔═╡ e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
@@ -243,11 +255,11 @@ end
 if wc!==nothing
     DownloadButton(svgstring(paintsvg(wc)), "wordcloud-$(getwords(wc, 1)).svg")
 else
-    useurl ? md"Please enter a correct URL." : md"Please enter some text..."
+    nothing
 end
 
 # ╔═╡ Cell order:
-# ╟─46b9c3f5-49a9-4852-bc67-27c4795960fe
+# ╟─f83db0a7-9a83-4c41-8fb1-c2a75317deec
 # ╟─9191230b-b72a-4707-b7cf-1a51c9cdb217
 # ╟─f9e0e9a1-2b44-4ef9-a846-92a6aa08fb40
 # ╟─f4844a5f-260b-4713-84bf-69cd8123c7fc
@@ -263,15 +275,12 @@ end
 # ╟─2870a2ee-aa99-48ec-a26d-fed7b040e6de
 # ╟─0ad31e2e-555e-45e9-a6c1-2fe218e77b5e
 # ╟─fa6b3269-357e-4bf9-8514-70aff9df427f
-# ╟─72dec223-fa62-4771-9d7d-c7c4eeec9e87
-# ╟─daf38998-c448-498a-82e2-b48a6a2b9c27
 # ╟─21ba4b81-07aa-4828-875d-090e0b918c76
 # ╟─74bd4779-c13c-4d16-a90d-597db21eaa39
 # ╟─9396cf96-d553-43db-a839-273fc9febd5a
 # ╟─1a4d1e62-6a41-4a75-a759-839445dacf4f
 # ╟─4016ae0f-dcd6-4aea-b5e9-f06c69a692b1
 # ╟─27fb4920-d120-43f6-8a03-0b09877c99c4
-# ╟─0bf2ba32-321a-470d-8224-700cbc29cd7a
-# ╟─6a8d7068-2975-43ab-a387-7f0e7c2e4262
 # ╟─986cf1a6-8075-48ae-84d9-55ae11a27da1
 # ╟─e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
+# ╟─daf38998-c448-498a-82e2-b48a6a2b9c27
