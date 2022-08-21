@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.4
+# v0.19.9
 
 using Markdown
 using InteractiveUtils
@@ -26,19 +26,23 @@ end
 md"""$(Resource("https://raw.githubusercontent.com/guo-yong-zhi/WordCloud.jl/master/docs/src/assets/logo.svg", :width => 90)) **From** $(@bind texttype Select(["Text", "File", "URL"]))"""
 
 # ╔═╡ f4844a5f-260b-4713-84bf-69cd8123c7fc
-md"**mask:** $(@bind mask Select([:auto, box, ellipse, squircle, ngon, star])) $(@bind configshape CheckBox(default=false))config"
+md"""**mask:** $(@bind mask_ Select([:auto, box, ellipse, squircle, ngon, star])) $(@bind configshape CheckBox(default=false))config"""
 
 # ╔═╡ 1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
-if configshape
-    if mask in (ngon, star)
+begin
+if mask_ == :auto
+	md"""**mask file:** $(@bind uploadedmask FilePicker([MIME("image/*")]))"""
+elseif configshape
+    if mask_ in (ngon, star)
         md"**npoints:** $(@bind npoints NumberField(3:100, default=5))"
-    elseif mask == squircle
+	elseif mask_ == squircle
         md"**rt:** $(@bind rt NumberField(0.:0.5:3., default=0.))"
     else
-        md"random $(mask isa Function ? nameof(mask) : mask) shape"
+        md"random $(mask_ isa Function ? nameof(mask_) : mask_) shape"
     end
 else
-    md"random $(mask isa Function ? nameof(mask) : mask) shape"
+    md"random $(mask_ isa Function ? nameof(mask_) : mask_) shape"
+end
 end
 
 # ╔═╡ 6e614caa-38dc-4028-b0a7-05f7030d5b43
@@ -79,6 +83,20 @@ elseif texttype == "Text"
     @bind text_ TextField((80, 10), defaulttext)
 else
 	@bind uploadedfile FilePicker()
+end
+
+# ╔═╡ 397fdd42-d2b2-46db-bf74-957909f47a58
+if mask_ == :auto
+	if uploadedmask === nothing
+		mask = :auto
+		nothing
+	else
+		mask = loadmask(IOBuffer(uploadedmask["data"]))
+		nothing
+	end
+else
+	mask = mask_
+	nothing
 end
 
 # ╔═╡ 74bd4779-c13c-4d16-a90d-597db21eaa39
@@ -276,6 +294,7 @@ end
 # ╟─0ad31e2e-555e-45e9-a6c1-2fe218e77b5e
 # ╟─fa6b3269-357e-4bf9-8514-70aff9df427f
 # ╟─21ba4b81-07aa-4828-875d-090e0b918c76
+# ╟─397fdd42-d2b2-46db-bf74-957909f47a58
 # ╟─74bd4779-c13c-4d16-a90d-597db21eaa39
 # ╟─9396cf96-d553-43db-a839-273fc9febd5a
 # ╟─1a4d1e62-6a41-4a75-a759-839445dacf4f
