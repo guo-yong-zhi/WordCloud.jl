@@ -23,7 +23,7 @@ using HTTP
 end
 
 # ╔═╡ f83db0a7-9a83-4c41-8fb1-c2a75317deec
-md"""$(Resource("https://raw.githubusercontent.com/guo-yong-zhi/WordCloud.jl/master/docs/src/assets/logo.svg", :width => 90)) **From** $(@bind texttype Select(["Text", "File", "URL"]))"""
+md"""$(Resource("https://raw.githubusercontent.com/guo-yong-zhi/WordCloud.jl/master/docs/src/assets/logo.svg", :width => 90)) **From** $(@bind texttype Select(["Text", "File", "Web"]))"""
 
 # ╔═╡ f4844a5f-260b-4713-84bf-69cd8123c7fc
 md"""**mask:** $(@bind mask_ Select([:auto, box, ellipse, squircle, ngon, star])) $(@bind configshape CheckBox(default=false))config"""
@@ -77,7 +77,7 @@ begin
 end
 
 # ╔═╡ 9191230b-b72a-4707-b7cf-1a51c9cdb217
-if texttype == "URL"
+if texttype == "Web"
     md"""**URL:** $(@bind url TextField(80, default="http://en.wikipedia.org/wiki/Special:random"))"""
 elseif texttype == "Text"
     @bind text_ TextField((80, 10), defaulttext)
@@ -171,7 +171,7 @@ begin
     words_weights = ([],[])
     wordsnum = 0
     try
-        if texttype == "URL"
+        if texttype == "Web"
             if !isempty(url)
                 text = text_from_url(url)
             end
