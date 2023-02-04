@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.19.17
 
 using Markdown
 using InteractiveUtils
@@ -26,14 +26,14 @@ end
 md"""$(Resource("https://raw.githubusercontent.com/guo-yong-zhi/WordCloud.jl/master/docs/src/assets/logo.svg", :width => 90)) **From** $(@bind texttype Select(["Text", "File", "Web"]))"""
 
 # ╔═╡ f4844a5f-260b-4713-84bf-69cd8123c7fc
-md"""**mask:** $(@bind mask_ Select([:auto, box, ellipse, squircle, ngon, star])) $(@bind configshape CheckBox(default=false))config"""
+md"""**mask:** $(@bind mask_ Select([:auto, box, ellipse, squircle, ngon, star, bezingon, bezistar])) $(@bind configshape CheckBox(default=false))config"""
 
 # ╔═╡ 1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
 begin
 if mask_ == :auto
 	md"""**mask file:** $(@bind uploadedmask FilePicker([MIME("image/*")]))"""
 elseif configshape
-    if mask_ in (ngon, star)
+    if mask_ in (ngon, star, bezingon, bezistar)
         md"**npoints:** $(@bind npoints NumberField(3:100, default=5))"
 	elseif mask_ == squircle
         md"**rt:** $(@bind rt NumberField(0.:0.5:3., default=0.))"
@@ -103,7 +103,7 @@ end
 begin
     maskkwargs = (;)
     if configshape
-        if mask in (ngon, star)
+        if mask in (ngon, star, bezingon, bezistar)
             maskkwargs = (npoints=npoints,)
         elseif mask == squircle
             maskkwargs = (rt=rt,)

@@ -1,7 +1,7 @@
 module Render
 export rendertext, overlay!, 
-    shape, ellipse, box, squircle, star, ngon, ellipse_area, box_area, squircle_area, star_area, ngon_area,
-    GIF, generate, parsecolor, rendertextoutlines,
+    shape, ellipse, box, squircle, star, ngon, bezistar, bezingon, ellipse_area, box_area, squircle_area,
+    star_area, ngon_area, GIF, generate, parsecolor, rendertextoutlines,
     colorschemes, torgba, imagemask, outline, padding, dilate!, imresize, recolor!, recolor
 export issvg, save, load, tobitmap, SVGImageType, svgstring
 using Luxor
@@ -326,7 +326,18 @@ function star(pos, w, h, args...; npoints=5, starratio=0.5, orientation=0, kargs
     orientation = orientation -π / 2 # 尖朝上
     Luxor.star(pos, r, npoints, starratio, orientation, args...; kargs...)
 end
-
+function bezingon(pos, w, h, args...; npoints=3, orientation=0, kargs...)
+    r = min(w, h) / 2
+    orientation = orientation -π / 2 # 尖朝上
+    pts = Luxor.ngon(pos, r, npoints, orientation, vertices=true)
+	drawbezierpath(makebezierpath(pts), args...; kargs...)
+end
+function bezistar(pos, w, h, args...; npoints=5, starratio=0.5, orientation=0, kargs...)
+    r = min(w, h) / 2
+    orientation = orientation -π / 2 # 尖朝上
+    pts = Luxor.star(pos, r, npoints, starratio, orientation, vertices=true)
+	drawbezierpath(makebezierpath(pts), args...; kargs...)
+end
 ellipse_area(h, w) = π*h*w/4
 function box_area(h, w; cornerradius=0)
     r = cornerradius
@@ -351,7 +362,7 @@ function star_area(h, w; npoints=5, starratio=0.5)
 end
 
 """
-generate a box, ellipse, squircle, ngon or star svg image
+generate a box, ellipse, squircle, ngon, star, bezingon or bezistar svg image
 ## Examples
 * shape(box, 80, 50) #80*50 box
 * shape(box, 80, 50, cornerradius=4) #box with cornerradius=4

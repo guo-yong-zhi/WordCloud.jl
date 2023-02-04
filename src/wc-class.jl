@@ -38,7 +38,7 @@ Positional arguments are used to specify words and weights, and can be in differ
 * mask = loadmask("res/heart.jpg", color="red", ratio=2) #see the doc of `loadmask`
 * mask = "res/heart.jpg" #shorthand for loadmask("res/heart.jpg")
 * mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #See the doc of `shape`.
-* mask = box #mask can also be one of `box`, `ellipse`, `squircle`, `ngon` and `star`.  See the doc of `shape`. 
+* mask = box #mask can also be one of `box`, `ellipse`, `squircle`, `ngon`, `star`, `bezingon` and `bezistar`. See the doc of `shape`. 
 * masksize: Can be a tuple `(width, height)` or just a single number as a side length hint. 
 * backgroundsize: See `shape`. Need to be used with `masksize` to specify the padding size.
 * maskcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original (keep it unchanged), :auto (auto recolor the mask).
