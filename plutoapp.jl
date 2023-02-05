@@ -20,6 +20,7 @@ import Pkg; #Pkg.activate()
 using PlutoUI
 using WordCloud 
 using HTTP
+using ImageIO
 end
 
 # ╔═╡ f83db0a7-9a83-4c41-8fb1-c2a75317deec
@@ -278,12 +279,6 @@ wc = gen_cloud(words_weights)
 wc
 end
 
-# ╔═╡ 0ad31e2e-555e-45e9-a6c1-2fe218e77b5e
-if wc!==nothing
-    DownloadButton(svgstring(paintsvg(wc)), "wordcloud-$(getwords(wc, 1)).svg")
-else
-    nothing
-end
 
 # ╔═╡ Cell order:
 # ╟─f83db0a7-9a83-4c41-8fb1-c2a75317deec
@@ -301,7 +296,6 @@ end
 # ╟─4d7cb093-f953-4fc0-bb5e-92e7c1716fd7
 # ╟─23b925d3-b94f-487b-a213-f1e365ff9415
 # ╟─2870a2ee-aa99-48ec-a26d-fed7b040e6de
-# ╟─0ad31e2e-555e-45e9-a6c1-2fe218e77b5e
 # ╟─fa6b3269-357e-4bf9-8514-70aff9df427f
 # ╟─21ba4b81-07aa-4828-875d-090e0b918c76
 # ╟─397fdd42-d2b2-46db-bf74-957909f47a58
