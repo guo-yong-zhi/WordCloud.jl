@@ -45,6 +45,9 @@ else
 end
 end
 
+# ╔═╡ b38c3ad9-7885-4af6-8394-877fde8ed83b
+md"**outline:** $(@bind outlinewidth NumberField(-1:100, default=-1))"
+
 # ╔═╡ 6e614caa-38dc-4028-b0a7-05f7030d5b43
 md"**style:** $(@bind style Select([:auto, :uniform, :gathering]))"
 
@@ -232,6 +235,11 @@ end
 # ╔═╡ 27fb4920-d120-43f6-8a03-0b09877c99c4
 begin
 function gen_cloud(words_weights)
+    if outlinewidth isa Number && outlinewidth >= 0
+		olw = outlinewidth
+	else
+		olw = rand((0, 0, 0, rand(2:10)))
+	end
 try
 	return wordcloud(
 		words_weights;
@@ -239,6 +247,7 @@ try
 		angles=angles,
 		fonts=fonts,
 		mask=mask,
+		outline=olw,
 		density=density,
 		spacing=spacing,
 		style=style,
@@ -282,6 +291,7 @@ end
 # ╟─f9e0e9a1-2b44-4ef9-a846-92a6aa08fb40
 # ╟─f4844a5f-260b-4713-84bf-69cd8123c7fc
 # ╟─1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
+# ╟─b38c3ad9-7885-4af6-8394-877fde8ed83b
 # ╟─6e614caa-38dc-4028-b0a7-05f7030d5b43
 # ╟─b4798663-d33d-4acc-94a2-c5175b3acb5a
 # ╟─68dced3e-1ec2-4a70-b2b9-043fb62967c5
