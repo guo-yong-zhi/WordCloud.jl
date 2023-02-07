@@ -16,7 +16,7 @@ end
 
 # ╔═╡ daf38998-c448-498a-82e2-b48a6a2b9c27
 begin
-import Pkg; #Pkg.activate()
+import Pkg; Pkg.activate(homedir())
 using PlutoUI
 using WordCloud 
 using HTTP
