@@ -51,7 +51,7 @@ maskfile = pkgdir(WordCloud)*"/res/alice_mask.png"
 wc = wordcloud(
     processtext(open(textfile), stopwords=stopwords, maxnum=500), 
     mask = maskfile,
-    maskcolor="#faeef8",
+    maskcolor = "#faeef8",
     outline = 4,
     linecolor = "purple",
     colors = :Set1_5,
