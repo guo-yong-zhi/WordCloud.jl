@@ -42,7 +42,7 @@ function splitwords(text::AbstractString, regexp=r"\w[\w']+")
 end
 
 function countwords(words::AbstractVector{<:AbstractString}; 
-    regexp=r"\w[\w']+", counter=Dict{String,Int}())
+    regexp=r"\S(?:[\s\S]*\S)?", counter=Dict{String,Int}())
     for w in words
         if regexp !== nothing
             m = match(regexp, w)
@@ -159,10 +159,11 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     words, weights
 end
 
-function processtext(text; regexp=r"\w[\w']+", counter=Dict{String,Int}(), kargs...)
+function processtext(text; kargs...)
+    cwkw = (:counter, :regexp)
     processtext(
-        countwords(text, regexp=regexp, counter=counter);
-        kargs...)
+        countwords(text; filter(kw->first(kw) ∈ cwkw, kargs)...);
+        filter(kw->first(kw) ∉ cwkw, kargs)...)
 end
 processtext(fun::Function; kargs...) = processtext(fun(); kargs...)
 function processtext(words::AbstractVector{T}, weights::AbstractVector{W}; kargs...) where {T,W}
