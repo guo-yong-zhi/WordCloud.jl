@@ -64,7 +64,7 @@ md"""
 md"""**fonts:** $(@bind fonts_ TextField(default="auto"))　[*browse fonts*](https://fonts.google.com)"""
 
 # ╔═╡ 23b925d3-b94f-487b-a213-f1e365ff9415
-md"""**density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　**spacing:** $(@bind spacing NumberField(0:100, default=1))"""
+md"""**density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　**spacing:** $(@bind spacing NumberField(0:100, default=2))"""
 
 # ╔═╡ 2870a2ee-aa99-48ec-a26d-fed7b040e6de
 @bind go Button("    Go!    ")
@@ -275,7 +275,7 @@ end
 # ╔═╡ fa6b3269-357e-4bf9-8514-70aff9df427f
 begin
 google_fonts #used to adjust cell order
-wc = gen_cloud(words_weights)
+@time wc = gen_cloud(words_weights)
 wc
 end
 
