@@ -69,7 +69,7 @@ wordcloud(words, weight::Number; kargs...) = wordcloud(words, repeat([weight], l
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=:auto, angles=:auto, 
                 mask=:auto, fonts=:auto,
-                transparent=:auto, minfontsize=:auto, maxfontsize=:auto, spacing::Integer=1, density=0.5,
+                transparent=:auto, minfontsize=:auto, maxfontsize=:auto, spacing::Integer=2, density=0.5,
                 state=placewords!, style=:auto, centeredword=:auto, reorder=:auto, level=:auto, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol,Any}()
