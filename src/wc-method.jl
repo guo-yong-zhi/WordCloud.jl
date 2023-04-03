@@ -1,7 +1,7 @@
 using Random
 function initqtree!(wc, i::Integer; backgroundcolor=(0, 0, 0, 0), spacing=getparameter(wc, :spacing))
     img = wc.imgs[i]
-    mimg = wordmask(img, backgroundcolor, spacing)
+    mimg = ternary_wordmask(img, backgroundcolor, spacing)
     t = qtree(mimg, wc.params[:groundsize])
     c = isassigned(wc.qtrees, i) ? getcenter(wc.qtrees[i]) : wc.params[:groundsize] ÷ 2
     setcenter!(t, c)

@@ -98,6 +98,14 @@ end
 wordmask(img, bgcolor, border) = dilate!(alpha.(img) .!= 0, border)
 # use `alpha` instead of `convert(eltype(img), parsecolor(bgcolor))`
 # https://github.com/JuliaGraphics/Luxor.jl/issues/107
+function ternary_wordmask(img, bgcolor, border)
+    tmask = fill(Stuffing.EMPTY, size(img))
+    m0 = alpha.(img) .!= 0
+    m1 = dilate!(copy(m0), border)
+    tmask[m1] .= Stuffing.MIX
+    tmask[m0] .= Stuffing.FULL
+    tmask
+end
 
 function contentsize_proposal(words, weights)
     weights = weights ./ (sum(weights) / length(weights)) #权重为平均值的单词为中等大小的单词。weights不平方，即按条目平均，而不是按面积平均
