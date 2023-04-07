@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.17
+# v0.19.22
 
 using Markdown
 using InteractiveUtils
@@ -21,6 +21,8 @@ using PlutoUI
 using WordCloud 
 using HTTP
 using ImageIO
+using PythonCall
+# using CondaPkg; CondaPkg.add("jieba")
 end
 
 # ╔═╡ f83db0a7-9a83-4c41-8fb1-c2a75317deec
@@ -169,6 +171,45 @@ end
 # ╔═╡ 4d7cb093-f953-4fc0-bb5e-92e7c1716fd7
 md"**word count:** $(@bind maxnum NumberField(1:5000, default=500))　　**scale:** $(@bind scale_ Select(weightscalelist))"
 
+# ╔═╡ e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
+begin
+google_fonts = ["Roboto","Open Sans","Lato","Montserrat","Noto Sans JP","Roboto Condensed","Oswald","Source Sans Pro","Slabo 27px","Raleway","PT Sans","Poppins","Roboto Slab","Merriweather","Noto Sans","Ubuntu","Roboto Mono","Lora","Playfair Display","Nunito","PT Serif","Titillium Web","PT Sans Narrow","Arimo","Noto Serif",
+"Rubik","Fira Sans","Work Sans","Noto Sans KR","Quicksand","Dosis","Inconsolata","Oxygen","Mukta","Bitter","Nanum Gothic","Yanone Kaffeesatz","Nunito Sans","Lobster","Cabin","Fjalla One","Indie Flower","Anton","Arvo","Josefin Sans","Karla","Libre Baskerville","Noto Sans TC","Hind","Crimson Text","Hind Siliguri",
+"Inter","Heebo","Abel","Libre Franklin","Barlow","Varela Round","Pacifico","Dancing Script","Exo 2","Source Code Pro","Shadows Into Light","Merriweather Sans","Asap","Bree Serif","Archivo Narrow","Play","Ubuntu Condensed","Questrial","Abril Fatface","Source Serif Pro","Maven Pro","Francois One","Signika",
+"EB Garamond","Comfortaa","Exo","Vollkorn","Teko","Catamaran","Kanit","Cairo","Amatic SC","IBM Plex Sans","Cuprum","Poiret One","Rokkitt","Bebas Neue","Acme","PT Sans Caption","Righteous","Noto Sans SC","Alegreya Sans","Alegreya","Barlow Condensed","Prompt","Gloria Hallelujah","Patua One","Crete Round","Permanent Marker"]
+empty!(WordCloud.AvailableFonts)
+append!(WordCloud.AvailableFonts, ["$f$w" for w in WordCloud.CandiWeights, f in google_fonts])
+nothing
+end
+
+# ╔═╡ b09620ef-4495-4c83-ad1c-2d8b0ed70710
+begin
+function ischinese(text)
+	ch = 0
+	total = 0
+	for c in text
+		if match(r"\w", string(c)) !== nothing
+			total += 1
+			if '\u4e00' <= c <= '\u9fa5'
+				ch += 1
+			end
+		end
+	end
+	if total > 0
+		# println("total: $total; chinese: $ch; ratio: $(ch/total)")
+		return ch / total > 0.05
+	else
+		return false
+	end
+end
+
+function wordseg_cn(t)
+	jieba = pyimport("jieba")
+	pyconvert(Vector{String}, jieba.lcut(t))
+end
+nothing
+end
+
 # ╔═╡ f9e0e9a1-2b44-4ef9-a846-92a6aa08fb40
 begin
     go
@@ -187,6 +228,10 @@ begin
 			end
         end
         dict_process = scaleweight(scale_) ∘ casemerge! ∘ lemmatize!
+		if ischinese(text)
+			println("检测到中文")
+			text = wordseg_cn(text)
+		end
         global words_weights = processtext(text, maxnum=maxnum, process = dict_process)
         global wordsnum = length(words_weights[1])
     catch
@@ -261,17 +306,6 @@ end
 nothing
 end
 
-# ╔═╡ e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
-begin
-google_fonts = ["Roboto","Open Sans","Lato","Montserrat","Noto Sans JP","Roboto Condensed","Oswald","Source Sans Pro","Slabo 27px","Raleway","PT Sans","Poppins","Roboto Slab","Merriweather","Noto Sans","Ubuntu","Roboto Mono","Lora","Playfair Display","Nunito","PT Serif","Titillium Web","PT Sans Narrow","Arimo","Noto Serif",
-"Rubik","Fira Sans","Work Sans","Noto Sans KR","Quicksand","Dosis","Inconsolata","Oxygen","Mukta","Bitter","Nanum Gothic","Yanone Kaffeesatz","Nunito Sans","Lobster","Cabin","Fjalla One","Indie Flower","Anton","Arvo","Josefin Sans","Karla","Libre Baskerville","Noto Sans TC","Hind","Crimson Text","Hind Siliguri",
-"Inter","Heebo","Abel","Libre Franklin","Barlow","Varela Round","Pacifico","Dancing Script","Exo 2","Source Code Pro","Shadows Into Light","Merriweather Sans","Asap","Bree Serif","Archivo Narrow","Play","Ubuntu Condensed","Questrial","Abril Fatface","Source Serif Pro","Maven Pro","Francois One","Signika",
-"EB Garamond","Comfortaa","Exo","Vollkorn","Teko","Catamaran","Kanit","Cairo","Amatic SC","IBM Plex Sans","Cuprum","Poiret One","Rokkitt","Bebas Neue","Acme","PT Sans Caption","Righteous","Noto Sans SC","Alegreya Sans","Alegreya","Barlow Condensed","Prompt","Gloria Hallelujah","Patua One","Crete Round","Permanent Marker"]
-empty!(WordCloud.AvailableFonts)
-append!(WordCloud.AvailableFonts, ["$f$w" for w in WordCloud.CandiWeights, f in google_fonts])
-nothing
-end
-
 # ╔═╡ fa6b3269-357e-4bf9-8514-70aff9df427f
 begin
 google_fonts #used to adjust cell order
@@ -306,4 +340,5 @@ end
 # ╟─27fb4920-d120-43f6-8a03-0b09877c99c4
 # ╟─986cf1a6-8075-48ae-84d9-55ae11a27da1
 # ╟─e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
+# ╟─b09620ef-4495-4c83-ad1c-2d8b0ed70710
 # ╟─daf38998-c448-498a-82e2-b48a6a2b9c27
