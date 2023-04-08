@@ -149,20 +149,6 @@ end
 nothing
 end
 
-# ╔═╡ 4016ae0f-dcd6-4aea-b5e9-f06c69a692b1
-begin
-function text_from_url(url)
-    resp = HTTP.request("GET", url, redirect=true)
-    println(resp.request)
-    resp.body |> String |> html2text
-end
-function scaleweights(dict, scale)
-    Dict(k=>scale(v) for (k, v) in dict)
-end
-scaleweight(scale) = dict -> scaleweights(dict, scale)
-nothing
-end
-
 # ╔═╡ 986cf1a6-8075-48ae-84d9-55ae11a27da1
 begin
 weightscalelist = [
@@ -176,7 +162,23 @@ nothing
 end
 
 # ╔═╡ 6e614caa-38dc-4028-b0a7-05f7030d5b43
-md"**layout style:** $(@bind style Select([:auto, :uniform, :gathering]))　　**weight scaling:** $(@bind scale_ Select(weightscalelist))"
+md"**layout style:** $(@bind style Select([:auto, :uniform, :gathering]))　　**weight scaling:** $(@bind scale_ Select(weightscalelist)) $(@bind wordlength_correct CheckBox(default=true))correct with word length"
+
+# ╔═╡ 4016ae0f-dcd6-4aea-b5e9-f06c69a692b1
+begin
+function scaleweights(dict, scale)
+	if wordlength_correct
+    	# Dict(k=>sqrt(scale(v)^2/(length(k)^2+1)) for (k, v) in dict) # keep diagonal length
+		newdict = Dict(k => scale(v)/sqrt(length(k)) for (k, v) in dict) # keep area
+	else
+		newdict = Dict(k => scale(v) for (k, v) in dict)
+	end
+	sc = sum(values(dict)) / sum(values(newdict))
+	Dict(k => v * sc for (k, v) in newdict)
+end
+scaleweight(scale) = dict -> scaleweights(dict, scale)
+nothing
+end
 
 # ╔═╡ e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
 begin
@@ -237,35 +239,40 @@ end
 
 # ╔═╡ d8e73850-f0a6-4170-be45-5a7527f1ec39
 begin
-    go
-    words_weights = ([],[])
-    wordsnum = 0
-    try
-        if texttype == "Web"
-            if !isempty(url)
-                text = text_from_url(url)
-            end
-        elseif texttype == "Text"
-            text = text_
-		else
-			if uploadedfile !== nothing
-				text = read(IOBuffer(uploadedfile["data"]), String)
-			end
-        end
-        dict_process = scaleweight(scale_) ∘ casemerge! ∘ lemmatize!
-		if ischinese(text)
-			println("检测到中文")
-			text = wordseg_cn(text)
+function text_from_url(url)
+    resp = HTTP.request("GET", url, redirect=true)
+    println(resp.request)
+    resp.body |> String |> html2text
+end
+go
+words_weights = ([],[])
+wordsnum = 0
+try
+	if texttype == "Web"
+		if !isempty(url)
+			text = text_from_url(url)
 		end
-        global words_weights = processtext(
-			text, maxnum=maxnum,
-			minlength=minlength,
-			stopwords=WordCloud.stopwords ∪ wordblacklist,
-			process = dict_process)
-        global wordsnum = length(words_weights[1])
-    catch
-    end
-    nothing
+	elseif texttype == "Text"
+		text = text_
+	else
+		if uploadedfile !== nothing
+			text = read(IOBuffer(uploadedfile["data"]), String)
+		end
+	end
+	dict_process = scaleweight(scale_) ∘ casemerge! ∘ lemmatize!
+	if ischinese(text)
+		println("检测到中文")
+		text = wordseg_cn(text)
+	end
+	global words_weights = processtext(
+		text, maxnum=maxnum,
+		minlength=minlength,
+		stopwords=WordCloud.stopwords ∪ wordblacklist,
+		process = dict_process)
+	global wordsnum = length(words_weights[1])
+catch
+end
+nothing
 end
 
 # ╔═╡ 77e13474-8987-4cc6-93a9-ea68ca53b217
