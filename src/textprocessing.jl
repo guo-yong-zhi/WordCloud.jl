@@ -126,7 +126,7 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     process=casemerge! ∘ lemmatize!)
     stopwords isa AbstractSet || (stopwords = Set(stopwords))
     counter = process(counter)
-    print("Total words: $(sum(values(counter))). ")
+    print("Total words: $(round(sum(values(counter)), digits=2)). ")
     print("Unique words: $(length(counter)). ")
     for (w, c) in counter
         if (c < minfrequency 
