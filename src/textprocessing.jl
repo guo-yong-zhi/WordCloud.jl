@@ -1,6 +1,6 @@
 module TextProcessing
-export countwords, processtext, html2text, stopwords_en, stopwords_cn, stopwords, 
-lemmatize, lemmatize!, casemerge!
+export countwords, processtext, html2text, stopwords_en, stopwords_cn, stopwords,
+    lemmatize, lemmatize!, casemerge!, rescaleweights
 dir = @__DIR__
 stopwords_en = Set(readlines(dir * "/../res/stopwords_en.txt"))
 stopwords_cn = Set(readlines(dir * "/../res/stopwords_cn.txt"))
@@ -41,7 +41,7 @@ function splitwords(text::AbstractString, regexp=r"\w[\w']+")
     words = [endswith(text[i], "'s") ? text[i][1:prevind(text[i], end, 2)] : text[i] for i in words]
 end
 
-function countwords(words::AbstractVector{<:AbstractString}; 
+function countwords(words::AbstractVector{<:AbstractString};
     regexp=r"\S(?:[\s\S]*\S)?", counter=Dict{String,Int}())
     for w in words
         if regexp !== nothing
@@ -72,7 +72,7 @@ function countwords(textfile::IO; counter=Dict{String,Int}(), kargs...)
     end
     counter
 end
-        
+
 # function countwords(textfiles::AbstractVector{<:IO};counter=Dict{String,Int}(), kargs...)
 #     for f in textfiles
 #         countwords(f;counter=counter, kargs...)
@@ -104,6 +104,23 @@ function lemmatize!(d::AbstractDict)
     d
 end
 
+function _rescaleweights(dict, func=identity, keep=:wordarea)
+    @assert keep in [:wordarea, :fontsize, :diagonallength]
+    if keep == :wordarea
+        newdict = Dict(k => func(v) / sqrt(length(k)) for (k, v) in dict)
+    elseif keep == :fontsize
+        newdict = Dict(k => func(v) for (k, v) in dict)
+    else
+        newdict = Dict(k => func(v) / sqrt(length(k)^2 + 1) for (k, v) in dict)
+    end
+    sc = sum(values(dict)) / sum(values(newdict))
+    for k in keys(newdict)
+        newdict[k] *= sc
+    end
+    newdict
+end
+rescaleweights(a...; ka...) = dict -> _rescaleweights(dict, a...; ka...)
+
 """
 processtext the text, filter the words, and adjust the weights. return words vector and weights vector.
 ## Positional Arguments
@@ -115,22 +132,22 @@ processtext the text, filter the words, and adjust the weights. return words vec
 * minfrequency: minimum frequency of a word to be included
 * maxnum: maximum number of words, defaults to 500
 * minweight, maxweight: within 0 ~ 1, set to adjust extreme weight
-* process: a function to process word counter, defaults to `casemerge!∘lemmatize!`
+* process: a function to process word counter, defaults to `rescaleweights(identity, :wordarea)∘casemerge!∘lemmatize!`
 """
-function processtext(counter::AbstractDict{<:AbstractString,<:Real}; 
+function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     stopwords=stopwords,
     minlength=1, maxlength=30,
     minfrequency=0,
     maxnum=500,
     minweight=1 / maxnum, maxweight=:auto,
-    process=casemerge! ∘ lemmatize!)
+    process=rescaleweights(identity, :wordarea) ∘ casemerge! ∘ lemmatize!)
     stopwords isa AbstractSet || (stopwords = Set(stopwords))
     counter = process(counter)
     print("Total words: $(round(sum(values(counter)), digits=2)). ")
     print("Unique words: $(length(counter)). ")
     for (w, c) in counter
-        if (c < minfrequency 
-            || length(w) < minlength || length(w) > maxlength 
+        if (c < minfrequency
+            || length(w) < minlength || length(w) > maxlength
             || w in stopwords || lowercase(w) in stopwords)
             delete!(counter, w)
         end
@@ -150,7 +167,7 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     weights[m] .= log1p.(weights[m] .- maxweight) ./ 10 .+ maxweight
     weights .+= minweight
     nhuge = sum(m)
-    if nhuge ==  1
+    if nhuge == 1
         print("The weight of the biggest word $(repr(only(words[m]))) is reduced.")
     elseif nhuge > 1
         print("The weights of the biggest $nhuge words are reduced.")
@@ -162,8 +179,8 @@ end
 function processtext(text; kargs...)
     cwkw = (:counter, :regexp)
     processtext(
-        countwords(text; filter(kw->first(kw) ∈ cwkw, kargs)...);
-        filter(kw->first(kw) ∉ cwkw, kargs)...)
+        countwords(text; filter(kw -> first(kw) ∈ cwkw, kargs)...);
+        filter(kw -> first(kw) ∉ cwkw, kargs)...)
 end
 processtext(fun::Function; kargs...) = processtext(fun(); kargs...)
 function processtext(words::AbstractVector{T}, weights::AbstractVector{W}; kargs...) where {T,W}
@@ -196,4 +213,4 @@ function html2text(content::AbstractString)
     content
 end
 html2text(file::IO) = html2text(read(file, String))
-end 
+end

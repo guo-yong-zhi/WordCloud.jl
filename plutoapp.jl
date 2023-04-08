@@ -63,7 +63,7 @@ end
 md"**mask outline:** $(@bind outlinewidth NumberField(-1:100, default=-1))　*-1 means random*"
 
 # ╔═╡ 872f2653-303f-4b53-8e01-26bec86fc413
-md"""**text density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　**word spacing:** $(@bind spacing NumberField(0:100, default=2))"""
+md"""**text density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　**min word spacing:** $(@bind spacing NumberField(0:100, default=2))"""
 
 # ╔═╡ 26d6b795-1cc3-4548-aa07-86c2f6ee0776
 md"""**word fonts:** $(@bind fonts_ TextField(default="auto"))　*Use commas to separate multiple fonts.*　[*Browse available fonts*](https://fonts.google.com)"""
@@ -151,34 +151,19 @@ end
 
 # ╔═╡ 986cf1a6-8075-48ae-84d9-55ae11a27da1
 begin
-weightscalelist = [
-    identity => "n", 
-    (√) => "√n", 
-    log1p => "log n",
-    (n->n^2) => "n²",
-    expm1 => "exp n",
+weightscale_funcs = [
+    identity => "identity", 
+    (√) => "√x", 
+    log1p => "log x",
+    (n->n^2) => "x²",
+    expm1 => "exp x",
     ]
+weightscale_types = [:wordarea, :fontsize, :diagonallength]
 nothing
 end
 
 # ╔═╡ 6e614caa-38dc-4028-b0a7-05f7030d5b43
-md"**layout style:** $(@bind style Select([:auto, :uniform, :gathering]))　　**weight scaling:** $(@bind scale_ Select(weightscalelist)) $(@bind wordlength_correct CheckBox(default=true))correct with word length"
-
-# ╔═╡ 4016ae0f-dcd6-4aea-b5e9-f06c69a692b1
-begin
-function scaleweights(dict, scale)
-	if wordlength_correct
-    	# Dict(k=>sqrt(scale(v)^2/(length(k)^2+1)) for (k, v) in dict) # keep diagonal length
-		newdict = Dict(k => scale(v)/sqrt(length(k)) for (k, v) in dict) # keep area
-	else
-		newdict = Dict(k => scale(v) for (k, v) in dict)
-	end
-	sc = sum(values(dict)) / sum(values(newdict))
-	Dict(k => v * sc for (k, v) in newdict)
-end
-scaleweight(scale) = dict -> scaleweights(dict, scale)
-nothing
-end
+md"**layout style:** $(@bind style Select([:auto, :uniform, :gathering]))　　**rescale weights:** $(@bind rescale_func Select(weightscale_funcs)) $(@bind scalekeeptype Select(weightscale_types))"
 
 # ╔═╡ e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
 begin
@@ -259,7 +244,7 @@ try
 			text = read(IOBuffer(uploadedfile["data"]), String)
 		end
 	end
-	dict_process = scaleweight(scale_) ∘ casemerge! ∘ lemmatize!
+	dict_process = rescaleweights(rescale_func, scalekeeptype) ∘ casemerge! ∘ lemmatize!
 	if ischinese(text)
 		println("检测到中文")
 		text = wordseg_cn(text)
@@ -376,7 +361,6 @@ end
 # ╟─74bd4779-c13c-4d16-a90d-597db21eaa39
 # ╟─9396cf96-d553-43db-a839-273fc9febd5a
 # ╟─1a4d1e62-6a41-4a75-a759-839445dacf4f
-# ╟─4016ae0f-dcd6-4aea-b5e9-f06c69a692b1
 # ╟─27fb4920-d120-43f6-8a03-0b09877c99c4
 # ╟─986cf1a6-8075-48ae-84d9-55ae11a27da1
 # ╟─e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
