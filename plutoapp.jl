@@ -25,45 +25,63 @@ using PythonCall
 # using CondaPkg; CondaPkg.add("jieba")
 end
 
+# ╔═╡ 6b7b1da7-03dc-4815-9abf-b8eea410d2fd
+md"**max word count:** $(@bind maxnum NumberField(1:5000, default=500))　　**min word length:** $(@bind minlength NumberField(1:1000, default=1))"
+
+# ╔═╡ 852810b2-1830-4100-ad74-18b8e96afafe
+md"""
+**word blacklist:** $(@bind wordblacklist_ TextField(default=""))
+"""
+
+# ╔═╡ 0dddeaf5-08c3-46d0-8a79-30b5ce42ef2b
+begin
+wordblacklist = [wordblacklist_[i] for i in findall(r"[^\s,;，；、]+", wordblacklist_)]
+isempty(wordblacklist) ? nothing : wordblacklist 
+end
+
 # ╔═╡ f4844a5f-260b-4713-84bf-69cd8123c7fc
-md"""**mask:** $(@bind mask_ Select([:auto, box, ellipse, squircle, ngon, star, bezingon, bezistar])) $(@bind configshape CheckBox(default=false))config"""
+md"""**mask shape:** $(@bind mask_ Select([:auto, box, ellipse, squircle, ngon, star, bezingon, bezistar])) $(@bind configshape CheckBox(default=false))additional config"""
 
 # ╔═╡ 1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
 begin
 if mask_ == :auto
-	md"""**mask file:** $(@bind uploadedmask FilePicker([MIME("image/*")]))"""
+	md"""**upload an image as a mask:** $(@bind uploadedmask FilePicker([MIME("image/*")]))"""
 elseif configshape
     if mask_ in (ngon, star, bezingon, bezistar)
-        md"**npoints:** $(@bind npoints NumberField(3:100, default=5))"
+        md"**number of points:** $(@bind npoints NumberField(3:100, default=5))"
 	elseif mask_ == squircle
-        md"**rt:** $(@bind rt NumberField(0.:0.5:3., default=0.))"
+        md"**shape parameter:** $(@bind rt NumberField(0.:0.5:3., default=0.))　*0: rectangle; 1: ellipse; 2: rhombus*; >2: four-armed star"
     else
-        md"random $(mask_ isa Function ? nameof(mask_) : mask_) shape"
+        md"use random $(mask_ isa Function ? nameof(mask_) : mask_) shape"
     end
 else
-    md"random $(mask_ isa Function ? nameof(mask_) : mask_) shape"
+    md"use random $(mask_ isa Function ? nameof(mask_) : mask_) shape"
 end
 end
 
 # ╔═╡ b38c3ad9-7885-4af6-8394-877fde8ed83b
-md"**outline:** $(@bind outlinewidth NumberField(-1:100, default=-1))"
+md"**mask outline:** $(@bind outlinewidth NumberField(-1:100, default=-1))　*-1 means random*"
 
-# ╔═╡ 6e614caa-38dc-4028-b0a7-05f7030d5b43
-md"**style:** $(@bind style Select([:auto, :uniform, :gathering]))"
+# ╔═╡ 872f2653-303f-4b53-8e01-26bec86fc413
+md"""**text density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　**word spacing:** $(@bind spacing NumberField(0:100, default=2))"""
 
-# ╔═╡ b4798663-d33d-4acc-94a2-c5175b3acb5a
-md"**colors:** $(@bind colors_ Select([:auto; WordCloud.Schemes])) $(@bind colorstyle Select([:random, :gradient]))"
+# ╔═╡ 26d6b795-1cc3-4548-aa07-86c2f6ee0776
+md"""**word fonts:** $(@bind fonts_ TextField(default="auto"))　*Use commas to separate multiple fonts.*　[*Browse available fonts*](https://fonts.google.com)"""
 
 # ╔═╡ 7993fd44-2fcf-488e-9280-4b4d0bf0e22c
 md"""
-**angles:** $(@bind anglelength NumberField(0:1000, default=0)) orientations from $(@bind anglestart NumberField(-360:360, default=0))° to $(@bind anglestop NumberField(-360:360, default=0))°  
+**word orientations:** $(@bind anglelength NumberField(-1:1000, default=-1)) orientations
 """
 
-# ╔═╡ 8f4d9caa-5f0d-405a-9e46-a6953e9fa67c
-md"""**fonts:** $(@bind fonts_ TextField(default="auto"))　[*browse fonts*](https://fonts.google.com)"""
+# ╔═╡ 8153f1f1-9704-4b1e-bff9-009a54404448
+if anglelength > 0
+	md"""from $(@bind anglestart NumberField(-360:360, default=0)) degrees to $(@bind anglestop NumberField(-360:360, default=0)) degrees"""
+else
+	md"use random word orientations"
+end
 
-# ╔═╡ 23b925d3-b94f-487b-a213-f1e365ff9415
-md"""**density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　**spacing:** $(@bind spacing NumberField(0:100, default=2))"""
+# ╔═╡ 14666dc2-7ae4-4808-9db3-456eb26cd435
+md"**word colors:** $(@bind colors_ Select([:auto; WordCloud.Schemes])) $(@bind colorstyle Select([:random, :gradient]))"
 
 # ╔═╡ 2870a2ee-aa99-48ec-a26d-fed7b040e6de
 @bind go Button("    Go!    ")
@@ -107,13 +125,14 @@ begin
 end
 
 # ╔═╡ 9396cf96-d553-43db-a839-273fc9febd5a
-if anglelength == 0
-    angles = :auto
-	nothing
-else
-    angles = range(anglestart, anglestop, length=anglelength)
+begin
+angles = :auto
+try
+    global angles = range(anglestart, anglestop, length=anglelength)
     isempty(angles) && (angles = :auto)
     nothing
+catch
+end
 end
 
 # ╔═╡ 1a4d1e62-6a41-4a75-a759-839445dacf4f
@@ -156,8 +175,8 @@ weightscalelist = [
 nothing
 end
 
-# ╔═╡ 4d7cb093-f953-4fc0-bb5e-92e7c1716fd7
-md"**word count:** $(@bind maxnum NumberField(1:5000, default=500))　　**scale:** $(@bind scale_ Select(weightscalelist))"
+# ╔═╡ 6e614caa-38dc-4028-b0a7-05f7030d5b43
+md"**layout style:** $(@bind style Select([:auto, :uniform, :gathering]))　　**weight scaling:** $(@bind scale_ Select(weightscalelist))"
 
 # ╔═╡ e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
 begin
@@ -172,7 +191,7 @@ end
 
 # ╔═╡ b09620ef-4495-4c83-ad1c-2d8b0ed70710
 begin
-function ischinese(text)
+function ischinese(text::AbstractString)
 	ch = 0
 	total = 0
 	for c in text
@@ -216,7 +235,7 @@ else
 	@bind uploadedfile FilePicker()
 end
 
-# ╔═╡ f9e0e9a1-2b44-4ef9-a846-92a6aa08fb40
+# ╔═╡ d8e73850-f0a6-4170-be45-5a7527f1ec39
 begin
     go
     words_weights = ([],[])
@@ -238,14 +257,18 @@ begin
 			println("检测到中文")
 			text = wordseg_cn(text)
 		end
-        global words_weights = processtext(text, maxnum=maxnum, process = dict_process)
+        global words_weights = processtext(
+			text, maxnum=maxnum,
+			minlength=minlength,
+			stopwords=WordCloud.stopwords ∪ wordblacklist,
+			process = dict_process)
         global wordsnum = length(words_weights[1])
     catch
     end
     nothing
 end
 
-# ╔═╡ 68dced3e-1ec2-4a70-b2b9-043fb62967c5
+# ╔═╡ 77e13474-8987-4cc6-93a9-ea68ca53b217
 begin
 colors__ = colors_
 if colorstyle == :gradient
@@ -257,14 +280,14 @@ if colorstyle == :gradient
     """
 else
     if colors__ == :auto
-        md""
+        md"use random color scheme"
     else
-        md"**probability:** $(@bind colorprob NumberField(0.1:0.01:1., default=0.5))"
+        md"**sampling probability:** $(@bind colorprob NumberField(0.1:0.01:1., default=0.5))"
     end
 end
 end
 
-# ╔═╡ 529ca925-422d-4c36-bc35-9e28a484aab0
+# ╔═╡ a758178c-b6e6-491c-83a3-8b3fa594fc9e
 begin
 colors = colors__
 if colors != :auto
@@ -280,7 +303,7 @@ if colors != :auto
         C
     end
 else
-    md"random colors"
+    md""
 end
 end
 
@@ -305,7 +328,8 @@ try
 		style=style,
 		maskkwargs...
 	) |> generate!
-catch
+catch e
+	# throw(e)
 end
 return nothing
 end
@@ -323,18 +347,21 @@ end
 # ╔═╡ Cell order:
 # ╟─bda3fa85-04a3-4033-9890-a5b4f10e2a77
 # ╟─9191230b-b72a-4707-b7cf-1a51c9cdb217
-# ╟─f9e0e9a1-2b44-4ef9-a846-92a6aa08fb40
+# ╟─d8e73850-f0a6-4170-be45-5a7527f1ec39
+# ╟─6b7b1da7-03dc-4815-9abf-b8eea410d2fd
+# ╟─852810b2-1830-4100-ad74-18b8e96afafe
+# ╟─0dddeaf5-08c3-46d0-8a79-30b5ce42ef2b
 # ╟─f4844a5f-260b-4713-84bf-69cd8123c7fc
 # ╟─1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
 # ╟─b38c3ad9-7885-4af6-8394-877fde8ed83b
 # ╟─6e614caa-38dc-4028-b0a7-05f7030d5b43
-# ╟─b4798663-d33d-4acc-94a2-c5175b3acb5a
-# ╟─68dced3e-1ec2-4a70-b2b9-043fb62967c5
-# ╟─529ca925-422d-4c36-bc35-9e28a484aab0
+# ╟─872f2653-303f-4b53-8e01-26bec86fc413
+# ╟─26d6b795-1cc3-4548-aa07-86c2f6ee0776
 # ╟─7993fd44-2fcf-488e-9280-4b4d0bf0e22c
-# ╟─8f4d9caa-5f0d-405a-9e46-a6953e9fa67c
-# ╟─4d7cb093-f953-4fc0-bb5e-92e7c1716fd7
-# ╟─23b925d3-b94f-487b-a213-f1e365ff9415
+# ╟─8153f1f1-9704-4b1e-bff9-009a54404448
+# ╟─14666dc2-7ae4-4808-9db3-456eb26cd435
+# ╟─77e13474-8987-4cc6-93a9-ea68ca53b217
+# ╟─a758178c-b6e6-491c-83a3-8b3fa594fc9e
 # ╟─2870a2ee-aa99-48ec-a26d-fed7b040e6de
 # ╟─fa6b3269-357e-4bf9-8514-70aff9df427f
 # ╟─21ba4b81-07aa-4828-875d-090e0b918c76
