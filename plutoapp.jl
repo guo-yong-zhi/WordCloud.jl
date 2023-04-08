@@ -25,9 +25,6 @@ using PythonCall
 # using CondaPkg; CondaPkg.add("jieba")
 end
 
-# ╔═╡ f83db0a7-9a83-4c41-8fb1-c2a75317deec
-md"""$(Resource("https://raw.githubusercontent.com/guo-yong-zhi/WordCloud.jl/master/docs/src/assets/logo.svg", :width => 90)) **From** $(@bind texttype Select(["Text", "File", "Web"]))"""
-
 # ╔═╡ f4844a5f-260b-4713-84bf-69cd8123c7fc
 md"""**mask:** $(@bind mask_ Select([:auto, box, ellipse, squircle, ngon, star, bezingon, bezistar])) $(@bind configshape CheckBox(default=false))config"""
 
@@ -80,15 +77,6 @@ begin
     This format is useful for quickly perceiving the most prominent terms to determine its relative prominence.  
     """
     nothing
-end
-
-# ╔═╡ 9191230b-b72a-4707-b7cf-1a51c9cdb217
-if texttype == "Web"
-    md"""**URL:** $(@bind url TextField(80, default="http://en.wikipedia.org/wiki/Special:random"))"""
-elseif texttype == "Text"
-    @bind text_ TextField((80, 10), defaulttext)
-else
-	@bind uploadedfile FilePicker()
 end
 
 # ╔═╡ 397fdd42-d2b2-46db-bf74-957909f47a58
@@ -210,6 +198,24 @@ end
 nothing
 end
 
+# ╔═╡ 3dc10049-d257-4bcd-9119-2a1af5a0e233
+begin
+logo = html"""<a href="https://github.com/guo-yong-zhi/WordCloud.jl"><div align="right"><i>https://github.com/guo-yong-zhi/WordCloud.jl</i></div><img src="https://raw.githubusercontent.com/guo-yong-zhi/WordCloud.jl/master/docs/src/assets/logo.svg" alt="some_text" width=90></a>"""
+nothing
+end
+
+# ╔═╡ bda3fa85-04a3-4033-9890-a5b4f10e2a77
+md"""$logo  **From** $(@bind texttype Select(["Text", "File", "Web"])) """
+
+# ╔═╡ 9191230b-b72a-4707-b7cf-1a51c9cdb217
+if texttype == "Web"
+    md"""**URL:** $(@bind url TextField(80, default="http://en.wikipedia.org/wiki/Special:random"))"""
+elseif texttype == "Text"
+    @bind text_ TextField((80, 10), defaulttext)
+else
+	@bind uploadedfile FilePicker()
+end
+
 # ╔═╡ f9e0e9a1-2b44-4ef9-a846-92a6aa08fb40
 begin
     go
@@ -315,7 +321,7 @@ end
 
 
 # ╔═╡ Cell order:
-# ╟─f83db0a7-9a83-4c41-8fb1-c2a75317deec
+# ╟─bda3fa85-04a3-4033-9890-a5b4f10e2a77
 # ╟─9191230b-b72a-4707-b7cf-1a51c9cdb217
 # ╟─f9e0e9a1-2b44-4ef9-a846-92a6aa08fb40
 # ╟─f4844a5f-260b-4713-84bf-69cd8123c7fc
@@ -341,4 +347,5 @@ end
 # ╟─986cf1a6-8075-48ae-84d9-55ae11a27da1
 # ╟─e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
 # ╟─b09620ef-4495-4c83-ad1c-2d8b0ed70710
+# ╟─3dc10049-d257-4bcd-9119-2a1af5a0e233
 # ╟─daf38998-c448-498a-82e2-b48a6a2b9c27
