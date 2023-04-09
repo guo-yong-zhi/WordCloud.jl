@@ -40,7 +40,7 @@ isempty(wordblacklist) ? nothing : wordblacklist
 end
 
 # ╔═╡ f4844a5f-260b-4713-84bf-69cd8123c7fc
-md"""**mask shape:** $(@bind mask_ Select([:auto, box, ellipse, squircle, ngon, star, bezingon, bezistar])) $(@bind configshape CheckBox(default=false))additional config"""
+md"""**mask shape:** $(@bind mask_ Select([:auto, box, ellipse, squircle, ngon, star, bezingon, bezistar])) $(@bind configshape　　CheckBox(default=false))additional config　　**mask size:** $(@bind masksize_ TextField(default="auto"))　*e.g. 400,300*"""
 
 # ╔═╡ 1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
 begin
@@ -364,13 +364,21 @@ else
 end
 end
 
-# ╔═╡ 27fb4920-d120-43f6-8a03-0b09877c99c4
+# ╔═╡ 9a61bb59-5708-4fc0-81f3-3ca555b3bf5d
 begin
 function gen_cloud(words_weights)
     if outlinewidth isa Number && outlinewidth >= 0
 		olw = outlinewidth
 	else
 		olw = rand((0, 0, 0, rand(2:10)))
+	end
+	masksize = :auto
+	try
+		masksize = Tuple(parse(Int, i ) for i in split(masksize_, ","))
+		if length(masksize) == 1
+			masksize = masksize[1]
+		end
+	catch
 	end
 try
 	return wordcloud(
@@ -379,6 +387,7 @@ try
 		angles=angles,
 		fonts=fonts,
 		mask=mask,
+		masksize=masksize,
 		outline=olw,
 		density=density,
 		spacing=spacing,
@@ -427,9 +436,9 @@ end
 # ╟─74bd4779-c13c-4d16-a90d-597db21eaa39
 # ╟─9396cf96-d553-43db-a839-273fc9febd5a
 # ╟─1a4d1e62-6a41-4a75-a759-839445dacf4f
-# ╟─27fb4920-d120-43f6-8a03-0b09877c99c4
 # ╟─986cf1a6-8075-48ae-84d9-55ae11a27da1
 # ╟─e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
 # ╟─b09620ef-4495-4c83-ad1c-2d8b0ed70710
 # ╟─3dc10049-d257-4bcd-9119-2a1af5a0e233
+# ╟─9a61bb59-5708-4fc0-81f3-3ca555b3bf5d
 # ╟─daf38998-c448-498a-82e2-b48a6a2b9c27
