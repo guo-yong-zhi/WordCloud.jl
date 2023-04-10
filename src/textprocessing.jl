@@ -104,15 +104,16 @@ function lemmatize!(d::AbstractDict)
     d
 end
 
-function _rescaleweights(dict, func=identity, keep=:wordarea)
-    @assert keep in [:wordarea, :fontsize, :diagonallength]
-    if keep == :wordarea
-        newdict = Dict(k => func(v) / sqrt(length(k)) for (k, v) in dict)
-    elseif keep == :fontsize
-        newdict = Dict(k => func(v) for (k, v) in dict)
+function _rescaleweights(dict, func=identity, p=0) # p is the exponent of the power mean
+    # ((fontsize^p + (wordlength*fontsize)^p)/2) ^ (1/p) = weight
+    # p=-1, harmonic mean; p=0, geometric mean; p=1, arithmetic mean; p=2, root mean square;
+    # p=-∞, minimum; p=∞, maximum;
+    if p == 0
+        wordlength_scale = l->sqrt(l)
     else
-        newdict = Dict(k => func(v) / sqrt(length(k)^2 + 1) for (k, v) in dict)
+        wordlength_scale = l->(l^p+1)^(1/p)
     end
+    newdict = Dict(k => func(v) / wordlength_scale(length(k)) for (k, v) in dict)
     sc = sum(values(dict)) / sum(values(newdict))
     for k in keys(newdict)
         newdict[k] *= sc
@@ -140,7 +141,7 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     minfrequency=0,
     maxnum=500,
     minweight=1 / maxnum, maxweight=:auto,
-    process=rescaleweights(identity, :wordarea) ∘ casemerge! ∘ lemmatize!)
+    process=rescaleweights(identity, p=0) ∘ casemerge! ∘ lemmatize!)
     stopwords isa AbstractSet || (stopwords = Set(stopwords))
     counter = process(counter)
     print("Total words: $(round(sum(values(counter)), digits=2)). ")

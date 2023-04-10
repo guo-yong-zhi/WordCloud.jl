@@ -62,6 +62,9 @@ end
 # ╔═╡ b38c3ad9-7885-4af6-8394-877fde8ed83b
 md"**mask outline:** $(@bind outlinewidth NumberField(-1:100, default=-1))　*-1 means random*"
 
+# ╔═╡ 6e614caa-38dc-4028-b0a7-05f7030d5b43
+md"**layout style:** $(@bind style Select([:auto, :uniform, :gathering]))"
+
 # ╔═╡ 872f2653-303f-4b53-8e01-26bec86fc413
 md"""**text density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　**min word spacing:** $(@bind spacing NumberField(0:100, default=2))"""
 
@@ -219,12 +222,11 @@ weightscale_funcs = [
     (n->n^2) => "x²",
     expm1 => "exp x",
     ]
-weightscale_types = [:wordarea, :fontsize, :diagonallength]
 nothing
 end
 
-# ╔═╡ 6e614caa-38dc-4028-b0a7-05f7030d5b43
-md"**layout style:** $(@bind style Select([:auto, :uniform, :gathering]))　　**rescale weights:** $(@bind rescale_func Select(weightscale_funcs)) $(@bind scalekeeptype Select(weightscale_types))"
+# ╔═╡ dfe608b0-077c-437a-adf2-b1382a0eb4eb
+md"**rescale weights:** $(@bind rescale_func Select(weightscale_funcs))　　**word length balance:** $(@bind word_length_balance Slider(-8:0.1:8, default=0))"
 
 # ╔═╡ e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
 begin
@@ -309,7 +311,7 @@ try
 	else
 		text = read_table(text_)
 	end
-	dict_process = rescaleweights(rescale_func, scalekeeptype) ∘ casemerge! ∘ lemmatize!
+	dict_process = rescaleweights(rescale_func, word_length_balance) ∘ casemerge! ∘ lemmatize!
 	if text isa AbstractString && ischinese(text)
 		println("检测到中文")
 		text = wordseg_cn(text)
@@ -421,6 +423,7 @@ end
 # ╟─1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
 # ╟─b38c3ad9-7885-4af6-8394-877fde8ed83b
 # ╟─6e614caa-38dc-4028-b0a7-05f7030d5b43
+# ╟─dfe608b0-077c-437a-adf2-b1382a0eb4eb
 # ╟─872f2653-303f-4b53-8e01-26bec86fc413
 # ╟─26d6b795-1cc3-4548-aa07-86c2f6ee0776
 # ╟─7993fd44-2fcf-488e-9280-4b4d0bf0e22c
