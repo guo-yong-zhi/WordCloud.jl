@@ -226,7 +226,7 @@ nothing
 end
 
 # ╔═╡ dfe608b0-077c-437a-adf2-b1382a0eb4eb
-md"**rescale weights:** $(@bind rescale_func Select(weightscale_funcs))　　**word length balance:** $(@bind word_length_balance Slider(-8:0.1:8, default=0))"
+md"**rescale weights:** $(@bind rescale_func Select(weightscale_funcs))　　**word length balance:** $(@bind word_length_balance Slider(-1:0.01:1, default=0, show_value=true))"
 
 # ╔═╡ e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
 begin
@@ -311,7 +311,7 @@ try
 	else
 		text = read_table(text_)
 	end
-	dict_process = rescaleweights(rescale_func, word_length_balance) ∘ casemerge! ∘ lemmatize!
+	dict_process = rescaleweights(rescale_func, tan(word_length_balance*π/2)) ∘ casemerge! ∘ lemmatize!
 	if text isa AbstractString && ischinese(text)
 		println("检测到中文")
 		text = wordseg_cn(text)

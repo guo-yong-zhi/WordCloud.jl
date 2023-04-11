@@ -104,23 +104,39 @@ function lemmatize!(d::AbstractDict)
     d
 end
 
-function _rescaleweights(dict, func=identity, p=0) # p is the exponent of the power mean
-    # ((fontsize^p + (wordlength*fontsize)^p)/2) ^ (1/p) = weight
-    # p=-1, harmonic mean; p=0, geometric mean; p=1, arithmetic mean; p=2, root mean square;
-    # p=-∞, minimum; p=∞, maximum;
-    if p == 0
-        wordlength_scale = l->sqrt(l)
+function powermeanwith1(x, p)
+    x = float(x)
+    xp = x^p
+    if xp == 1.0
+        return sqrt(x)
+    elseif isinf(xp)
+        return exp(log(x) - log(2) / p)
     else
-        wordlength_scale = l->(l^p+1)^(1/p)
+        return exp((log((xp / 2 + 1 / 2))) / p)
     end
-    newdict = Dict(k => func(v) / wordlength_scale(length(k)) for (k, v) in dict)
+end
+
+function _rescaleweights(dict, func=identity, p=0)
+    newdict = Dict(k => func(v) / powermeanwith1(length(k), p) for (k, v) in dict)
     sc = sum(values(dict)) / sum(values(newdict))
     for k in keys(newdict)
         newdict[k] *= sc
     end
     newdict
 end
-rescaleweights(a...; ka...) = dict -> _rescaleweights(dict, a...; ka...)
+
+"""
+rescaleweights(func=identity, p=0)  
+This function takes word length into account.So the weights after rescaled can be used as font size coefficients.  
+func(w::Real)->Real is used to remap weight, say `weight=func(weight)`; p is the exponent of the power mean.  
+We set `weight = powermean(1*fontsize, wordlength*fontsize) = ((fontsize^p + (wordlength*fontsize)^p)/2) ^ (1/p)`  
+That is `weight = fontsize * powermean(1, wordlength)`  
+Overall, that makes `fontsize = func(weight) / powermean(1, wordlength)`  
+p=-Inf, powermean is minimum (fontsize=weight); p=Inf, powermean is maximum (fontsize=weight/wordlength);  
+p=-1, powermean is harmonic mean; p=0, powermean is geometric mean (keep the word area);  
+p=1, powermean is arithmetic mean; p=2, powermean is root mean square (keep the diagonal length);  
+"""
+rescaleweights(func=identity, p=0) = dict -> _rescaleweights(dict, func, p)
 
 """
 processtext the text, filter the words, and adjust the weights. return words vector and weights vector.
@@ -141,7 +157,7 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     minfrequency=0,
     maxnum=500,
     minweight=1 / maxnum, maxweight=:auto,
-    process=rescaleweights(identity, p=0) ∘ casemerge! ∘ lemmatize!)
+    process=rescaleweights(identity, 0) ∘ casemerge! ∘ lemmatize!)
     stopwords isa AbstractSet || (stopwords = Set(stopwords))
     counter = process(counter)
     print("Total words: $(round(sum(values(counter)), digits=2)). ")

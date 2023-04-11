@@ -36,4 +36,15 @@
     @test length(processtext(["cat" => 1, "dog" => 1, "dogs" => 3, "Dogs" => 2, "Dog" => 1])[1]) == 2
     @test processtext(["cat" => 3, "Dog" => 1, "dogs" => 2])[2] |> diff |> only |> iszero
     @test processtext("word cloud") == processtext(["word","cloud"], [12,12]) == processtext([("word", 3), ("cloud", 3)])
+
+    pm = WordCloud.TextProcessing.powermeanwith1
+    @test pm(1, -12.34) == 1
+    @test abs(pm(7, 1e-8) - sqrt(7)) < 1e-6
+    @test pm(9, 0) == 3.
+    @test pm(17, 1) ≈ 9
+    @test pm(2, -1) ≈ 2/(1/2+1)
+    @test pm(Inf, -1) ≈ 2
+    @test abs(pm(12.5, 2-1e-8) - sqrt(12.5^2/2+1/2)) < 1e-6
+    @test pm(π, Inf) ≈ π
+    @test pm(7π, -Inf) == 1.
 end
