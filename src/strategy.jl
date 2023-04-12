@@ -54,6 +54,7 @@ function wordsoccupancy!(wc)
     border = 1
     sizemax = size(wc.mask) .* √(getparameter(wc, :contentarea) / prod(size(wc.mask))) .* 0.8
     check = getparameter(wc, :maxfontsize0) == :auto
+    check && setparameter!(wc, minimum(sizemax), :maxfontsize)
     imgs = []
     for i in 1:3
         empty!(imgs)
