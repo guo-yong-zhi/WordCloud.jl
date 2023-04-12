@@ -275,7 +275,7 @@ function printcollisions(wc)
     collwords = [(get_text(i), get_text(j)) for (i, j) in colllist]
     if length(colllist) > 0
         @warn "Have $(length(colllist)) collisions. Try setting a larger `nepoch` and `retry`, or lower `density` and `spacing` in `wordcloud` to fix it."
-        println("$collwords")
+        println("These words collide: $collwords")
     end
 end
 
@@ -308,7 +308,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
         end
     end
     if STATEIDS[getstate(wc)] >= STATEIDS[:fit!]
-        println("$(wc.params[:epoch]) epochs")
+        println("Completed after $(wc.params[:epoch]) epochs.")
         setstate!(wc, nameof(generate!))
     else # check
         printcollisions(wc)

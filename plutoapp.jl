@@ -269,7 +269,7 @@ end
 
 # ╔═╡ 3dc10049-d257-4bcd-9119-2a1af5a0e233
 begin
-logo = html"""<a href="https://github.com/guo-yong-zhi/WordCloud.jl"><div align="right"><i>https://github.com/guo-yong-zhi/WordCloud.jl</i></div><img src="https://raw.githubusercontent.com/guo-yong-zhi/WordCloud.jl/master/docs/src/assets/logo.svg" alt="some_text" width=90></a>"""
+logo = html"""<a href="https://github.com/guo-yong-zhi/WordCloud.jl"><div align="right"><i>https://github.com/guo-yong-zhi/WordCloud.jl</i></div><img src="https://raw.githubusercontent.com/guo-yong-zhi/WordCloud.jl/master/docs/src/assets/logo.svg" alt="WordCloud" width=90></a>"""
 nothing
 end
 
@@ -322,7 +322,8 @@ try
 		stopwords=WordCloud.stopwords ∪ wordblacklist,
 		process = dict_process)
 	global wordsnum = length(words_weights[1])
-catch
+catch e
+	# rethrow(e)
 end
 nothing
 end
@@ -397,7 +398,7 @@ try
 		maskkwargs...
 	) |> generate!
 catch e
-	# throw(e)
+	# rethrow(e)
 end
 return nothing
 end
