@@ -218,6 +218,7 @@ function html2text(content::AbstractString)
         r"<!--[\s\S]*?-->" => " ",
         "<br>" => "\n",
         r"<[\s\S]*?>" => " ",
+        "&nbsp;" => " ",
         "&quot;" => "\"",
         "&amp;" => "&",
         "&lt;" => "<",
