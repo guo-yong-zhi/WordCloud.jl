@@ -35,12 +35,14 @@ function load(fn::AbstractString)
     if endswith(fn, r".svg|.SVG")
         loadsvg(fn)
     else
-        FileIO.load(fn)
+        r = FileIO.load(fn)
+        r isa AbstractMatrix && collect(r)
     end
 end
 function load(file::IO)
     try
-        FileIO.load(file)
+        r = FileIO.load(file)
+        r isa AbstractMatrix && collect(r)
     catch
         seekstart(file)
         loadsvg(read(file, String))
