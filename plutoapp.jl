@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.22
+# v0.19.23
 
 using Markdown
 using InteractiveUtils
@@ -30,8 +30,7 @@ md"**max word count:** $(@bind maxnum NumberField(1:5000, default=500))　　**m
 
 # ╔═╡ 852810b2-1830-4100-ad74-18b8e96afafe
 md"""
-**word blacklist:** $(@bind wordblacklist_ TextField(default=""))
-"""
+**word blacklist:** $(@bind wordblacklist_ TextField(default="")) $(@bind enablestopwords　　CheckBox(default=true))enable the built-in stop word list"""
 
 # ╔═╡ 0dddeaf5-08c3-46d0-8a79-30b5ce42ef2b
 begin
@@ -319,7 +318,7 @@ try
 	global words_weights = processtext(
 		text, maxnum=maxnum,
 		minlength=minlength,
-		stopwords=WordCloud.stopwords ∪ wordblacklist,
+		stopwords=enablestopwords ? WordCloud.stopwords ∪ wordblacklist : wordblacklist,
 		process = dict_process)
 	global wordsnum = length(words_weights[1])
 catch e
