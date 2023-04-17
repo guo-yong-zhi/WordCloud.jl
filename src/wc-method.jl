@@ -272,10 +272,11 @@ function printcollisions(wc)
     qtrees = [wc.maskqtree, wc.qtrees...]
     colllist = first.(totalcollisions(qtrees))
     get_text(i) = i > 1 ? wc.words[i - 1] : "#MASK#"
-    collwords = [(get_text(i), get_text(j)) for (i, j) in colllist]
     if length(colllist) > 0
         @warn "Have $(length(colllist)) collisions. Try setting a larger `nepoch` and `retry`, or lower `density` and `spacing` in `wordcloud` to fix it."
-        println("These words collide: $collwords")
+        print("These words collide: ")
+        foreach(ij->print(get_text(ij[1]), " & ", get_text(ij[2]), ", "), colllist)
+        println()
     end
 end
 
@@ -295,12 +296,20 @@ function generate!(wc::WC, args...; retry=3, krags...)
     end
     for r in 1:retry
         if r != 1
-            rescale!(wc, 0.97)
-            dens = wordsoccupancy!(wc) / wc.params[:contentarea]
-            println("▸$r. try scale = $(wc.params[:scale]). The density is reduced to $dens")
-            printfontsizes(wc)
+            println("Aborted after $(getparameter(wc, :epoch)) epochs.")
+            sp = getparameter(wc, :spacing)
+            if iseven(r) && sp > 1
+                setparameter!(wc, sp - 1, :spacing)
+                initword!.(wc, 1:length(wc))
+                println("▸$r. Try setting spacing = $(getparameter(wc, :spacing))")
+            else
+                rescale!(wc, 0.97)
+                dens = wordsoccupancy!(wc) / getparameter(wc, :contentarea)
+                println("▸$r. Try setting scale = $(getparameter(wc, :scale)). The density is reduced to $dens")
+                printfontsizes(wc)
+            end
         else
-            println("▸$r. scale = $(wc.params[:scale])")
+            println("▸$r. Set spacing = $(getparameter(wc, :spacing)); scale = $(getparameter(wc, :scale))")
         end
         fit!(wc, args...; krags...)
         if getstate(wc) == :fit!
@@ -308,9 +317,10 @@ function generate!(wc::WC, args...; retry=3, krags...)
         end
     end
     if STATEIDS[getstate(wc)] >= STATEIDS[:fit!]
-        println("Completed after $(wc.params[:epoch]) epochs.")
+        println("Completed after $(getparameter(wc, :epoch)) epochs.")
         setstate!(wc, nameof(generate!))
     else # check
+        println("Failed after $(getparameter(wc, :epoch)) epochs.")
         printcollisions(wc)
     end
     wc
