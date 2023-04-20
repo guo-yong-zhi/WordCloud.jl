@@ -39,7 +39,7 @@ function initwords!(wc::WC; maxiter=5, tolerance=0.02)
     println("set density = $(params[:density])")
     findscale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
     printfontsizes(wc)
-    initword!.(wc, 1:length(wc.words))
+    initword!(wc, :)
     setstate!(wc, nameof(initwords!))
     wc
 end
@@ -104,7 +104,7 @@ function placewords!(wc::WC; style=:auto, rt=:auto, centeredword=:auto, reorder=
         setcenter!(wc.qtrees[centeredword],  wc.params[:groundsize] .÷ 2)
         println("center the word $(repr(getwords(wc, centeredword)))")
         arg = (2:length(wc.qtrees) |> collect,)
-        qtrees = [wc.qtrees[i] for i in 1:length(wc.qtrees) if i != centeredword]
+        qtrees = [wc.qtrees[i] for i in eachindex(wc.qtrees) if i != centeredword]
         callback(1)
     end
     reorder == :auto && hasparameter(wc, :reorder) && (reorder = getparameter(wc, :reorder))
@@ -145,7 +145,7 @@ function rescale!(wc::WC, ratio::Real)
     qts = wc.qtrees
     centers = getcenter.(qts)
     wc.params[:scale] *= ratio
-    initword!.(wc, 1:length(wc))
+    initword!(wc, :)
     setcenter!.(wc.qtrees, centers)
     wc
 end
@@ -300,7 +300,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
             sp = getparameter(wc, :spacing)
             if iseven(r) && sp > 1
                 setparameter!(wc, sp - 1, :spacing)
-                initword!.(wc, 1:length(wc))
+                initqtree!(wc, :)
                 println("▸$r. Try setting spacing = $(getparameter(wc, :spacing))")
             else
                 rescale!(wc, 0.97)
