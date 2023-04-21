@@ -52,7 +52,7 @@ function wordsoccupancy!(wc)
     fonts = getfonts(wc)
     angles = getangles(wc) ./ 180 .* π
     border = 1
-    sizemax = size(wc.mask) .* √(getparameter(wc, :contentarea) / prod(size(wc.mask))) .* 0.8
+    sizemax = size(wc.mask) .* √(getparameter(wc, :contentarea) / prod(size(wc.mask))) .* 0.9
     check = getparameter(wc, :maxfontsize0) == :auto
     check && setparameter!(wc, minimum(sizemax), :maxfontsize)
     imgs = []
