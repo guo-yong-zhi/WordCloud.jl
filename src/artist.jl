@@ -142,21 +142,25 @@ equalwh(arg...) = arg
 function randommask(args...; maskshape=:rand, returnkwargs=false, kargs...)
     rd = Dict(squircle => 0.4, box => 0.6, ellipse => 0.8, 
     ngon => 0.85, star => 0.9, bezingon => 0.92, bezistar => 1)
-    ran = get(rd, maskshape, rand())
-    if ran <= 0.4
-        s, k = randomsquircle(randomwh(args...)...; kargs...)
-    elseif ran <= 0.6
-        s, k = randombox(randomwh(args...)...; kargs...)
-    elseif ran <= 0.8
-        s, k = randomellipse(randomwh(args...)...; kargs...)
-    elseif ran <= 0.85
-        s, k = randomngon(equalwh(args...)...; kargs...)
-    elseif ran <= 0.9
-        s, k = randomstar(equalwh(args...)...; kargs...)
-    elseif ran <= 0.92
-        s, k = randombezingon(equalwh(args...)...; kargs...)
+    if maskshape ∉ keys(rd) && maskshape isa Function
+        s, k = maskshape(args...; kargs...), kargs
     else
-        s, k = randombezistar(equalwh(args...)...; kargs...)
+        ran = get(rd, maskshape, rand())
+        if ran <= 0.4
+            s, k = randomsquircle(randomwh(args...)...; kargs...)
+        elseif ran <= 0.6
+            s, k = randombox(randomwh(args...)...; kargs...)
+        elseif ran <= 0.8
+            s, k = randomellipse(randomwh(args...)...; kargs...)
+        elseif ran <= 0.85
+            s, k = randomngon(equalwh(args...)...; kargs...)
+        elseif ran <= 0.9
+            s, k = randomstar(equalwh(args...)...; kargs...)
+        elseif ran <= 0.92
+            s, k = randombezingon(equalwh(args...)...; kargs...)
+        else
+            s, k = randombezistar(equalwh(args...)...; kargs...)
+        end
     end
     return returnkwargs ? (s, k) : s
 end
