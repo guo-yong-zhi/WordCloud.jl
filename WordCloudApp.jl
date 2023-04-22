@@ -39,12 +39,21 @@ isempty(wordblacklist) ? nothing : wordblacklist
 end
 
 # ╔═╡ f4844a5f-260b-4713-84bf-69cd8123c7fc
-md"""**mask shape:** $(@bind mask_ Select([:auto, box, ellipse, squircle, ngon, star, bezingon, bezistar])) $(@bind configshape　　CheckBox(default=false))additional config　　**mask size:** $(@bind masksize_ TextField(default="auto"))　*e.g. 400,300*"""
+md"""**mask shape:** $(@bind mask_ Select([:auto, box, ellipse, squircle, ngon, star, bezingon, bezistar, :customsvg])) $(@bind configshape　　CheckBox(default=false))additional config　　**mask size:** $(@bind masksize_ TextField(default="auto"))　*e.g. 400,300*"""
 
 # ╔═╡ 1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
 begin
+defaultsvgstr = """
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+  <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+</svg>
+"""
 if mask_ == :auto
 	md"""**upload an image as a mask:** $(@bind uploadedmask FilePicker([MIME("image/*")]))"""
+elseif mask_ == :customsvg
+	md"""**svg string:**　*for example, you can copy svg code from [here](https://heroicons.com/)， you should choose a solid type icon*
+	
+	$(@bind masksvgstr TextField((80, 2), default=defaultsvgstr))"""
 elseif configshape
     if mask_ in (ngon, star, bezingon, bezistar)
         md"**number of points:** $(@bind npoints NumberField(3:100, default=5))"
@@ -59,7 +68,7 @@ end
 end
 
 # ╔═╡ b38c3ad9-7885-4af6-8394-877fde8ed83b
-md"**mask outline:** $(@bind outlinewidth NumberField(-1:100, default=-1))　*-1 means random*"
+md"**mask outline:** $(@bind outlinewidth NumberField(-1:100, default=mask_!=:customsvg ? -1 : 0))　*-1 means random*　　 $(@bind showbackground　　CheckBox(default=mask_!=:customsvg))show background"
 
 # ╔═╡ 6e614caa-38dc-4028-b0a7-05f7030d5b43
 md"**layout style:** $(@bind style Select([:auto, :uniform, :gathering]))"
@@ -158,33 +167,6 @@ function read_table(text)
 	ps
 end
 nothing
-end
-
-# ╔═╡ 397fdd42-d2b2-46db-bf74-957909f47a58
-if mask_ == :auto
-	if uploadedmask === nothing
-		mask = :auto
-		nothing
-	else
-		mask = loadmask(IOBuffer(uploadedmask["data"]))
-		nothing
-	end
-else
-	mask = mask_
-	nothing
-end
-
-# ╔═╡ 74bd4779-c13c-4d16-a90d-597db21eaa39
-begin
-    maskkwargs = (;)
-    if configshape
-        if mask in (ngon, star, bezingon, bezistar)
-            maskkwargs = (npoints=npoints,)
-        elseif mask == squircle
-            maskkwargs = (rt=rt,)
-        end
-    end
-    nothing
 end
 
 # ╔═╡ 9396cf96-d553-43db-a839-273fc9febd5a
@@ -366,6 +348,53 @@ else
 end
 end
 
+# ╔═╡ cb9926c7-1089-4e13-8318-8576c828b485
+begin
+function svgshapemask(svgstr, masksize; keeparea=true, kargs...)
+	ags = [string(masksize), "keeparea=$keeparea", ("$k=$(repr(v))" for (k, v) in kargs)...]
+    println("svgshapemask(", join(ags, ", "), ")")
+	maskimg = WordCloud.Render.tobitmap(WordCloud.Render.loadsvg(masksvgstr))
+	if keeparea
+		r = sqrt(first(masksize) * last(masksize) / WordCloud.occupancy(WordCloud.imagemask(maskimg)))
+		loadmask(maskimg; ratio=r, kargs...)
+	else
+		loadmask(maskimg, masksize; kargs...)
+	end
+end
+svgshapefunc(svgstr) = (a...; ka...) -> svgshapemask(svgstr, a...; ka...)
+nothing
+end
+
+# ╔═╡ 397fdd42-d2b2-46db-bf74-957909f47a58
+if mask_ == :auto
+	if uploadedmask === nothing
+		mask = :auto
+		nothing
+	else
+		mask = loadmask(IOBuffer(uploadedmask["data"]))
+		nothing
+	end
+elseif mask_ == :customsvg
+	mask = svgshapefunc(masksvgstr)
+	nothing
+else
+	mask = mask_
+	nothing
+end
+
+# ╔═╡ 74bd4779-c13c-4d16-a90d-597db21eaa39
+begin
+    maskkwargs = (;)
+    if configshape
+        if mask in (ngon, star, bezingon, bezistar)
+            maskkwargs = (npoints=npoints,)
+        elseif mask == squircle
+            maskkwargs = (rt=rt,)
+        end
+    end
+    nothing
+end
+
 # ╔═╡ 9a61bb59-5708-4fc0-81f3-3ca555b3bf5d
 begin
 function gen_cloud(words_weights)
@@ -408,7 +437,9 @@ end
 begin
 google_fonts #used to adjust cell order
 @time wc = gen_cloud(words_weights)
-wc
+if wc !== nothing
+	paintsvg(wc, background=showbackground)
+end
 end
 
 
@@ -443,5 +474,6 @@ end
 # ╟─e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
 # ╟─b09620ef-4495-4c83-ad1c-2d8b0ed70710
 # ╟─3dc10049-d257-4bcd-9119-2a1af5a0e233
+# ╟─cb9926c7-1089-4e13-8318-8576c828b485
 # ╟─9a61bb59-5708-4fc0-81f3-3ca555b3bf5d
 # ╟─daf38998-c448-498a-82e2-b48a6a2b9c27
