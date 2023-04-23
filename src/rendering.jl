@@ -95,19 +95,29 @@ function imresize(img::AbstractMatrix, sz...; ratio=1)
     rt = ratio isa Number ? ratio : reverse(ratio)
     if isempty(sz)
         ImageTransformations.imresize(img; ratio=rt)
-    else
-        sz = (last(sz), first(sz)) .* ratio
+    elseif length(sz) == 1
+        sz1 = size(img)
+        sz2 = sz1 .* only(sz) ./ sqrt(prod(sz1))
         # given single number as sz, ImageTransformations will resize the height only
         # given both sz and ratio, ImageTransformations will ignore the ratio
-        ImageTransformations.imresize(img, ceil.(Int, sz)...)
+        ImageTransformations.imresize(img, ceil.(Int, sz2)...)
+    else
+        sz2 = reverse(sz) .* ratio
+        ImageTransformations.imresize(img, ceil.(Int, sz2)...)
     end
 end
 function imresize(svg::SVGImageType, sz...; ratio=1)
-    sz0 = reverse(size(svg))
-    sznew = isempty(sz) ? sz0 : sz
-    sznew = sznew .* ratio .* (1, 1)
-    svgnew = Drawing(sznew..., :svg)
-    scale((sznew ./ sz0)...)
+    sz1 = reverse(size(svg))
+    if isempty(sz)
+        sz2 = sz1
+    elseif length(sz) == 1
+        sz2 = sz1 .* only(sz) ./ sqrt(prod(sz1))
+    else
+        sz2 = sz
+    end
+    sz2 = sz2 .* ratio
+    svgnew = Drawing(sz2..., :svg)
+    scale((sz2 ./ sz1)...)
     placeimage(svg)
     finish()
     svgnew
@@ -190,9 +200,9 @@ function _backgroundcolor(img, c=:auto)
     end
 end
 imagemask(img::AbstractArray{Bool,2}) = img
-imagemask(img, istransparent::Function) = .!istransparent.(torgba.(img))
-imagemask(img, transparent::AbstractArray{Bool,2}) = .!transparent
-function imagemask(img, transparent=:auto)
+imagemask(img::AbstractMatrix, istransparent::Function) = .!istransparent.(torgba.(img))
+imagemask(img::AbstractMatrix, transparent::AbstractArray{Bool,2}) = .!transparent
+function imagemask(img::AbstractMatrix, transparent=:auto)
     if transparent == :auto
         if img[1] == img[end] && any(c -> c != img[1], img)
             transparent = img[1]
@@ -205,6 +215,8 @@ function imagemask(img, transparent=:auto)
     end
     img .!= convert(eltype(img), parsecolor(transparent))
 end
+imagemask(img::SVGImageType, istransparent::Function) = imagemask(tobitmap(img), istransparent)
+imagemask(img::SVGImageType, transparent::AbstractArray{Bool,2}) = .!transparent
 imagemask(img::SVGImageType, transparent) = imagemask(tobitmap(img), transparent)
 
 function dilate!(mat, r)
