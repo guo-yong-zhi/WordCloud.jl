@@ -68,7 +68,7 @@ end
 end
 
 # ╔═╡ b38c3ad9-7885-4af6-8394-877fde8ed83b
-md"**mask outline:** $(@bind outlinewidth NumberField(-1:100, default=mask_!=:customsvg ? -1 : 0))　*-1 means random*　　 $(@bind showbackground　　CheckBox(default=mask_!=:customsvg))show background"
+md"**mask outline:** $(@bind outlinewidth NumberField(-1:100, default=-1))　*-1 means random*　　 $(@bind showbackground　　CheckBox(default=true))show background"
 
 # ╔═╡ 6e614caa-38dc-4028-b0a7-05f7030d5b43
 md"**layout style:** $(@bind style Select([:auto, :uniform, :gathering]))"
@@ -353,13 +353,15 @@ begin
 function svgshapemask(svgstr, masksize; keeparea=true, kargs...)
 	ags = [string(masksize), "keeparea=$keeparea", ("$k=$(repr(v))" for (k, v) in kargs)...]
     println("svgshapemask(", join(ags, ", "), ")")
-	maskimg = WordCloud.Render.tobitmap(WordCloud.Render.loadsvg(masksvgstr))
+	masksvg = WordCloud.Render.loadsvg(masksvgstr)
 	if keeparea
+		maskimg = WordCloud.Render.tobitmap(masksvg)
 		r = sqrt(first(masksize) * last(masksize) / WordCloud.occupancy(WordCloud.imagemask(maskimg)))
-		loadmask(maskimg; ratio=r, kargs...)
+		resizedsvg = WordCloud.Render.imresize(masksvg, ratio=r)
 	else
-		loadmask(maskimg, masksize; kargs...)
+		resizedsvg = WordCloud.Render.imresize(masksvg, masksize...)
 	end
+	loadmask(WordCloud.Render.tobitmap(resizedsvg); kargs...)
 end
 svgshapefunc(svgstr) = (a...; ka...) -> svgshapemask(svgstr, a...; ka...)
 nothing

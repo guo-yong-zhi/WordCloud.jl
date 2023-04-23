@@ -175,7 +175,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         merge!(params, maskkw)
         transparent = c -> c != torgba(maskcolor)
     else
-        ms = masksize in DEFAULTSYMBOLS ? () : (last(masksize), first(masksize))
+        ms = masksize in DEFAULTSYMBOLS ? () : masksize
         if maskcolor == :auto && !issvg(loadmask(mask))
             maskcolor = randommaskcolor(colors)
             println("Recolor the mask with color $maskcolor.")

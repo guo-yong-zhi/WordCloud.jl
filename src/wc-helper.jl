@@ -48,13 +48,13 @@ function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...;
             m .= convert.(eltype(img), backgroundcolor) #不保持透明度
         end
     end
-    if outline > 0
-        img = Render.outline(img, linewidth=outline, color=linecolor, smoothness=smoothness, 
-        transparent=transparent)
-    end
     if padding != 0
         bc = backgroundcolor in DEFAULTSYMBOLS ? :auto : backgroundcolor
         img = Render.padding(img, padding, backgroundcolor=bc)
+    end
+    if outline > 0
+        img = Render.outline(img, linewidth=outline, color=linecolor, smoothness=smoothness, 
+        transparent=transparent)
     end
     return_bitmask ? (img, mask) : img
 end
@@ -62,9 +62,12 @@ function loadmask(img::AbstractMatrix{<:Colorant}, args...; kargs...)
     loadmask(ARGB.(img), args...; kargs...)
 end
 function loadmask(img::SVGImageType, args...; 
-    padding=0, transparent=:auto, outline=0, linecolor=:auto, return_bitmask=false, kargs...)
-    if !isempty(args) || !isempty(v for v in values(values(kargs)) if v ∉ DEFAULTSYMBOLS) || outline != 0
+    padding=0, transparent=:auto, outline=0, linecolor=:auto, return_bitmask=false, ratio=1, kargs...)
+    if !isempty(v for v in values(values(kargs)) if v ∉ DEFAULTSYMBOLS) || outline != 0
         @warn "editing svg file is not supported: $args $kargs"
+    end
+    if !(isempty(args) && all(ratio .== 1))
+        img = imresize(img, args...; ratio=ratio)
     end
     if padding != 0
         bc = get(kargs, :backgroundcolor, (0,0,0,0))

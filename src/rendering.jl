@@ -1,5 +1,5 @@
 module Render
-export rendertext, overlay!, 
+export rendertext, overlay!,
     shape, ellipse, box, squircle, star, ngon, bezistar, bezingon, ellipse_area, box_area, squircle_area,
     star_area, ngon_area, GIF, generate, parsecolor, rendertextoutlines,
     colorschemes, torgba, imagemask, outline, padding, dilate!, imresize, recolor!, recolor
@@ -8,7 +8,7 @@ using Luxor
 using Colors
 using ColorSchemes
 using FileIO
-import ImageTransformations.imresize
+using ImageTransformations
 
 # because of float error, (randommask(color=Gray(0.3))|>tobitmap)[300,300]|>torgba != Gray(0.3)|>torgba
 parsecolor(c) = ARGB{Colors.N0f8}(parse(Colorant, c))
@@ -48,7 +48,7 @@ function load(file::IO)
         loadsvg(read(file, String))
     end
 end
-function tobitmap(svg::Drawing)
+function tobitmap(svg::SVGImageType)
     Drawing(ceil(svg.width), ceil(svg.height), :image)
     placeimage(svg)
     m = image_as_matrix()
@@ -59,19 +59,19 @@ end
 function boundingbox(p::AbstractMatrix, bgcolor; border=0)
     a = c = 1
     b = d = 0
-    while a < size(p, 1) && all(@view(p[a,:]) .== bgcolor)
+    while a < size(p, 1) && all(@view(p[a, :]) .== bgcolor)
         a += 1
     end
-    while b < size(p, 1) && all(@view(p[end - b,:]) .== bgcolor)
+    while b < size(p, 1) && all(@view(p[end-b, :]) .== bgcolor)
         b += 1
     end
     a = max(1, a - border)
     b = min(size(p, 1), max(size(p, 1) - b + border, a))
     p = @view p[a:b, :]
-    while c < size(p, 2) && all(@view(p[:,c]) .== bgcolor)
+    while c < size(p, 2) && all(@view(p[:, c]) .== bgcolor)
         c += 1
     end
-    while d < size(p, 2) && all(@view(p[:, end - d]) .== bgcolor)
+    while d < size(p, 2) && all(@view(p[:, end-d]) .== bgcolor)
         d += 1
     end
     # @show a,b,c,d,border,bgcolor
@@ -82,14 +82,36 @@ function boundingbox(p::AbstractMatrix, bgcolor; border=0)
 end
 
 "a, b, c, d are all inclusive"
-function clipsvg(m, a, b, c, d)
-    m2 = Drawing(d - c + 1, b - a + 1, :svg)
-    placeimage(m, Point(-c + 1, -a + 1))
+function crop(img::SVGImageType, a, b, c, d)
+    imgnew = Drawing(d - c + 1, b - a + 1, :svg)
+    placeimage(img, Point(-c + 1, -a + 1))
     finish()
-    m2
-    end
+    imgnew
+end
 "a, b, c, d are all inclusive"
-clipbitmap(m, a, b, c, d) = m[a:b, c:d]
+crop(img::AbstractMatrix, a, b, c, d) = img[a:b, c:d]
+
+function imresize(img::AbstractMatrix, sz...; ratio=1)
+    rt = ratio isa Number ? ratio : reverse(ratio)
+    if isempty(sz)
+        ImageTransformations.imresize(img; ratio=rt)
+    else
+        sz = (last(sz), first(sz)) .* ratio
+        # given single number as sz, ImageTransformations will resize the height only
+        # given both sz and ratio, ImageTransformations will ignore the ratio
+        ImageTransformations.imresize(img, ceil.(Int, sz)...)
+    end
+end
+function imresize(svg::SVGImageType, sz...; ratio=1)
+    sz0 = reverse(size(svg))
+    sznew = isempty(sz) ? sz0 : sz
+    sznew = sznew .* ratio .* (1, 1)
+    svgnew = Drawing(sznew..., :svg)
+    scale((sznew ./ sz0)...)
+    placeimage(svg)
+    finish()
+    svgnew
+end
 
 function drawtext(t, size, pos, angle=0, color="black", font="")
     setcolor(parsecolor(color))
@@ -97,8 +119,8 @@ function drawtext(t, size, pos, angle=0, color="black", font="")
     settext(t, Point(pos...), halign="center", valign="center"; angle=angle)
 end
 
-function rendertext(str::AbstractString, size::Real; 
-        pos=(0, 0), color="black", backgroundcolor=(0, 0, 0, 0), angle=0, font="", border=0, type=:bitmap)
+function rendertext(str::AbstractString, size::Real;
+    pos=(0, 0), color="black", backgroundcolor=(0, 0, 0, 0), angle=0, font="", border=0, type=:bitmap)
     @assert type in (:svg, :bitmap, :both)
     l = length(str) + 1
     l = ceil(Int, size * l + 2border + 2)
@@ -112,24 +134,28 @@ function rendertext(str::AbstractString, size::Real;
     bgcolor = background(bgcolor)
 
     drawtext(str, size, pos, angle, color, font)
-    if type == :bitmap mat = image_as_matrix() end
+    if type == :bitmap
+        mat = image_as_matrix()
+    end
     finish()
-    if type != :bitmap mat = tobitmap(svg) end
+    if type != :bitmap
+        mat = tobitmap(svg)
+    end
     #     bgcolor = Luxor.ARGB32(bgcolor...) #https://github.com/JuliaGraphics/Luxor.jl/issues/107
     bgcolor = mat[1]
     box = boundingbox(mat, bgcolor, border=border)
-    mat = clipbitmap(mat, box...)
+    mat = crop(mat, box...)
     if type == :bitmap
         return mat
     elseif type == :svg
-        return clipsvg(svg, box...)
+        return crop(svg, box...)
     else
-        return mat, clipsvg(svg, box...)
+        return mat, crop(svg, box...)
     end
 end
 
-function rendertextoutlines(str::AbstractString, size::Real; color="black", bgcolor=(0, 0, 0, 0), 
-        linewidth=3, linecolor="white", font="")
+function rendertextoutlines(str::AbstractString, size::Real; color="black", bgcolor=(0, 0, 0, 0),
+    linewidth=3, linecolor="white", font="")
     l = length(str)
     Drawing(ceil(Int, 2l * (size + 2linewidth) + 2), ceil(Int, 2 * (size + 2linewidth) + 2), :image)
     origin()
@@ -137,7 +163,7 @@ function rendertextoutlines(str::AbstractString, size::Real; color="black", bgco
     bgcolor = background(bgcolor)
     # bgcolor = Luxor.ARGB32(bgcolor...)
     setcolor(parsecolor(color))
-#     setfont(font, size)
+    #     setfont(font, size)
     fontface(font)
     fontsize(size)
     setline(linewidth)
@@ -147,7 +173,7 @@ function rendertextoutlines(str::AbstractString, size::Real; color="black", bgco
     strokepath()
     mat = image_as_matrix()
     finish()
-    mat = clipbitmap(mat, boundingbox(mat, mat[1])...)
+    mat = crop(mat, boundingbox(mat, mat[1])...)
 end
 
 function torgba(c)
@@ -159,8 +185,8 @@ torgba(img::AbstractArray) = torgba.(img)
 function _backgroundcolor(img, c=:auto)
     if c == :auto
         return img[1] == img[end] && any(c -> c != img[1], img) ? img[1] : (0, 0, 0, 0)
-        else
-    return c
+    else
+        return c
     end
 end
 imagemask(img::AbstractArray{Bool,2}) = img
@@ -177,22 +203,22 @@ function imagemask(img, transparent=:auto)
     if transparent === nothing
         return trues(size(img))
     end
-    img .!= convert(eltype(img), parsecolor(transparent))    
+    img .!= convert(eltype(img), parsecolor(transparent))
 end
 
 function dilate!(mat, r)
     r == 0 && return mat
     mat2 = copy(mat)
     @views for _ in 1:r
-        mat2[1:end - 1, :] .|= mat[1 + 1:end, :]
-        mat2[1 + 1:end, : ] .|= mat[1:end - 1, :]
-        mat2[:, 1:end - 1] .|= mat[:, 1 + 1:end]
-        mat2[:, 1 + 1:end] .|= mat[:, 1:end - 1]
+        mat2[1:end-1, :] .|= mat[1+1:end, :]
+        mat2[1+1:end, :] .|= mat[1:end-1, :]
+        mat2[:, 1:end-1] .|= mat[:, 1+1:end]
+        mat2[:, 1+1:end] .|= mat[:, 1:end-1]
 
-        mat2[1:end - 1, 1:end - 1] .|= mat[1 + 1:end, 1 + 1:end]
-        mat2[1 + 1:end, 1 + 1:end ] .|= mat[1:end - 1, 1:end - 1]
-        mat2[1:end - 1, 1 + 1:end ] .|= mat[1 + 1:end, 1:end - 1]
-        mat2[1 + 1:end, 1:end - 1 ] .|= mat[1:end - 1, 1 + 1:end]
+        mat2[1:end-1, 1:end-1] .|= mat[1+1:end, 1+1:end]
+        mat2[1+1:end, 1+1:end] .|= mat[1:end-1, 1:end-1]
+        mat2[1:end-1, 1+1:end] .|= mat[1+1:end, 1:end-1]
+        mat2[1+1:end, 1:end-1] .|= mat[1:end-1, 1+1:end]
         mat .= mat2
     end
     mat
@@ -201,7 +227,7 @@ end
 function dilate2(mat, r; smoothness=0.5) # better and slower
     @assert smoothness >= 0
     m = zeros(size(mat) .+ 2)
-    m[2:end - 1, 2:end - 1] .= mat
+    m[2:end-1, 2:end-1] .= mat
     # 立方 ∫∫ x^2+y^2 dx dy
     s = max(7, 171 * smoothness) # 13*4+7*4+91, smoothness是平滑系数，0-1，越大越圆但边缘越模糊，越小越方但边缘越清晰
     # s < 7 无意义，反而增加溢出风险
@@ -209,19 +235,17 @@ function dilate2(mat, r; smoothness=0.5) # better and slower
     o = 91 / s # 1 / ((0.5^3-(-0.5)^3) * 2)
     p = 7 / s # 1 / ((1.5^3-0.5^3) * 2)
     q = 13 / s # 1 / ((1.5^3-0.5^3) + (0.5^3-(-0.5)^3))
-    
+
     for _ in 1:r
-        @views m[2:end - 1, 2:end - 1] .= (
-            o * m[2:end - 1, 2:end - 1] .+ # 中
-
-            q * m[1:end - 2, 2:end - 1] .+ q * m[3:end, 2:end - 1] .+ # 上下
-            q * m[2:end - 1, 1:end - 2] .+ q * m[2:end - 1, 3:end] .+ # 左右
-
-            p * m[1:end - 2, 1:end - 2] .+ p * m[3:end, 3:end] .+ # 主对角
-            p * m[1:end - 2, 3:end] .+ p * m[3:end, 1:end - 2] # 副对角
+        @views m[2:end-1, 2:end-1] .= (
+            o * m[2:end-1, 2:end-1] .+ # 中
+            q * m[1:end-2, 2:end-1] .+ q * m[3:end, 2:end-1] .+ # 上下
+            q * m[2:end-1, 1:end-2] .+ q * m[2:end-1, 3:end] .+ # 左右
+            p * m[1:end-2, 1:end-2] .+ p * m[3:end, 3:end] .+ # 主对角
+            p * m[1:end-2, 3:end] .+ p * m[3:end, 1:end-2] # 副对角
         )
     end
-    return min.(1., m[2:end - 1, 2:end - 1])
+    return min.(1.0, m[2:end-1, 2:end-1])
 end
 """
 img: a bitmap image
@@ -267,30 +291,34 @@ function overlappingarea(img1, img2, x=1, y=1)
     img2v = @view img2[max(1, -y + 2):min(h2, -y + h1 + 1), max(1, -x + 2):min(w2, -x + w1 + 1)]
     img1v, img2v
 end
-                        
+
 function overlay(color1::TransparentRGB, color2::TransparentRGB)
-#     @show color1, color2
+    #     @show color1, color2
     a2 = Colors.alpha(color2)
-    if a2 == 0 return color1 end
-    if a2 == 1 return color2 end
+    if a2 == 0
+        return color1
+    end
+    if a2 == 1
+        return color2
+    end
     a1 = Colors.alpha(color1) |> Float64
     c1 = (Colors.red(color1), Colors.green(color1), Colors.blue(color1))
     c2 = (Colors.red(color2), Colors.green(color2), Colors.blue(color2))
     a = a1 + a2 - a1 * a2
     c = (c1 .* a1 .* (1 - a2) .+ c2 .* a2) ./ ifelse(a > 0, a, 1)
-#     @show c, a
+    #     @show c, a
     typeof(color1)(min.(1, c)..., min(1, a))
 end
 "put img2 on img1 at (x, y)"
 function overlay!(img1::AbstractMatrix, img2::AbstractMatrix, x=1, y=1)# 左上角重合时(x=1,y=1)
     img1v, img2v = overlappingarea(img1, img2, x, y)
-#     @show (h1, w1),(h2, w2),(x,y)
+    #     @show (h1, w1),(h2, w2),(x,y)
     img1v .= overlay.(img1v, img2v)
     img1
 end
 function overlay!(img::AbstractMatrix, imgs, pos)
     for (i, p) in zip(imgs, pos)
-#         @show pos
+        #         @show pos
         overlay!(img, i, p...)
     end
     img
@@ -320,37 +348,37 @@ function box(pos, w, h, args...; cornerradius=0, kargs...)
 end
 function ngon(pos, w, h, args...; npoints=5, orientation=0, kargs...)
     r = min(w, h) / 2
-    orientation = orientation -π / 2 # 尖朝上
+    orientation = orientation - π / 2 # 尖朝上
     Luxor.ngon(pos, r, npoints, orientation, args...; kargs...)
 end
 function star(pos, w, h, args...; npoints=5, starratio=0.5, orientation=0, kargs...)
     r = min(w, h) / 2
-    orientation = orientation -π / 2 # 尖朝上
+    orientation = orientation - π / 2 # 尖朝上
     Luxor.star(pos, r, npoints, starratio, orientation, args...; kargs...)
 end
 function bezingon(pos, w, h, args...; npoints=3, orientation=0, kargs...)
     r = min(w, h) / 2
-    orientation = orientation -π / 2 # 尖朝上
+    orientation = orientation - π / 2 # 尖朝上
     pts = Luxor.ngon(pos, r, npoints, orientation, vertices=true)
-	drawbezierpath(makebezierpath(pts), args...; kargs...)
+    drawbezierpath(makebezierpath(pts), args...; kargs...)
 end
 function bezistar(pos, w, h, args...; npoints=5, starratio=0.5, orientation=0, kargs...)
     r = min(w, h) / 2
-    orientation = orientation -π / 2 # 尖朝上
+    orientation = orientation - π / 2 # 尖朝上
     pts = Luxor.star(pos, r, npoints, starratio, orientation, vertices=true)
-	drawbezierpath(makebezierpath(pts), args...; kargs...)
+    drawbezierpath(makebezierpath(pts), args...; kargs...)
 end
-ellipse_area(h, w) = π*h*w/4
+ellipse_area(h, w) = π * h * w / 4
 function box_area(h, w; cornerradius=0)
     r = cornerradius
-    @assert min(h,w) >= 2r
-    h*w + (π-4)*r*r
+    @assert min(h, w) >= 2r
+    h * w + (π - 4) * r * r
 end
 function squircle_area(h, w; rt)
     @assert rt < 100
-    h * w * (gamma(1+rt/2))^2 / gamma(1+rt)
+    h * w * (gamma(1 + rt / 2))^2 / gamma(1 + rt)
 end
-gamma(z) = √(2π/z) * (1/ℯ*(z + 1 / (12z - 1/(10z))))^z
+gamma(z) = √(2π / z) * (1 / ℯ * (z + 1 / (12z - 1 / (10z))))^z
 function ngon_area(h, w; npoints=5)
     r = min(w, h) / 2
     θ = 2π / npoints
@@ -380,9 +408,9 @@ padding: an Integer or a tuple of two Integers
 backgroundsize: a tuple of two Integers
 color, linecolor, backgroundcolor: anything that can be parsed to a color
 """
-function shape(shape_, width, height, args...; 
+function shape(shape_, width, height, args...;
     outline=0, linecolor="black", padding=0,
-    color="white", backgroundcolor=(0, 0, 0, 0), backgroundsize=(width + 2outline, height + 2outline) .+ 2 .* padding, 
+    color="white", backgroundcolor=(0, 0, 0, 0), backgroundsize=(width + 2outline, height + 2outline) .+ 2 .* padding,
     kargs...)
     d = Drawing(ceil.(backgroundsize)..., :svg)
     origin()
@@ -406,7 +434,10 @@ function try_gif_gen(gifdirectory; framerate=4)
         pipeline(`ffmpeg -framerate $(framerate) -f image2 -i $(gifdirectory)/%010d.png 
             -i $(gifdirectory)/palette.png -lavfi paletteuse -y $(gifdirectory)/animation.gif`,
             stdout=devnull, stderr=devnull) |> run
-        try rm("$(gifdirectory)/palette.png", force=true) catch end
+        try
+            rm("$(gifdirectory)/palette.png", force=true)
+        catch
+        end
     catch e
         @warn "You need to have FFmpeg manually installed to use this function."
         @warn e
