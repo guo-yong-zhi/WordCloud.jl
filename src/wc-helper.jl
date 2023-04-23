@@ -10,7 +10,10 @@ end
 Base.iterate(it::IterGen, state=0) = it.generator(state),state+1
 Base.IteratorSize(it::IterGen) = Base.IsInfinite()
 
-
+function cal_sc(img, transparent)
+    sc = sqrt(prod(size(img)) / occupancy(imagemask(img, transparent)))
+    isinf(sc) ? 1 : sc
+end
 """
 load a img as mask, recolor, or resize, etc
 ## examples
@@ -25,11 +28,18 @@ About orther keyword arguments like outline, linecolor, smoothness, see function
 """
 function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...; 
     color=:auto, backgroundcolor=:auto, transparent=:auto, 
-    outline=0, linecolor="black", smoothness=0.5, padding=0, return_bitmask=false, kargs...)
+    outline=0, linecolor="black", smoothness=0.5, padding=0, return_bitmask=false,
+    keeparea=false, ratio=1)
     copied = false
-    if !(isempty(args) && isempty(kargs))
-        img = imresize(img, args...; kargs...)
+    if !(isempty(args) && all(ratio .== 1))
+        sc = keeparea ? cal_sc(img, transparent) : 1
+        img = imresize(img, args...; ratio=ratio .* sc)
         copied = true
+    end
+    backgroundcolor ∉ DEFAULTSYMBOLS && (backgroundcolor = parsecolor(backgroundcolor))
+    if padding != 0 # padding before cal imagemask
+        bc = backgroundcolor in DEFAULTSYMBOLS ? :auto : backgroundcolor
+        img = Render.padding(img, padding, backgroundcolor=bc)
     end
     if return_bitmask || color ∉ DEFAULTSYMBOLS || backgroundcolor ∉ DEFAULTSYMBOLS
         mask = imagemask(img, transparent)
@@ -43,15 +53,11 @@ function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...;
             Render.recolor!(m, color) #保持透明度
         end
         if backgroundcolor ∉ DEFAULTSYMBOLS
-            backgroundcolor = parsecolor(backgroundcolor)
             m = @view img[.~mask]
             m .= convert.(eltype(img), backgroundcolor) #不保持透明度
         end
     end
-    if padding != 0
-        bc = backgroundcolor in DEFAULTSYMBOLS ? :auto : backgroundcolor
-        img = Render.padding(img, padding, backgroundcolor=bc)
-    end
+
     if outline > 0
         img = Render.outline(img, linewidth=outline, color=linecolor, smoothness=smoothness, 
         transparent=transparent)
@@ -62,12 +68,13 @@ function loadmask(img::AbstractMatrix{<:Colorant}, args...; kargs...)
     loadmask(ARGB.(img), args...; kargs...)
 end
 function loadmask(img::SVGImageType, args...; 
-    padding=0, transparent=:auto, outline=0, linecolor=:auto, return_bitmask=false, ratio=1, kargs...)
-    if !isempty(v for v in values(values(kargs)) if v ∉ DEFAULTSYMBOLS) || outline != 0
-        @warn "editing svg file is not supported: $args $kargs"
+    padding=0, transparent=:auto, linecolor=:auto, return_bitmask=false, ratio=1, keeparea=false, kargs...)
+    if !all(kv->(last(kv) in DEFAULTSYMBOLS || kv==(:outline=>0)), kargs)
+        @warn "editing svg file is not supported: $kargs"
     end
     if !(isempty(args) && all(ratio .== 1))
-        img = imresize(img, args...; ratio=ratio)
+        sc = keeparea ? cal_sc(img, transparent) : 1
+        img = imresize(img, args...; ratio=ratio .* sc)
     end
     if padding != 0
         bc = get(kargs, :backgroundcolor, (0,0,0,0))

@@ -126,7 +126,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     wc
 end
 function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
-                masksize=:default, maskcolor=:default, keepmaskarea=:auto,
+                masksize=:auto, maskcolor=:default, keepmaskarea=:auto,
                 backgroundcolor=:default, padding=:default,
                 outline=:default, linecolor=:auto, fonts=:auto,
                 transparent=:auto, params=Dict{Symbol,Any}(), kargs...)
@@ -175,10 +175,15 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         merge!(params, maskkw)
         transparent = c -> c != torgba(maskcolor)
     else
-        ms = masksize in DEFAULTSYMBOLS ? () : masksize
-        if maskcolor == :auto && !issvg(loadmask(mask))
-            maskcolor = randommaskcolor(colors)
-            println("Recolor the mask with color $maskcolor.")
+        if masksize == :auto
+            ms = contentsize_proposal(words, weights)
+        elseif masksize in DEFAULTSYMBOLS
+            ms = ()
+        else
+            ms = masksize
+        end
+        if keepmaskarea in DEFAULTSYMBOLS
+            keepmaskarea = masksize == :auto
         end
         if backgroundcolor == :auto
             if maskcolor == :default
@@ -192,19 +197,26 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         if backgroundcolor ∉ [:default, :original]
             @show backgroundcolor
             bc = (1, 1, 1, 0) # to remove the original background in mask
+            if maskcolor == :default && backgroundcolor != :maskcolor
+                maskcolor = backgroundcolor
+            end
+        end
+        if maskcolor in [:default, :auto] && !issvg(loadmask(mask))
+            maskcolor = randommaskcolor(colors)
+            println("Recolor the mask with color $maskcolor.")
         end
         if outline == :auto
             outline = randomoutline()
             outline != 0 && @show outline
         elseif outline in DEFAULTSYMBOLS
-        outline = 0
+            outline = 0
         end
         if linecolor in DEFAULTSYMBOLS && outline != 0
             linecolor = randomlinecolor(colors)
         end
-        padding in DEFAULTSYMBOLS && (padding = 0)
+        padding in DEFAULTSYMBOLS && (padding = outline)
         mask, binarymask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, 
-            outline=outline, linecolor=linecolor,padding=padding, return_bitmask=true, kargs...)
+            outline=outline, linecolor=linecolor,padding=padding, return_bitmask=true, keeparea=keepmaskarea, kargs...)
         binarymask === nothing || (transparent = .!binarymask)
     end
     # under this line: both mask == :auto or not

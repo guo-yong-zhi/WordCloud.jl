@@ -205,6 +205,7 @@ function imagemask(img, transparent=:auto)
     end
     img .!= convert(eltype(img), parsecolor(transparent))
 end
+imagemask(img::SVGImageType, transparent) = imagemask(tobitmap(img), transparent)
 
 function dilate!(mat, r)
     r == 0 && return mat
@@ -269,13 +270,13 @@ end
 
 function padding(img::AbstractMatrix, r=maximum(size(img)) ÷ 10; backgroundcolor=:auto)
     color = convert(eltype(img), parsecolor(_backgroundcolor(img, backgroundcolor)))
-    r = round.(Int, r)
+    r = ceil.(Int, r)
     bg = fill(color, size(img) .+ 2 .* r)
     overlay!(bg, img, reverse((0, 0) .+ r)...)
 end
 function padding(img::SVGImageType, r=maximum(size(img)) ÷ 10; backgroundcolor=(0, 0, 0, 0))
     color = parsecolor(backgroundcolor)
-    sz = size(img) .+ 2 .* round.(Int, r)
+    sz = size(img) .+ 2 .* ceil.(Int, r)
     m2 = Drawing(reverse(sz)..., :svg)
     origin()
     background(color)
