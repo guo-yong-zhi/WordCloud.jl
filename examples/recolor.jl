@@ -11,22 +11,24 @@ weights = randexp(length(words)) .+ 1
 wc = wordcloud(
     words, weights,
     mask=background,
+    maskcolor=:original,
     colors="LimeGreen",
     angles=-30,
     density=0.4,
     transparent=istrans,
     spacing=1,
 ) |> generate!;
+background2 = loadmask(getmask(wc), color=0.99)
 #md# ## average style
 recolor!(wc, style=:average)
-avgimg = paint(wc, background=loadmask(background, color=0.99))
+avgimg = paint(wc, background=background2)
 #md# ## clipping style
 recolor!(wc, style=:clipping)
-clipimg = paint(wc, background=loadmask(background, color=0.99))
+clipimg = paint(wc, background=background2)
 #md# ## blending style
 recolor!(wc, style=:reset)
 recolor!(wc, style=:blending, alpha=0.5) # blending with origin color - LimeGreen
-blendimg = paint(wc, background=loadmask(background, color=0.99))
+blendimg = paint(wc, background=background2)
 #md# ## mix style
 #md# styles can also be mixed
 # setcolors!(wc, :, "LimeGreen")
@@ -38,7 +40,7 @@ setcolors!(wc, 200:250, "black")
 recolor!(wc, 200:250, style=:reset)
 setcolors!(wc, 1, "black")
 recolor!(wc, 1, style=:reset) # single index is ok
-mixstyleimg = paint(wc, background=loadmask(background, color=0.99))
+mixstyleimg = paint(wc, background=background2)
 #md# 
 h, w = size(avgimg)
 lw = 21

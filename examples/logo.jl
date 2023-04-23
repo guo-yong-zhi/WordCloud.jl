@@ -21,6 +21,7 @@ wc = wordcloud(
     repeat(string.('a':'z'), 5),
     repeat([1], 26 * 5),
     mask=cloudshape(500),
+    masksize=:original,
     transparent=(0, 0, 0, 0),
     colors=1,
     angles=-90:0,

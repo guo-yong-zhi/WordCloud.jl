@@ -19,6 +19,7 @@ wca = wordcloud(
 wcb = wordcloud(
     processtext(open(pkgdir(WordCloud) * "/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords),
     mask=getsvgmask(wca),
+    masksize=:original,
     colors=cs,
     angles=as,
     density=dens,

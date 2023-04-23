@@ -15,6 +15,7 @@ using WordCloud
 wc = wordcloud(
     processtext(open(pkgdir(WordCloud) * "/res/alice.txt"), stopwords=WordCloud.stopwords_en ∪ ["said"]), 
     mask=shape(box, 500 * 2, 400 * 2, cornerradius=10 * 2),
+    masksize=:original,
     colors=:Dark2_3,
     angles=(0, 90),
     density=0.7) |> generate!

@@ -16,7 +16,9 @@ wc = wordcloud(
 #     mask = WordCloud.randommask(400, color="#FFDE00"),
     mask=pkgdir(WordCloud) * "/res/heart_mask.png",
     maskcolor="#FFDE00",
-    density=0.65) |> generate!
+    masksize=500,
+    density=0.6,
+    ) |> generate!
 
 println("结果保存在 中文.png")
 paint(wc, "中文.png")
