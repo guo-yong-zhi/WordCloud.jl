@@ -169,7 +169,7 @@ function callshape(args...; kargs...)
     println("shape(", join(ags, ", "), ")")
     shape(args...; kargs...), kargs
 end
-function randombox(w, h; cornerradius=:rand, keeparea=false, kargs...)
+function randombox(w, h; cornerradius=:rand, preservevolume=false, kargs...)
     if cornerradius == :rand
         r = rand() * 0.5 - 0.05 # up to 0.45
         r < 0. && (r = 0.) # 10% for 0.
@@ -177,11 +177,11 @@ function randombox(w, h; cornerradius=:rand, keeparea=false, kargs...)
     else
         r = cornerradius
     end
-    sc = keeparea ? sqrt(w*h/box_area(w, h, cornerradius=r)) : 1
+    sc = preservevolume ? sqrt(w*h/box_area(w, h, cornerradius=r)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc); r = round(Int, r*sc)
     return callshape(box, w, h; cornerradius=r, kargs...)
 end
-function randomsquircle(w, h; rt=:rand, keeparea=false, kargs...)
+function randomsquircle(w, h; rt=:rand, preservevolume=false, kargs...)
     if rt == :rand
         if rand() < 0.8
             rt = rand()
@@ -195,12 +195,12 @@ function randomsquircle(w, h; rt=:rand, keeparea=false, kargs...)
         end
         rt = round(rt, digits=3)
     end
-    sc = keeparea ? sqrt(w*h/squircle_area(w, h, rt=rt)) : 1
+    sc = preservevolume ? sqrt(w*h/squircle_area(w, h, rt=rt)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
     return callshape(squircle, w, h, rt=rt; kargs...)
 end
-function randomellipse(w, h; keeparea=false, kargs...)
-    sc = keeparea ? sqrt(w*h/ellipse_area(w, h)) : 1
+function randomellipse(w, h; preservevolume=false, kargs...)
+    sc = preservevolume ? sqrt(w*h/ellipse_area(w, h)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
     return callshape(ellipse, w, h; kargs...)
 end
@@ -214,39 +214,39 @@ function randomorientation(n)
     end
     return ori
 end
-function randomngon(w, h; npoints=:rand, orientation=:rand, keeparea=false, kargs...)
+function randomngon(w, h; npoints=:rand, orientation=:rand, preservevolume=false, kargs...)
     npoints == :rand && (npoints = rand(3:12))
     orientation == :rand && (orientation = randomorientation(npoints))
-    sc = keeparea ? sqrt(w*h/ngon_area(w, h, npoints=npoints)) : 1
+    sc = preservevolume ? sqrt(w*h/ngon_area(w, h, npoints=npoints)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
     return callshape(ngon, w, h; npoints=npoints, orientation=orientation, kargs...)
 end
-function randomstar(w, h; npoints=:rand, starratio=:rand, orientation=:rand, keeparea=false, kargs...)
+function randomstar(w, h; npoints=:rand, starratio=:rand, orientation=:rand, preservevolume=false, kargs...)
     npoints == :rand && (npoints = rand(5:12))
     orientation == :rand && (orientation = randomorientation(npoints))
     if starratio == :rand
         starratio = cos(π/npoints) * (0.7 + 0.25rand())
         starratio = round(starratio, digits=3)
     end
-    sc = keeparea ? sqrt(w*h/star_area(w, h, npoints=npoints, starratio=starratio)) : 1
+    sc = preservevolume ? sqrt(w*h/star_area(w, h, npoints=npoints, starratio=starratio)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
     return callshape(star, w, h; npoints=npoints, starratio=starratio, orientation=orientation, kargs...)
 end
-function randombezingon(w, h; npoints=:rand, orientation=:rand, keeparea=false, kargs...)
+function randombezingon(w, h; npoints=:rand, orientation=:rand, preservevolume=false, kargs...)
     npoints == :rand && (npoints = rand((3,3,4)))
     orientation == :rand && (orientation = randomorientation(npoints))
-    sc = keeparea ? sqrt(w*h/ngon_area(w, h, npoints=npoints)) : 1
+    sc = preservevolume ? sqrt(w*h/ngon_area(w, h, npoints=npoints)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
     return callshape(bezingon, w, h; npoints=npoints, orientation=orientation, kargs...)
 end
-function randombezistar(w, h; npoints=:rand, starratio=:rand, orientation=:rand, keeparea=false, kargs...)
+function randombezistar(w, h; npoints=:rand, starratio=:rand, orientation=:rand, preservevolume=false, kargs...)
     npoints == :rand && (npoints = rand(3:12))
     orientation == :rand && (orientation = randomorientation(npoints))
     if starratio == :rand
         starratio = cos(π/npoints) * (0.7 + 0.25rand())
         starratio = round(starratio, digits=3)
     end
-    sc = keeparea ? sqrt(w*h/star_area(w, h, npoints=npoints, starratio=starratio)) : 1
+    sc = preservevolume ? sqrt(w*h/star_area(w, h, npoints=npoints, starratio=starratio)) : 1
     w = round(Int, w*sc); h = round(Int, h*sc)
     return callshape(bezistar, w, h; npoints=npoints, starratio=starratio, orientation=orientation, kargs...)
 end

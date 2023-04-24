@@ -53,7 +53,7 @@ function printfontsizes(wc)
         println("$nsmall words($perc%) are limited to the minimum font size.")
         if perc > 70
             msg = "It seems too crowded. Word size may be seriously distorted. You need to reduce the number of words or set a larger mask."
-            ratio = contentsize_proposal(wc.words, wc.weights) / √getparameter(wc, :contentarea)
+            ratio = volumeproposal(wc.words, wc.weights) / √getparameter(wc, :volume)
             if ratio > 1.1
                 msg = msg * " Recommended mask scaling: ratio=$(round(ratio, digits=3))."
             end
@@ -71,47 +71,47 @@ end
 * placewords!(wc, style=:gathering)
 * placewords!(wc, style=:gathering, level=5) #`level` controls the intensity of gathering, typically between 4 and 6, defaults to 5.
 * placewords!(wc, style=:gathering, level=6, rt=0) #rt=0, rectangle; rt=1, ellipse; rt=2, rhombus. defaults to 1.  
-There is also a keyword argument `centeredword`. e.g. `centeredword=1`, `centeredword="Alice"`, `centeredword=false`
+There is also a keyword argument `centralword`. e.g. `centralword=1`, `centralword="Alice"`, `centralword=false`
 When you have set `style=:gathering`, you should disable repositioning in `generate!` at the same time, especially for big words. e.g. `generate!(wc, reposition=0.7)`.
 The keyword argument `reorder` is a function to reorder the words, which affects the order of placement. Like `reverse`, `WordCloud.shuffle`.
 """
-function placewords!(wc::WC; style=:auto, rt=:auto, centeredword=:auto, reorder=:auto, level=:auto, callback=x->x, kargs...)
+function placewords!(wc::WC; style=:auto, rt=:auto, centralword=:auto, reorder=:auto, level=:auto, callback=x->x, kargs...)
     if STATEIDS[getstate(wc)] < STATEIDS[:initwords!]
         initwords!(wc)
     end
     @assert style in [:uniform, :gathering, :auto]
-    centeredword == :auto && hasparameter(wc, :centeredword) && (centeredword = getparameter(wc, :centeredword))
-    if centeredword == :auto || centeredword === true
+    centralword == :auto && hasparameter(wc, :centralword) && (centralword = getparameter(wc, :centralword))
+    if centralword == :auto || centralword === true
         max_i = argmax(wc.weights)
         max_i2 = length(wc)>1 ? partialsortperm(wc.weights, 2, rev=true) : max_i
-        if centeredword == :auto
+        if centralword == :auto
             c = wc.params[:groundsize] ÷ 2 # can't wc.maskqtree[1][end÷2]. 1D index goes wrong.
             kernelsize = Stuffing.kernelsize
-            centeredword = wc.maskqtree[1][c, c] == QTrees.EMPTY && (
+            centralword = wc.maskqtree[1][c, c] == QTrees.EMPTY && (
                 length(wc.qtrees) < 2 
                 || (wc.weights[max_i2] / wc.weights[max_i] < 0.5 
                     && prod(kernelsize(wc.qtrees[max_i2])) / prod(kernelsize(wc.qtrees[max_i])) < 0.5))
         end
-        if centeredword #Bool
-            centeredword = max_i
+        if centralword #Bool
+            centralword = max_i
         end
         #false or Int
     end
     arg = ()
     qtrees = wc.qtrees
-    if centeredword !== false #Bool, Int or string...
-        centeredword = index(wc, centeredword)
-        setcenter!(wc.qtrees[centeredword],  wc.params[:groundsize] .÷ 2)
-        println("center the word $(repr(getwords(wc, centeredword)))")
+    if centralword !== false #Bool, Int or string...
+        centralword = index(wc, centralword)
+        setcenter!(wc.qtrees[centralword],  wc.params[:groundsize] .÷ 2)
+        println("center the word $(repr(getwords(wc, centralword)))")
         arg = (2:length(wc.qtrees) |> collect,)
-        qtrees = [wc.qtrees[i] for i in eachindex(wc.qtrees) if i != centeredword]
+        qtrees = [wc.qtrees[i] for i in eachindex(wc.qtrees) if i != centralword]
         callback(1)
     end
     reorder == :auto && hasparameter(wc, :reorder) && (reorder = getparameter(wc, :reorder))
     reorder == :auto && (reorder=identity)
     qtrees = reorder(qtrees)
-    centeredword !== false && (qtrees = [wc.qtrees[centeredword], qtrees...])
-    if length(wc.qtrees) > 0 + (centeredword !== false)
+    centralword !== false && (qtrees = [wc.qtrees[centralword], qtrees...])
+    if length(wc.qtrees) > 0 + (centralword !== false)
         style == :auto && hasparameter(wc, :style) && (style = getparameter(wc, :style))
         style == :auto && (style = rand()<0.8 ? :uniform : :gathering)
         if style == :gathering
@@ -304,7 +304,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
                 println("▸$r. Try setting spacing = $(getparameter(wc, :spacing))")
             else
                 rescale!(wc, 0.97)
-                dens = wordsoccupancy!(wc) / getparameter(wc, :contentarea)
+                dens = wordsoccupancy!(wc) / getparameter(wc, :volume)
                 println("▸$r. Try setting scale = $(getparameter(wc, :scale)). The density is reduced to $dens")
                 printfontsizes(wc)
             end
@@ -383,21 +383,21 @@ pin some words as if they were part of the background, then execute the function
 function pin(fun, wc::WC, mask::AbstractArray{Bool})
     maskqtree = wc.maskqtree
     wcmask = wc.mask
-    contentarea = wc.params[:contentarea]
+    volume = wc.params[:volume]
     
     maskqtree2 = deepcopy(maskqtree)
     Stuffing.overlap!(maskqtree2, wc.qtrees[mask])
     wc.maskqtree = maskqtree2
     resultpic = copy(wc.mask)
     wc.mask = overlay!(resultpic, wc.imgs[mask], getpositions(wc, mask))
-    wc.params[:contentarea] = occupancy(QTrees.kernel(wc.maskqtree[1]), QTrees.FULL)
+    wc.params[:volume] = occupancy(QTrees.kernel(wc.maskqtree[1]), QTrees.FULL)
     r = nothing
     try
         r = ignore(fun, wc, mask)
     finally
         wc.maskqtree = maskqtree
         wc.mask = wcmask
-    wc.params[:contentarea] = contentarea
+    wc.params[:volume] = volume
     end
     r
 end

@@ -51,7 +51,7 @@ Positional arguments are used to specify words and weights, and can be in differ
 Some arguments depend on whether or not the `mask` is given or the type of the given `mask`.
 
 ### other keyword arguments
-* style, centeredword, reorder, rt, level: config the style of `placewords!`. See the doc of `placewords!`.  
+* style, centralword, reorder, rt, level: config the style of `placewords!`. See the doc of `placewords!`.  
 * state = placewords! #default setting, will initialize word's position
 * state = generate! #get result directly
 * state = initwords! #only initialize resources, such as rendering word images
@@ -70,13 +70,13 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
                 colors=:auto, angles=:auto, 
                 mask=:auto, fonts=:auto,
                 transparent=:auto, minfontsize=:auto, maxfontsize=:auto, spacing::Integer=2, density=0.5,
-                state=placewords!, style=:auto, centeredword=:auto, reorder=:auto, level=:auto, kargs...)
+                state=placewords!, style=:auto, centralword=:auto, reorder=:auto, level=:auto, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol,Any}()
 
     # parameters for placewords!
     params[:style] = style
-    params[:centeredword] = centeredword
+    params[:centralword] = centralword
     params[:reorder] = reorder
     params[:level] = level
 
@@ -85,22 +85,21 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:colors] = Any[colors...]
     params[:angles] = angles
     params[:transparent] = transparent
-    mask, maskqtree, groundsize, contentarea = preparemask(mask, transparent)
+    mask, maskqtree, groundsize, volume = preparemask(mask, transparent)
     params[:groundsize] = groundsize
-    params[:contentarea] = contentarea
-    if contentarea == 0
+    params[:volume] = volume
+    if volume == 0
         error("Have you set the right `transparent`? e.g. `transparent=mask[1,1]`")
     end
-    contentsize = round(Int, √contentarea)
-    avgsize = round(Int, sqrt(contentarea / length(words)))
-    println("mask size: $(size(mask, 1))×$(size(mask, 2)), content area: $(contentsize)² ($(avgsize)²/word)")
+    avgsize = round(Int, sqrt(volume / length(words)))
+    println("mask size: $(size(mask, 1))×$(size(mask, 2)), volume: $(round(Int, √volume))² ($(avgsize)²/word)")
     params[:maxfontsize0] = maxfontsize
     if maxfontsize == :auto
         maxfontsize = minimum(size(mask))
     end
-    @assert contentarea > 0
+    @assert volume > 0
     if minfontsize == :auto
-        minfontsize = min(maxfontsize, 8, sqrt(contentarea / length(words) / 8))
+        minfontsize = min(maxfontsize, 8, sqrt(volume / length(words) / 8))
         #只和单词数量有关，和单词长度无关。不管单词多长，字号小了依然看不见。
     end
     println("set fontsize ∈ [$minfontsize, $maxfontsize]")
@@ -149,7 +148,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         if keepmaskarea in DEFAULTSYMBOLS
             keepmaskarea = masksize in DEFAULTSYMBOLS
         end
-        masksize in DEFAULTSYMBOLS && (masksize = contentsize_proposal(words, weights))
+        masksize in DEFAULTSYMBOLS && (masksize = volumeproposal(words, weights))
         if backgroundcolor in DEFAULTSYMBOLS
             backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1, 1, 1, 0), :maskcolor)) : (1, 1, 1, 0)
         end
@@ -171,12 +170,12 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         end
         padding in DEFAULTSYMBOLS && (padding = round(Int, maximum(masksize) ÷ 10))
         mask, maskkw = randommask(masksize; maskshape=mask, color=maskcolor, padding=padding,
-         keeparea=keepmaskarea, returnkwargs=true, kg..., kargs...)
+         preservevolume=keepmaskarea, returnkwargs=true, kg..., kargs...)
         merge!(params, maskkw)
         transparent = c -> c != torgba(maskcolor)
     else
         if masksize == :auto
-            ms = contentsize_proposal(words, weights)
+            ms = volumeproposal(words, weights)
         elseif masksize in DEFAULTSYMBOLS
             ms = ()
         else
@@ -216,7 +215,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         end
         padding in DEFAULTSYMBOLS && (padding = outline)
         mask, binarymask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, 
-            outline=outline, linecolor=linecolor,padding=padding, return_bitmask=true, keeparea=keepmaskarea, kargs...)
+            outline=outline, linecolor=linecolor,padding=padding, return_bitmask=true, preservevolume=keepmaskarea, kargs...)
         binarymask === nothing || (transparent = .!binarymask)
     end
     # under this line: both mask == :auto or not

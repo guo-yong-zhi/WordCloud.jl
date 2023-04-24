@@ -10,8 +10,8 @@ end
 Base.iterate(it::IterGen, state=0) = it.generator(state),state+1
 Base.IteratorSize(it::IterGen) = Base.IsInfinite()
 
-function cal_sc(img, transparent)
-    sc = sqrt(prod(size(img)) / occupancy(imagemask(img, transparent)))
+function volume_factor(img, args...)
+    sc = sqrt(prod(size(img)) / occupancy(imagemask(img, args...)))
     isinf(sc) ? 1 : sc
 end
 """
@@ -29,11 +29,11 @@ About orther keyword arguments like outline, linecolor, smoothness, see function
 function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...; 
     color=:auto, backgroundcolor=:auto, transparent=:auto, 
     outline=0, linecolor="black", smoothness=0.5, padding=0, return_bitmask=false,
-    keeparea=false, ratio=1)
+    preservevolume=false, ratio=1)
     copied = false
     if !(isempty(args) && all(ratio .== 1))
-        sc = keeparea ? cal_sc(img, transparent) : 1
-        img = imresize(img, args...; ratio=ratio .* sc)
+        vf = preservevolume ? volume_factor(img, transparent) : 1
+        img = imresize(img, args...; ratio=ratio .* vf)
         copied = true
     end
     backgroundcolor ∉ DEFAULTSYMBOLS && (backgroundcolor = parsecolor(backgroundcolor))
@@ -68,13 +68,13 @@ function loadmask(img::AbstractMatrix{<:Colorant}, args...; kargs...)
     loadmask(ARGB.(img), args...; kargs...)
 end
 function loadmask(img::SVGImageType, args...; 
-    padding=0, transparent=:auto, linecolor=:auto, return_bitmask=false, ratio=1, keeparea=false, kargs...)
+    padding=0, transparent=:auto, linecolor=:auto, return_bitmask=false, ratio=1, preservevolume=false, kargs...)
     if !all(kv->(last(kv) in DEFAULTSYMBOLS || kv==(:outline=>0)), kargs)
         @warn "editing svg file is not supported: $kargs"
     end
     if !(isempty(args) && all(ratio .== 1))
-        sc = keeparea ? cal_sc(img, transparent) : 1
-        img = imresize(img, args...; ratio=ratio .* sc)
+        vf = preservevolume ? volume_factor(img, transparent) : 1
+        img = imresize(img, args...; ratio=ratio .* vf)
     end
     if padding != 0
         bc = get(kargs, :backgroundcolor, (0,0,0,0))

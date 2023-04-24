@@ -52,7 +52,7 @@ function wordsoccupancy!(wc)
     fonts = getfonts(wc)
     angles = getangles(wc) ./ 180 .* π
     border = 1
-    sizemax = size(wc.mask) .* √(getparameter(wc, :contentarea) / prod(size(wc.mask))) .* 0.9
+    sizemax = size(wc.mask) .* √(getparameter(wc, :volume) / prod(size(wc.mask))) .* 0.9
     check = getparameter(wc, :maxfontsize0) == :auto
     check && setparameter!(wc, minimum(sizemax), :maxfontsize)
     imgs = []
@@ -85,9 +85,9 @@ function preparemask(img, bgcolor)
     mask = imagemask(img, bgcolor)
     maskqt = maskqtree(mask)
     groundsize = size(maskqt[1], 1)
-    contentarea = occupancy(mask, false)
-    @assert contentarea == occupancy(QTrees.kernel(maskqt[1]), QTrees.FULL)
-    return img, maskqt, groundsize, contentarea
+    volume = occupancy(mask, false)
+    @assert volume == occupancy(QTrees.kernel(maskqt[1]), QTrees.FULL)
+    return img, maskqt, groundsize, volume
 end
 
 function prepareword(word, fontsize, color, angle; backgroundcolor=(0, 0, 0, 0), font="", border=0)
@@ -108,7 +108,7 @@ function ternary_wordmask(img, bgcolor, border)
     tmask
 end
 
-function contentsize_proposal(words, weights)
+function volumeproposal(words, weights)
     weights = weights ./ (sum(weights) / length(weights)) #权重为平均值的单词为中等大小的单词。weights不平方，即按条目平均，而不是按面积平均
     12 * √sum(length.(words) .* weights .^ 2) #中等大小的单词其每个字母占据12 pixel*12 pixel 
 end
@@ -122,7 +122,7 @@ function scaleiterstep(x₀, y₀, x₁, y₁, y)
 end
 
 function findscale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tolerance=0.05)
-    area = getparameter(wc, :contentarea)
+    area = getparameter(wc, :volume)
     words = wc.words
     if initialscale <= 0
         initialscale = √(area / length(words) / 0.4 * density) # 初始值假设字符的字面框面积占正方格比率为0.4（低估了汉字）

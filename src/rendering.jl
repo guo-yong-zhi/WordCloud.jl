@@ -217,7 +217,7 @@ function imagemask(img::AbstractMatrix, transparent=:auto)
 end
 imagemask(img::SVGImageType, istransparent::Function) = imagemask(tobitmap(img), istransparent)
 imagemask(img::SVGImageType, transparent::AbstractArray{Bool,2}) = .!transparent
-imagemask(img::SVGImageType, transparent) = imagemask(tobitmap(img), transparent)
+imagemask(img::SVGImageType, transparent=:auto) = imagemask(tobitmap(img), transparent)
 
 function dilate!(mat, r)
     r == 0 && return mat
