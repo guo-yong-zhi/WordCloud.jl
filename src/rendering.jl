@@ -97,7 +97,7 @@ function imresize(img::AbstractMatrix, sz...; ratio=1)
         ImageTransformations.imresize(img; ratio=rt)
     elseif length(sz) == 1
         sz1 = size(img)
-        sz2 = sz1 .* only(sz) ./ sqrt(prod(sz1))
+        sz2 = sz1 .* only(sz) ./ sqrt(prod(sz1)) .* ratio
         # given single number as sz, ImageTransformations will resize the height only
         # given both sz and ratio, ImageTransformations will ignore the ratio
         ImageTransformations.imresize(img, ceil.(Int, sz2)...)
