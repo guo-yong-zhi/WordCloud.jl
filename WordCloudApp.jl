@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.23
+# v0.19.25
 
 using Markdown
 using InteractiveUtils
@@ -23,6 +23,13 @@ using HTTP
 using ImageIO
 using PythonCall
 # using CondaPkg; CondaPkg.add("jieba")
+end
+
+# ╔═╡ bda3fa85-04a3-4033-9890-a5b4f10e2a77
+begin
+logo = html"""<a href="https://github.com/guo-yong-zhi/WordCloud.jl"><div align="right"><i>https://github.com/guo-yong-zhi/WordCloud.jl</i></div><img src="https://raw.githubusercontent.com/guo-yong-zhi/WordCloud.jl/master/docs/src/assets/logo.svg" alt="WordCloud" width=90></a>"""
+	
+md"""$logo  **From** $(@bind texttype Select(["Text", "File", "Web", "Table"]))"""
 end
 
 # ╔═╡ 6b7b1da7-03dc-4815-9abf-b8eea410d2fd
@@ -67,11 +74,45 @@ else
 end
 end
 
+# ╔═╡ a90b83ca-384d-4157-99b3-df15764a242f
+md"""**mask color:** $(@bind maskcolor_ Select([:auto, :default, :original, "custom color"], default=:default))　　**background color:** $(@bind backgroundcolor_ Select([:auto, :default, :original, :maskcolor, "custom color"], default=:default))　 $(@bind showbackground CheckBox(default=true))show background"""
+
+# ╔═╡ 1842a3c8-4b47-4d36-a4e4-9a5ff4df452e
+if maskcolor_ == "custom color"
+	if backgroundcolor_ == "custom color"
+		r = md"""**mask color:** $(@bind maskcolor ColorStringPicker())　　**background color:** $(@bind backgroundcolor ColorStringPicker())"""
+	else
+		backgroundcolor = backgroundcolor_
+		r = md"""**mask color:** $(@bind maskcolor ColorStringPicker())"""
+	end
+else
+	maskcolor = maskcolor_
+	if backgroundcolor_ == "custom color"
+		r = md"""**background color:** $(@bind backgroundcolor ColorStringPicker())"""
+	else
+		backgroundcolor = backgroundcolor_
+		nothing
+	end
+end
+
+
 # ╔═╡ b38c3ad9-7885-4af6-8394-877fde8ed83b
-md"**mask outline:** $(@bind outlinewidth NumberField(-1:100, default=-1))　*-1 means random*　　 $(@bind showbackground　　CheckBox(default=true))show background"
+md"**mask outline:** $(@bind outlinewidth NumberField(-1:100, default=-1))　*-1 means random*"
 
 # ╔═╡ 6e614caa-38dc-4028-b0a7-05f7030d5b43
 md"**layout style:** $(@bind style Select([:auto, :uniform, :gathering]))"
+
+# ╔═╡ dfe608b0-077c-437a-adf2-b1382a0eb4eb
+begin
+	weightscale_funcs = [
+	    identity => "identity", 
+	    (√) => "√x", 
+	    log1p => "log x",
+	    (n->n^2) => "x²",
+	    expm1 => "exp x",
+	    ]
+	md"**rescale weights:** $(@bind rescale_func Select(weightscale_funcs))　　**word length balance:** $(@bind word_length_balance Slider(-1:0.01:1, default=0, show_value=true))"
+end
 
 # ╔═╡ 872f2653-303f-4b53-8e01-26bec86fc413
 md"""**text density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　**min word spacing:** $(@bind spacing NumberField(0:100, default=2))"""
@@ -149,6 +190,17 @@ defaultttable = """
 nothing
 end
 
+# ╔═╡ 9191230b-b72a-4707-b7cf-1a51c9cdb217
+if texttype == "Web"
+    md"""**URL:** $(@bind url TextField(80, default="http://en.wikipedia.org/wiki/Special:random"))"""
+elseif texttype == "Text"
+    @bind text_ TextField((80, 10), defaulttext)
+elseif texttype == "File"
+	@bind uploadedfile FilePicker()
+else
+	@bind text_ TextField((30, 15), defaultttable)
+end
+
 # ╔═╡ 66f4b71e-01e5-4279-858b-04d44aeeb574
 begin
 function read_table(text)
@@ -167,6 +219,47 @@ function read_table(text)
 	ps
 end
 nothing
+end
+
+# ╔═╡ 397fdd42-d2b2-46db-bf74-957909f47a58
+begin
+function svgshapemask(svgstr, masksize; preservevolume=true, kargs...)
+	ags = [string(masksize), "preservevolume=$preservevolume", ("$k=$(repr(v))" for (k, v) in kargs)...]
+	println("svgshapemask(", join(ags, ", "), ")")
+	masksvg = WordCloud.Render.loadsvg(masksvgstr)
+	vf = preservevolume ? WordCloud.volume_factor(masksvg) : 1
+	resizedsvg = WordCloud.Render.imresize(masksvg, masksize...; ratio=vf)
+	loadmask(WordCloud.Render.tobitmap(resizedsvg); kargs...)
+end
+svgshapefunc(svgstr) = (a...; ka...) -> svgshapemask(svgstr, a...; ka...)
+if mask_ == :auto
+	if uploadedmask === nothing
+		mask = :auto
+		nothing
+	else
+		mask = loadmask(IOBuffer(uploadedmask["data"]))
+		nothing
+	end
+elseif mask_ == :customsvg
+	mask = svgshapefunc(masksvgstr)
+	nothing
+else
+	mask = mask_
+	nothing
+end
+end
+
+# ╔═╡ 74bd4779-c13c-4d16-a90d-597db21eaa39
+begin
+    maskkwargs = (;)
+    if configshape
+        if mask in (ngon, star, bezingon, bezistar)
+            maskkwargs = (npoints=npoints,)
+        elseif mask == squircle
+            maskkwargs = (rt=rt,)
+        end
+    end
+    nothing
 end
 
 # ╔═╡ 9396cf96-d553-43db-a839-273fc9febd5a
@@ -193,21 +286,6 @@ else
 end
 nothing
 end
-
-# ╔═╡ 986cf1a6-8075-48ae-84d9-55ae11a27da1
-begin
-weightscale_funcs = [
-    identity => "identity", 
-    (√) => "√x", 
-    log1p => "log x",
-    (n->n^2) => "x²",
-    expm1 => "exp x",
-    ]
-nothing
-end
-
-# ╔═╡ dfe608b0-077c-437a-adf2-b1382a0eb4eb
-md"**rescale weights:** $(@bind rescale_func Select(weightscale_funcs))　　**word length balance:** $(@bind word_length_balance Slider(-1:0.01:1, default=0, show_value=true))"
 
 # ╔═╡ e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
 begin
@@ -246,26 +324,6 @@ function wordseg_cn(t)
 	pyconvert(Vector{String}, jieba.lcut(t))
 end
 nothing
-end
-
-# ╔═╡ 3dc10049-d257-4bcd-9119-2a1af5a0e233
-begin
-logo = html"""<a href="https://github.com/guo-yong-zhi/WordCloud.jl"><div align="right"><i>https://github.com/guo-yong-zhi/WordCloud.jl</i></div><img src="https://raw.githubusercontent.com/guo-yong-zhi/WordCloud.jl/master/docs/src/assets/logo.svg" alt="WordCloud" width=90></a>"""
-nothing
-end
-
-# ╔═╡ bda3fa85-04a3-4033-9890-a5b4f10e2a77
-md"""$logo  **From** $(@bind texttype Select(["Text", "File", "Web", "Table"])) """
-
-# ╔═╡ 9191230b-b72a-4707-b7cf-1a51c9cdb217
-if texttype == "Web"
-    md"""**URL:** $(@bind url TextField(80, default="http://en.wikipedia.org/wiki/Special:random"))"""
-elseif texttype == "Text"
-    @bind text_ TextField((80, 10), defaulttext)
-elseif texttype == "File"
-	@bind uploadedfile FilePicker()
-else
-	@bind text_ TextField((30, 15), defaultttable)
 end
 
 # ╔═╡ d8e73850-f0a6-4170-be45-5a7527f1ec39
@@ -348,57 +406,9 @@ else
 end
 end
 
-# ╔═╡ cb9926c7-1089-4e13-8318-8576c828b485
+# ╔═╡ fa6b3269-357e-4bf9-8514-70aff9df427f
 begin
-function svgshapemask(svgstr, masksize; keeparea=true, kargs...)
-	ags = [string(masksize), "keeparea=$keeparea", ("$k=$(repr(v))" for (k, v) in kargs)...]
-    println("svgshapemask(", join(ags, ", "), ")")
-	masksvg = WordCloud.Render.loadsvg(masksvgstr)
-	if keeparea
-		maskimg = WordCloud.Render.tobitmap(masksvg)
-		r = sqrt(first(masksize) * last(masksize) / WordCloud.occupancy(WordCloud.imagemask(maskimg)))
-		resizedsvg = WordCloud.Render.imresize(masksvg, ratio=r)
-	else
-		resizedsvg = WordCloud.Render.imresize(masksvg, masksize...)
-	end
-	loadmask(WordCloud.Render.tobitmap(resizedsvg); kargs...)
-end
-svgshapefunc(svgstr) = (a...; ka...) -> svgshapemask(svgstr, a...; ka...)
-nothing
-end
-
-# ╔═╡ 397fdd42-d2b2-46db-bf74-957909f47a58
-if mask_ == :auto
-	if uploadedmask === nothing
-		mask = :auto
-		nothing
-	else
-		mask = loadmask(IOBuffer(uploadedmask["data"]))
-		nothing
-	end
-elseif mask_ == :customsvg
-	mask = svgshapefunc(masksvgstr)
-	nothing
-else
-	mask = mask_
-	nothing
-end
-
-# ╔═╡ 74bd4779-c13c-4d16-a90d-597db21eaa39
-begin
-    maskkwargs = (;)
-    if configshape
-        if mask in (ngon, star, bezingon, bezistar)
-            maskkwargs = (npoints=npoints,)
-        elseif mask == squircle
-            maskkwargs = (rt=rt,)
-        end
-    end
-    nothing
-end
-
-# ╔═╡ 9a61bb59-5708-4fc0-81f3-3ca555b3bf5d
-begin
+google_fonts #used to adjust cell order
 function gen_cloud(words_weights)
     if outlinewidth isa Number && outlinewidth >= 0
 		olw = outlinewidth
@@ -421,6 +431,8 @@ try
 		fonts=fonts,
 		mask=mask,
 		masksize=masksize,
+		maskcolor=maskcolor,
+		backgroundcolor=backgroundcolor,
 		outline=olw,
 		density=density,
 		spacing=spacing,
@@ -428,16 +440,10 @@ try
 		maskkwargs...
 	) |> generate!
 catch e
-	# rethrow(e)
+	rethrow(e)
 end
 return nothing
 end
-nothing
-end
-
-# ╔═╡ fa6b3269-357e-4bf9-8514-70aff9df427f
-begin
-google_fonts #used to adjust cell order
 @time wc = gen_cloud(words_weights)
 if wc !== nothing
 	paintsvg(wc, background=showbackground)
@@ -454,6 +460,8 @@ end
 # ╟─0dddeaf5-08c3-46d0-8a79-30b5ce42ef2b
 # ╟─f4844a5f-260b-4713-84bf-69cd8123c7fc
 # ╟─1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
+# ╟─a90b83ca-384d-4157-99b3-df15764a242f
+# ╟─1842a3c8-4b47-4d36-a4e4-9a5ff4df452e
 # ╟─b38c3ad9-7885-4af6-8394-877fde8ed83b
 # ╟─6e614caa-38dc-4028-b0a7-05f7030d5b43
 # ╟─dfe608b0-077c-437a-adf2-b1382a0eb4eb
@@ -472,10 +480,6 @@ end
 # ╟─74bd4779-c13c-4d16-a90d-597db21eaa39
 # ╟─9396cf96-d553-43db-a839-273fc9febd5a
 # ╟─1a4d1e62-6a41-4a75-a759-839445dacf4f
-# ╟─986cf1a6-8075-48ae-84d9-55ae11a27da1
 # ╟─e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
 # ╟─b09620ef-4495-4c83-ad1c-2d8b0ed70710
-# ╟─3dc10049-d257-4bcd-9119-2a1af5a0e233
-# ╟─cb9926c7-1089-4e13-8318-8576c828b485
-# ╟─9a61bb59-5708-4fc0-81f3-3ca555b3bf5d
 # ╟─daf38998-c448-498a-82e2-b48a6a2b9c27
