@@ -16,20 +16,21 @@ end
 
 # ╔═╡ daf38998-c448-498a-82e2-b48a6a2b9c27
 begin
-import Pkg; Pkg.activate(homedir())
-using PlutoUI
-using WordCloud 
-using HTTP
-using ImageIO
-using PythonCall
-# using CondaPkg; CondaPkg.add("jieba")
+    import Pkg
+    Pkg.activate(homedir())
+    using PlutoUI
+    using WordCloud
+    using HTTP
+    using ImageIO
+    using PythonCall
+    # using CondaPkg; CondaPkg.add("jieba")
 end
 
 # ╔═╡ bda3fa85-04a3-4033-9890-a5b4f10e2a77
 begin
-logo = html"""<a href="https://github.com/guo-yong-zhi/WordCloud.jl"><div align="right"><i>https://github.com/guo-yong-zhi/WordCloud.jl</i></div><img src="https://raw.githubusercontent.com/guo-yong-zhi/WordCloud.jl/master/docs/src/assets/logo.svg" alt="WordCloud" width=90></a>"""
-	
-md"""$logo  **From** $(@bind texttype Select(["Text", "File", "Web", "Table"]))"""
+    logo = html"""<a href="https://github.com/guo-yong-zhi/WordCloud.jl"><div align="right"><i>https://github.com/guo-yong-zhi/WordCloud.jl</i></div><img src="https://raw.githubusercontent.com/guo-yong-zhi/WordCloud.jl/master/docs/src/assets/logo.svg" alt="WordCloud" width=90></a>"""
+
+    md"""$logo  **From** $(@bind texttype Select(["Text", "File", "Web", "Table"]))"""
 end
 
 # ╔═╡ 6b7b1da7-03dc-4815-9abf-b8eea410d2fd
@@ -41,8 +42,8 @@ md"""
 
 # ╔═╡ 0dddeaf5-08c3-46d0-8a79-30b5ce42ef2b
 begin
-wordblacklist = [wordblacklist_[i] for i in findall(r"[^\s,;，；、]+", wordblacklist_)]
-isempty(wordblacklist) ? nothing : wordblacklist 
+    wordblacklist = [wordblacklist_[i] for i in findall(r"[^\s,;，；、]+", wordblacklist_)]
+    isempty(wordblacklist) ? nothing : wordblacklist
 end
 
 # ╔═╡ f4844a5f-260b-4713-84bf-69cd8123c7fc
@@ -50,28 +51,28 @@ md"""**mask shape:** $(@bind mask_ Select([:auto, box, ellipse, squircle, ngon, 
 
 # ╔═╡ 1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
 begin
-defaultsvgstr = """
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-  <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
-</svg>
-"""
-if mask_ == :auto
-	md"""**upload an image as a mask:** $(@bind uploadedmask FilePicker([MIME("image/*")]))"""
-elseif mask_ == :customsvg
-	md"""**svg string:**　*for example, you can copy svg code from [here](https://heroicons.com/)， you should choose a solid type icon*
-	
-	$(@bind masksvgstr TextField((80, 2), default=defaultsvgstr))"""
-elseif configshape
-    if mask_ in (ngon, star, bezingon, bezistar)
-        md"**number of points:** $(@bind npoints NumberField(3:100, default=5))"
-	elseif mask_ == squircle
-        md"**shape parameter:** $(@bind rt NumberField(0.:0.5:3., default=0.))　*0: rectangle; 1: ellipse; 2: rhombus*; >2: four-armed star"
+    defaultsvgstr = """
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+      <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+    </svg>
+    """
+    if mask_ == :auto
+        md"""**upload an image as a mask:** $(@bind uploadedmask FilePicker([MIME("image/*")]))"""
+    elseif mask_ == :customsvg
+        md"""**svg string:**　*for example, you can copy svg code from [here](https://heroicons.com/)， you should choose a solid type icon*
+
+        $(@bind masksvgstr TextField((80, 2), default=defaultsvgstr))"""
+    elseif configshape
+        if mask_ in (ngon, star, bezingon, bezistar)
+            md"**number of points:** $(@bind npoints NumberField(3:100, default=5))"
+        elseif mask_ == squircle
+            md"**shape parameter:** $(@bind rt NumberField(0.:0.5:3., default=0.))　*0: rectangle; 1: ellipse; 2: rhombus*; >2: four-armed star"
+        else
+            md"use random $(mask_ isa Function ? nameof(mask_) : mask_) shape"
+        end
     else
         md"use random $(mask_ isa Function ? nameof(mask_) : mask_) shape"
     end
-else
-    md"use random $(mask_ isa Function ? nameof(mask_) : mask_) shape"
-end
 end
 
 # ╔═╡ a90b83ca-384d-4157-99b3-df15764a242f
@@ -79,20 +80,20 @@ md"""**mask color:** $(@bind maskcolor_ Select([:auto, :default, :original, "cus
 
 # ╔═╡ 1842a3c8-4b47-4d36-a4e4-9a5ff4df452e
 if maskcolor_ == "custom color"
-	if backgroundcolor_ == "custom color"
-		r = md"""**mask color:** $(@bind maskcolor ColorStringPicker())　　**background color:** $(@bind backgroundcolor ColorStringPicker())"""
-	else
-		backgroundcolor = backgroundcolor_
-		r = md"""**mask color:** $(@bind maskcolor ColorStringPicker())"""
-	end
+    if backgroundcolor_ == "custom color"
+        r = md"""**mask color:** $(@bind maskcolor ColorStringPicker())　　**background color:** $(@bind backgroundcolor ColorStringPicker())"""
+    else
+        backgroundcolor = backgroundcolor_
+        r = md"""**mask color:** $(@bind maskcolor ColorStringPicker())"""
+    end
 else
-	maskcolor = maskcolor_
-	if backgroundcolor_ == "custom color"
-		r = md"""**background color:** $(@bind backgroundcolor ColorStringPicker())"""
-	else
-		backgroundcolor = backgroundcolor_
-		nothing
-	end
+    maskcolor = maskcolor_
+    if backgroundcolor_ == "custom color"
+        r = md"""**background color:** $(@bind backgroundcolor ColorStringPicker())"""
+    else
+        backgroundcolor = backgroundcolor_
+        nothing
+    end
 end
 
 
@@ -104,14 +105,14 @@ md"**layout style:** $(@bind style Select([:auto, :uniform, :gathering]))"
 
 # ╔═╡ dfe608b0-077c-437a-adf2-b1382a0eb4eb
 begin
-	weightscale_funcs = [
-	    identity => "identity", 
-	    (√) => "√x", 
-	    log1p => "log x",
-	    (n->n^2) => "x²",
-	    expm1 => "exp x",
-	    ]
-	md"**rescale weights:** $(@bind rescale_func Select(weightscale_funcs))　　**word length balance:** $(@bind word_length_balance Slider(-1:0.01:1, default=0, show_value=true))"
+    weightscale_funcs = [
+        identity => "identity",
+        (√) => "√x",
+        log1p => "log x",
+        (n -> n^2) => "x²",
+        expm1 => "exp x",
+    ]
+    md"**rescale weights:** $(@bind rescale_func Select(weightscale_funcs))　　**word length balance:** $(@bind word_length_balance Slider(-1:0.01:1, default=0, show_value=true))"
 end
 
 # ╔═╡ 872f2653-303f-4b53-8e01-26bec86fc413
@@ -127,9 +128,9 @@ md"""
 
 # ╔═╡ 8153f1f1-9704-4b1e-bff9-009a54404448
 if anglelength > 0
-	md"""from $(@bind anglestart NumberField(-360:360, default=0)) degrees to $(@bind anglestop NumberField(-360:360, default=0)) degrees"""
+    md"""from $(@bind anglestart NumberField(-360:360, default=0)) degrees to $(@bind anglestop NumberField(-360:360, default=0)) degrees"""
 else
-	md"use random word orientations"
+    md"use random word orientations"
 end
 
 # ╔═╡ 14666dc2-7ae4-4808-9db3-456eb26cd435
@@ -146,48 +147,48 @@ begin
     Tags are usually single words, and the importance of each tag is shown with font size or color. Bigger term means greater weight. 
     This format is useful for quickly perceiving the most prominent terms to determine its relative prominence.  
     """
-defaultttable = """
-				饥寒交迫, 1
-				落花流水, 1
-				受苦, 1
-				世界, 1
-				不要, 1
-				就, 2
-				为, 1
-				们, 1
-				一定, 2
-				团结起来, 2
-				，, 10
-				热血, 1
-				沸腾, 1
-				的, 6
-				而, 1
-				斗争, 3
-				最后, 2
-				真理, 1
-				人, 1
-				！, 7
-				奴隶, 2
-				旧, 1
-				主人, 1
-				这是, 2
-				英特纳雄耐尔, 2
-				说, 1
-				一无所有, 1
-				要, 4
-				已经, 1
-				我们, 2
-				天下, 1
-				实现, 2
-				起来, 4
-				全世界, 1
-				满腔, 1
-				打个, 1
-				做, 1
-				到, 2
-				明天, 2
-				"""
-nothing
+    defaultttable = """
+        饥寒交迫, 1
+        落花流水, 1
+        受苦, 1
+        世界, 1
+        不要, 1
+        就, 2
+        为, 1
+        们, 1
+        一定, 2
+        团结起来, 2
+        ，, 10
+        热血, 1
+        沸腾, 1
+        的, 6
+        而, 1
+        斗争, 3
+        最后, 2
+        真理, 1
+        人, 1
+        ！, 7
+        奴隶, 2
+        旧, 1
+        主人, 1
+        这是, 2
+        英特纳雄耐尔, 2
+        说, 1
+        一无所有, 1
+        要, 4
+        已经, 1
+        我们, 2
+        天下, 1
+        实现, 2
+        起来, 4
+        全世界, 1
+        满腔, 1
+        打个, 1
+        做, 1
+        到, 2
+        明天, 2
+        """
+    nothing
 end
 
 # ╔═╡ 9191230b-b72a-4707-b7cf-1a51c9cdb217
@@ -196,57 +197,57 @@ if texttype == "Web"
 elseif texttype == "Text"
     @bind text_ TextField((80, 10), defaulttext)
 elseif texttype == "File"
-	@bind uploadedfile FilePicker()
+    @bind uploadedfile FilePicker()
 else
-	@bind text_ TextField((30, 15), defaultttable)
+    @bind text_ TextField((30, 15), defaultttable)
 end
 
 # ╔═╡ 66f4b71e-01e5-4279-858b-04d44aeeb574
 begin
-function read_table(text)
-	ps = [split(it, r"[,;\t]") for it in split(strip(text), "\n")]
-	ps = sort([(first(it), parse(Float64, last(it))) for it in ps], by=last, rev=true)
-	maxlen = maximum(length∘first, ps)
-	println(length(ps), " items table:\n")
-	for (i,p) in enumerate(ps)
-		println("\t", p[1], " "^(maxlen-length(p[1]))*"\t|\t", p[end])
-		if i == 9
-			println("\t。。。")
-			break
-		end
-	end
-	println()
-	ps
-end
-nothing
+    function read_table(text)
+        ps = [split(it, r"[,;\t]") for it in split(strip(text), "\n")]
+        ps = sort([(first(it), parse(Float64, last(it))) for it in ps], by=last, rev=true)
+        maxlen = maximum(length ∘ first, ps)
+        println(length(ps), " items table:\n")
+        for (i, p) in enumerate(ps)
+            println("\t", p[1], " "^(maxlen - length(p[1])) * "\t|\t", p[end])
+            if i == 9
+                println("\t。。。")
+                break
+            end
+        end
+        println()
+        ps
+    end
+    nothing
 end
 
 # ╔═╡ 397fdd42-d2b2-46db-bf74-957909f47a58
 begin
-function svgshapemask(svgstr, masksize; preservevolume=true, kargs...)
-	ags = [string(masksize), "preservevolume=$preservevolume", ("$k=$(repr(v))" for (k, v) in kargs)...]
-	println("svgshapemask(", join(ags, ", "), ")")
-	masksvg = WordCloud.Render.loadsvg(masksvgstr)
-	vf = preservevolume ? WordCloud.volume_factor(masksvg) : 1
-	resizedsvg = WordCloud.Render.imresize(masksvg, masksize...; ratio=vf)
-	loadmask(WordCloud.Render.tobitmap(resizedsvg); kargs...)
-end
-svgshapefunc(svgstr) = (a...; ka...) -> svgshapemask(svgstr, a...; ka...)
-if mask_ == :auto
-	if uploadedmask === nothing
-		mask = :auto
-		nothing
-	else
-		mask = loadmask(IOBuffer(uploadedmask["data"]))
-		nothing
-	end
-elseif mask_ == :customsvg
-	mask = svgshapefunc(masksvgstr)
-	nothing
-else
-	mask = mask_
-	nothing
-end
+    function svgshapemask(svgstr, masksize; preservevolume=true, kargs...)
+        ags = [string(masksize), "preservevolume=$preservevolume", ("$k=$(repr(v))" for (k, v) in kargs)...]
+        println("svgshapemask(", join(ags, ", "), ")")
+        masksvg = WordCloud.Render.loadsvg(masksvgstr)
+        vf = preservevolume ? WordCloud.volume_factor(masksvg) : 1
+        resizedsvg = WordCloud.Render.imresize(masksvg, masksize...; ratio=vf)
+        loadmask(WordCloud.Render.tobitmap(resizedsvg); kargs...)
+    end
+    svgshapefunc(svgstr) = (a...; ka...) -> svgshapemask(svgstr, a...; ka...)
+    if mask_ == :auto
+        if uploadedmask === nothing
+            mask = :auto
+            nothing
+        else
+            mask = loadmask(IOBuffer(uploadedmask["data"]))
+            nothing
+        end
+    elseif mask_ == :customsvg
+        mask = svgshapefunc(masksvgstr)
+        nothing
+    else
+        mask = mask_
+        nothing
+    end
 end
 
 # ╔═╡ 74bd4779-c13c-4d16-a90d-597db21eaa39
@@ -264,190 +265,190 @@ end
 
 # ╔═╡ 9396cf96-d553-43db-a839-273fc9febd5a
 begin
-angles = :auto
-try
-    global angles = range(anglestart, anglestop, length=anglelength)
-    isempty(angles) && (angles = :auto)
-    nothing
-catch
-end
+    angles = :auto
+    try
+        global angles = range(anglestart, anglestop, length=anglelength)
+        isempty(angles) && (angles = :auto)
+        nothing
+    catch
+    end
 end
 
 # ╔═╡ 1a4d1e62-6a41-4a75-a759-839445dacf4f
 begin
-if fonts_ == "auto"
-    fonts = Symbol(fonts_)
-elseif fonts_ === nothing
-    fonts = ""
-elseif occursin(",", fonts_)
-    fonts = tuple(split(fonts_, ",")...)
-else
-    fonts = fonts_
-end
-nothing
+    if fonts_ == "auto"
+        fonts = Symbol(fonts_)
+    elseif fonts_ === nothing
+        fonts = ""
+    elseif occursin(",", fonts_)
+        fonts = tuple(split(fonts_, ",")...)
+    else
+        fonts = fonts_
+    end
+    nothing
 end
 
 # ╔═╡ e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
 begin
-google_fonts = ["Roboto","Open Sans","Lato","Montserrat","Noto Sans JP","Roboto Condensed","Oswald","Source Sans Pro","Slabo 27px","Raleway","PT Sans","Poppins","Roboto Slab","Merriweather","Noto Sans","Ubuntu","Roboto Mono","Lora","Playfair Display","Nunito","PT Serif","Titillium Web","PT Sans Narrow","Arimo","Noto Serif",
-"Rubik","Fira Sans","Work Sans","Noto Sans KR","Quicksand","Dosis","Inconsolata","Oxygen","Mukta","Bitter","Nanum Gothic","Yanone Kaffeesatz","Nunito Sans","Lobster","Cabin","Fjalla One","Indie Flower","Anton","Arvo","Josefin Sans","Karla","Libre Baskerville","Noto Sans TC","Hind","Crimson Text","Hind Siliguri",
-"Inter","Heebo","Abel","Libre Franklin","Barlow","Varela Round","Pacifico","Dancing Script","Exo 2","Source Code Pro","Shadows Into Light","Merriweather Sans","Asap","Bree Serif","Archivo Narrow","Play","Ubuntu Condensed","Questrial","Abril Fatface","Source Serif Pro","Maven Pro","Francois One","Signika",
-"EB Garamond","Comfortaa","Exo","Vollkorn","Teko","Catamaran","Kanit","Cairo","Amatic SC","IBM Plex Sans","Cuprum","Poiret One","Rokkitt","Bebas Neue","Acme","PT Sans Caption","Righteous","Noto Sans SC","Alegreya Sans","Alegreya","Barlow Condensed","Prompt","Gloria Hallelujah","Patua One","Crete Round","Permanent Marker"]
-empty!(WordCloud.AvailableFonts)
-append!(WordCloud.AvailableFonts, ["$f$w" for w in WordCloud.CandiWeights, f in google_fonts])
-nothing
+    google_fonts = ["Roboto", "Open Sans", "Lato", "Montserrat", "Noto Sans JP", "Roboto Condensed", "Oswald", "Source Sans Pro", "Slabo 27px", "Raleway", "PT Sans", "Poppins", "Roboto Slab", "Merriweather", "Noto Sans", "Ubuntu", "Roboto Mono", "Lora", "Playfair Display", "Nunito", "PT Serif", "Titillium Web", "PT Sans Narrow", "Arimo", "Noto Serif",
+        "Rubik", "Fira Sans", "Work Sans", "Noto Sans KR", "Quicksand", "Dosis", "Inconsolata", "Oxygen", "Mukta", "Bitter", "Nanum Gothic", "Yanone Kaffeesatz", "Nunito Sans", "Lobster", "Cabin", "Fjalla One", "Indie Flower", "Anton", "Arvo", "Josefin Sans", "Karla", "Libre Baskerville", "Noto Sans TC", "Hind", "Crimson Text", "Hind Siliguri",
+        "Inter", "Heebo", "Abel", "Libre Franklin", "Barlow", "Varela Round", "Pacifico", "Dancing Script", "Exo 2", "Source Code Pro", "Shadows Into Light", "Merriweather Sans", "Asap", "Bree Serif", "Archivo Narrow", "Play", "Ubuntu Condensed", "Questrial", "Abril Fatface", "Source Serif Pro", "Maven Pro", "Francois One", "Signika",
+        "EB Garamond", "Comfortaa", "Exo", "Vollkorn", "Teko", "Catamaran", "Kanit", "Cairo", "Amatic SC", "IBM Plex Sans", "Cuprum", "Poiret One", "Rokkitt", "Bebas Neue", "Acme", "PT Sans Caption", "Righteous", "Noto Sans SC", "Alegreya Sans", "Alegreya", "Barlow Condensed", "Prompt", "Gloria Hallelujah", "Patua One", "Crete Round", "Permanent Marker"]
+    empty!(WordCloud.AvailableFonts)
+    append!(WordCloud.AvailableFonts, ["$f$w" for w in WordCloud.CandiWeights, f in google_fonts])
+    nothing
 end
 
 # ╔═╡ b09620ef-4495-4c83-ad1c-2d8b0ed70710
 begin
-function ischinese(text::AbstractString)
-	ch = 0
-	total = 0
-	for c in text
-		if match(r"\w", string(c)) !== nothing
-			total += 1
-			if '\u4e00' <= c <= '\u9fa5'
-				ch += 1
-			end
-		end
-	end
-	if total > 0
-		# println("total: $total; chinese: $ch; ratio: $(ch/total)")
-		return ch / total > 0.05
-	else
-		return false
-	end
-end
+    function ischinese(text::AbstractString)
+        ch = 0
+        total = 0
+        for c in text
+            if match(r"\w", string(c)) !== nothing
+                total += 1
+                if '\u4e00' <= c <= '\u9fa5'
+                    ch += 1
+                end
+            end
+        end
+        if total > 0
+            # println("total: $total; chinese: $ch; ratio: $(ch/total)")
+            return ch / total > 0.05
+        else
+            return false
+        end
+    end
 
-function wordseg_cn(t)
-	jieba = pyimport("jieba")
-	pyconvert(Vector{String}, jieba.lcut(t))
-end
-nothing
+    function wordseg_cn(t)
+        jieba = pyimport("jieba")
+        pyconvert(Vector{String}, jieba.lcut(t))
+    end
+    nothing
 end
 
 # ╔═╡ d8e73850-f0a6-4170-be45-5a7527f1ec39
 begin
-function text_from_url(url)
-    resp = HTTP.request("GET", url, redirect=true)
-    println(resp.request)
-    resp.body |> String |> html2text
-end
-go
-words_weights = ([],[])
-wordsnum = 0
-try
-	if texttype == "Web"
-		if !isempty(url)
-			text = text_from_url(url)
-		end
-	elseif texttype == "Text"
-		text = text_
-	elseif texttype == "File"
-		if uploadedfile !== nothing
-			text = read(IOBuffer(uploadedfile["data"]), String)
-		end
-	else
-		text = read_table(text_)
-	end
-	dict_process = rescaleweights(rescale_func, tan(word_length_balance*π/2)) ∘ casemerge! ∘ lemmatize!
-	if text isa AbstractString && ischinese(text)
-		println("检测到中文")
-		text = wordseg_cn(text)
-	end
-	global words_weights = processtext(
-		text, maxnum=maxnum,
-		minlength=minlength,
-		stopwords=enablestopwords ? WordCloud.stopwords ∪ wordblacklist : wordblacklist,
-		process = dict_process)
-	global wordsnum = length(words_weights[1])
-catch e
-	# rethrow(e)
-end
-nothing
+    function text_from_url(url)
+        resp = HTTP.request("GET", url, redirect=true)
+        println(resp.request)
+        resp.body |> String |> html2text
+    end
+    go
+    words_weights = ([], [])
+    wordsnum = 0
+    try
+        if texttype == "Web"
+            if !isempty(url)
+                text = text_from_url(url)
+            end
+        elseif texttype == "Text"
+            text = text_
+        elseif texttype == "File"
+            if uploadedfile !== nothing
+                text = read(IOBuffer(uploadedfile["data"]), String)
+            end
+        else
+            text = read_table(text_)
+        end
+        dict_process = rescaleweights(rescale_func, tan(word_length_balance * π / 2)) ∘ casemerge! ∘ lemmatize!
+        if text isa AbstractString && ischinese(text)
+            println("检测到中文")
+            text = wordseg_cn(text)
+        end
+        global words_weights = processtext(
+            text, maxnum=maxnum,
+            minlength=minlength,
+            stopwords=enablestopwords ? WordCloud.stopwords ∪ wordblacklist : wordblacklist,
+            process=dict_process)
+        global wordsnum = length(words_weights[1])
+    catch e
+        # rethrow(e)
+    end
+    nothing
 end
 
 # ╔═╡ 77e13474-8987-4cc6-93a9-ea68ca53b217
 begin
-colors__ = colors_
-if colorstyle == :gradient
-    if colors__ == :auto
-        colors__ = rand(WordCloud.Schemes)
-    end
-    md"""
-    **gradient range:** $(@bind colorstart NumberField(0.:0.01:1., default=0.)) to $(@bind colorstop NumberField(0.:0.01:1., default=1.)). $wordsnum colors of $colors__   
-    """
-else
-    if colors__ == :auto
-        md"use random color scheme"
+    colors__ = colors_
+    if colorstyle == :gradient
+        if colors__ == :auto
+            colors__ = rand(WordCloud.Schemes)
+        end
+        md"""
+        **gradient range:** $(@bind colorstart NumberField(0.:0.01:1., default=0.)) to $(@bind colorstop NumberField(0.:0.01:1., default=1.)). $wordsnum colors of $colors__   
+        """
     else
-        md"**sampling probability:** $(@bind colorprob NumberField(0.1:0.01:1., default=0.5))"
+        if colors__ == :auto
+            md"use random color scheme"
+        else
+            md"**sampling probability:** $(@bind colorprob NumberField(0.1:0.01:1., default=0.5))"
+        end
     end
-end
 end
 
 # ╔═╡ a758178c-b6e6-491c-83a3-8b3fa594fc9e
 begin
-colors = colors__
-if colors != :auto
-    C = WordCloud.colorschemes[colors]
-    if colorstyle == :random
-        colors_vec = WordCloud.randsubseq(C.colors, colorprob)
-        isempty(colors_vec) && (colors_vec = C.colors)
-        colors = tuple(colors_vec...)
-        colors_vec
-    elseif colorstyle == :gradient
-        colors = WordCloud.gradient(words_weights[end], scheme=colors, section=(colorstart, max(colorstart, colorstop)))
+    colors = colors__
+    if colors != :auto
+        C = WordCloud.colorschemes[colors]
+        if colorstyle == :random
+            colors_vec = WordCloud.randsubseq(C.colors, colorprob)
+            isempty(colors_vec) && (colors_vec = C.colors)
+            colors = tuple(colors_vec...)
+            colors_vec
+        elseif colorstyle == :gradient
+            colors = WordCloud.gradient(words_weights[end], scheme=colors, section=(colorstart, max(colorstart, colorstop)))
+        else
+            C
+        end
     else
-        C
+        md""
     end
-else
-    md""
-end
 end
 
 # ╔═╡ fa6b3269-357e-4bf9-8514-70aff9df427f
 begin
-google_fonts #used to adjust cell order
-function gen_cloud(words_weights)
-    if outlinewidth isa Number && outlinewidth >= 0
-		olw = outlinewidth
-	else
-		olw = rand((0, 0, 0, rand(2:10)))
-	end
-	masksize = :auto
-	try
-		masksize = Tuple(parse(Int, i ) for i in split(masksize_, ","))
-		if length(masksize) == 1
-			masksize = masksize[1]
-		end
-	catch
-	end
-try
-	return wordcloud(
-		words_weights;
-		colors=colors,
-		angles=angles,
-		fonts=fonts,
-		mask=mask,
-		masksize=masksize,
-		maskcolor=maskcolor,
-		backgroundcolor=backgroundcolor,
-		outline=olw,
-		density=density,
-		spacing=spacing,
-		style=style,
-		maskkwargs...
-	) |> generate!
-catch e
-	rethrow(e)
-end
-return nothing
-end
-@time wc = gen_cloud(words_weights)
-if wc !== nothing
-	paintsvg(wc, background=showbackground)
-end
+    google_fonts #used to adjust cell order
+    function gen_cloud(words_weights)
+        if outlinewidth isa Number && outlinewidth >= 0
+            olw = outlinewidth
+        else
+            olw = rand((0, 0, 0, rand(2:10)))
+        end
+        masksize = :auto
+        try
+            masksize = Tuple(parse(Int, i) for i in split(masksize_, ","))
+            if length(masksize) == 1
+                masksize = masksize[1]
+            end
+        catch
+        end
+        try
+            return wordcloud(
+                words_weights;
+                colors=colors,
+                angles=angles,
+                fonts=fonts,
+                mask=mask,
+                masksize=masksize,
+                maskcolor=maskcolor,
+                backgroundcolor=backgroundcolor,
+                outline=olw,
+                density=density,
+                spacing=spacing,
+                style=style,
+                maskkwargs...
+            ) |> generate!
+        catch e
+            rethrow(e)
+        end
+        return nothing
+    end
+    @time wc = gen_cloud(words_weights)
+    if wc !== nothing
+        paintsvg(wc, background=showbackground)
+    end
 end
 
 
