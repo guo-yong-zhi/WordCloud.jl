@@ -47,7 +47,7 @@ begin
 end
 
 # ╔═╡ f4844a5f-260b-4713-84bf-69cd8123c7fc
-md"""**mask shape:** $(@bind mask_ Select([:auto, box, ellipse, squircle, ngon, star, bezingon, bezistar, :customsvg])) $(@bind configshape　　CheckBox(default=false))additional config　　**mask size:** $(@bind masksize_ TextField(default="auto"))　*e.g. 400,300*"""
+md"""**mask shape:** $(@bind mask_ Select([:auto, :customsvg, box, ellipse, squircle, ngon, star, bezingon, bezistar])) $(@bind configshape　　CheckBox(default=false))additional config　　**mask size:** $(@bind masksize_ TextField(default="auto"))　*e.g. 400,300*"""
 
 # ╔═╡ 1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
 begin
@@ -59,7 +59,7 @@ begin
     if mask_ == :auto
         md"""**upload an image as a mask:** $(@bind uploadedmask FilePicker([MIME("image/*")]))"""
     elseif mask_ == :customsvg
-        md"""**svg string:**　*for example, you can copy svg code from [here](https://heroicons.com/)， you should choose a solid type icon*
+        md"""**svg string:**　*for example, you can copy svg code from [here](https://heroicons.com/), you should choose a solid type icon*
 
         $(@bind masksvgstr TextField((80, 2), default=defaultsvgstr))"""
     elseif configshape
@@ -134,7 +134,7 @@ else
 end
 
 # ╔═╡ 14666dc2-7ae4-4808-9db3-456eb26cd435
-md"**word colors:** $(@bind colors_ Select([:auto; WordCloud.Schemes])) $(@bind colorstyle Select([:random, :gradient]))"
+md"**word colors:** $(@bind colors_ Select([:auto; WordCloud.Schemes])) $(@bind colorstyle Select([:random, :gradient]))　[*Browse colorschemes*](https://juliagraphics.github.io/ColorSchemes.jl/stable/catalogue)"
 
 # ╔═╡ 2870a2ee-aa99-48ec-a26d-fed7b040e6de
 @bind go Button("    Go!    ")
@@ -441,7 +441,7 @@ begin
                 maskkwargs...
             ) |> generate!
         catch e
-            rethrow(e)
+            # rethrow(e)
         end
         return nothing
     end
