@@ -38,7 +38,7 @@ wc = wordcloud(
     colors=0.3,
     backgroundcolor=:maskcolor,
     state=initwords!,
-    # angles = (0,45), fonts = "Helvetica thin", maskcolor=0.98,
+    # angles = (0, 45), fonts = "Eras Bold ITC", maskcolor=0.98,
 )
 
 pos = embedded
@@ -57,14 +57,14 @@ paint(wc, "semantic_embedding.png")
 #md# ### Clustering
 #md# Words can be further colored according to semantic clustering
 using Clustering
-V = vectors
-G = V' * V
-H = sum(V.^2, dims=1)
+V = embedded
+G = V * V'
+H = sum(V.^2, dims=2)
 D = max.(0, (H .+ H' .- 2G))
 D ./= sum(D) / length(D)
 D .= .√D # the distance matrix
 tree = hclust(D, linkage=:ward)
-lb = cutree(tree, h=2, k=10)
+lb = cutree(tree, h=3, k=8)
 println("$(length(lb)) words are divided into $(length(unique(lb))) groups")
 #md# 
 colors = parsecolor(:seaborn_dark)
