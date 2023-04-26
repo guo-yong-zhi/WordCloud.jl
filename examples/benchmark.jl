@@ -3,11 +3,11 @@ using WordCloud
 using Random
 # Random.seed!(8)
 
-println("This test will take several minutes")
+println("This test will take several minutes.")
 @show Threads.nthreads()
 words = [Random.randstring(rand(1:8)) for i in 1:200]
 weights = randexp(length(words)) .* 2000 .+ rand(20:100, length(words));
-wc1 = wordcloud(words, weights, mask=shape(ellipse, 500, 500, color=0.15), masksize=:original, angles=(0, 90, 45), density=0.55)
+wc1 = wordcloud(words, weights, mask=shape(ellipse, 500, 500, color=0.15), masksize=:original, angles=(0, 90, 45))
 
 words = [Random.randstring(rand(1:8)) for i in 1:400]
 weights = randexp(length(words)) .* 2000 .+ rand(20:100, length(words));
@@ -24,6 +24,7 @@ WordCloud.Stuffing.trainepoch_P!,WordCloud.Stuffing.trainepoch_P2!,WordCloud.Stu
 es = [[] for i in 1:length(wcs)]
 for (i, wc) in enumerate(wcs)
     println("\n\n", "*"^10, "wordcloud - $(length(wc)) words on mask$(size(wc.mask))", "*"^10)
+    i == 4 && deleteat!(ts, lastindex(ts)-2:lastindex(ts)) # too slow
     for (j, t) in enumerate(ts)
         println("\n", i - 1, "==== ", j, "/", length(ts), " ", nameof(t))
         placewords!(wc, style=:uniform)
