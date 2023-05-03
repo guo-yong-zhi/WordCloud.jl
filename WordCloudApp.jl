@@ -207,14 +207,14 @@ begin
     function read_table(text)
         ps = [split(it, r"[,;\t]") for it in split(strip(text), "\n")]
         ps = sort([(first(it), parse(Float64, last(it))) for it in ps], by=last, rev=true)
-        maxlen = maximum(length ∘ first, ps)
+        maxwidth = maximum(length ∘ first, ps[1:min(end, 9)])
         println(length(ps), " items table:\n")
         for (i, p) in enumerate(ps)
-            println("\t", p[1], " "^(maxlen - length(p[1])) * "\t|\t", p[end])
-            if i == 9
-                println("\t。。。")
+            if i == 10
+                println("\t...")
                 break
             end
+            println("\t", p[1], " "^(maxwidth - length(p[1])) * "\t|\t", p[end])
         end
         println()
         ps
