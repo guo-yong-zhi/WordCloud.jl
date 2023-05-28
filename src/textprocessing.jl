@@ -7,7 +7,7 @@ stopwords_cn = Set(readlines(dir * "/../res/stopwords_cn.txt"))
 stopwords = stopwords_en ∪ stopwords_cn
 include("wordlists.jl")
 
-"only handle the simple case of plural nouns and third person singular verbs"
+"only handles the simple cases of plural nouns and third person singular verbs"
 function lemmatize(word)
     if (!endswith(word, "s")) || endswith(word, "ss") # quick return
         return word
@@ -127,25 +127,24 @@ end
 
 """
 rescaleweights(func=identity, p=0)  
-This function takes word length into account.So the weights after rescaled can be used as font size coefficients.  
-func(w::Real)->Real is used to remap weight, say `weight=func(weight)`; p is the exponent of the power mean.  
+This function takes word length into account. Therefore, the rescaled weights can be used as font size coefficients.  
+The function func(w::Real)->Real is used to remap the weight, expressed as weight = func(weight); `p` represents the exponent of the power mean.
 We set `weight = powermean(1*fontsize, wordlength*fontsize) = ((fontsize^p + (wordlength*fontsize)^p)/2) ^ (1/p)`  
-That is `weight = fontsize * powermean(1, wordlength)`  
-Overall, that makes `fontsize = func(weight) / powermean(1, wordlength)`  
-p=-Inf, powermean is minimum (fontsize=weight); p=Inf, powermean is maximum (fontsize=weight/wordlength);  
-p=-1, powermean is harmonic mean; p=0, powermean is geometric mean (keep the word area);  
-p=1, powermean is arithmetic mean; p=2, powermean is root mean square (keep the diagonal length);  
+That is, `weight = fontsize * powermean(1, wordlength)`  
+Overall, this gives us `fontsize = func(weight) / powermean(1, wordlength)`  
+When p is -Inf, the power mean is at its minimum, resulting in fontsize=weight. When p is Inf, the power mean is at its maximum, resulting in fontsize=weight/wordlength.  
+When p is -1, the power mean is the harmonic mean. When p is 0, the power mean is the geometric mean, preserving the word area. 
+When p is 1, the power mean is the arithmetic mean. When p is 2, the power mean is the root mean square, preserving the diagonal length.  
 """
 rescaleweights(func=identity, p=0) = dict -> _rescaleweights(dict, func, p)
 
 """
-processtext the text, filter the words, and adjust the weights. return words vector and weights vector.
+Process the text, filter the words, and adjust the weights. Return a vector of words and a vector of weights.
 ## Positional Arguments
-* text: string, a vector of words, or a opend file(IO)
-* Or counter, a Dict{<:String, <:Real}, a Vector{Pair}, a Vector{Tuple}, or two Vectors
+* text: string, a vector of words, an opened file (IO), a counter, a Dict{<:String, <:Real}, a Vector{Pair}, a Vector{Tuple}, or two Vectors.
 ## Optional Keyword Arguments
-* stopwords: a words Set
-* minlength, maxlength: min and max length of a word to be included
+* stopwords: a set of words
+* minlength, maxlength: minimum and maximum length of a word to be included
 * minfrequency: minimum frequency of a word to be included
 * maxnum: maximum number of words, defaults to 500
 * minweight, maxweight: within 0 ~ 1, set to adjust extreme weight

@@ -53,12 +53,12 @@ end
 println("=pin same words=")
 pin(wcb, samewords) do
     placewords!(wcb, style=:uniform)
-    generate!(wcb, 1000, retry=1) # allow teleport but don‘t allow rescale
+    generate!(wcb, 1000, retry=1) # allow reposition but don‘t allow rescale
 end
 
 if getstate(wcb) != :generate!
     println("=overall tuning=")
-    generate!(wcb, 1000, reposition=setdiff(getwords(wcb), samewords), retry=2) # only teleport the unique words
+    generate!(wcb, 1000, reposition=setdiff(getwords(wcb), samewords), retry=2) # only reposition the unique words
 end
 
 ma = paint(wca)

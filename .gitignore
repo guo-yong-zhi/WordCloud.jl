@@ -11,3 +11,4 @@ address_compare*
 test/*.jpg
 test/*.svg
 test/animation*
+docs/build

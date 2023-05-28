@@ -11,55 +11,56 @@ mutable struct WC
 end
 
 """
-## Positional Arguments
-Positional arguments are used to specify words and weights, and can be in different forms, such as Tuple or Dict, etc.
+## Positional Argument
+Positional argument(s) are used to specify words and weights in various forms, such as Tuple or Dict.
 * words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}
 * words_weights::Tuple
 * counter::AbstractDict
 * counter::AbstractVector{<:Pair}
-## Optional Keyword Arguments
-### style keyword arguments
-* colors = "black" #all same color  
-* colors = ("black", (0.5,0.5,0.7), "yellow", "#ff0000", 0.2) #choose entries randomly  
-* colors = ["black", (0.5,0.5,0.7), "yellow", "red", (0.5,0.5,0.7), 0.2, ......] #use entries sequentially in cycle  
-* colors = :seaborn_dark #using a preset scheme. see `WordCloud.colorschemes` for all supported Symbols. and `WordCloud.displayschemes()` may be helpful.
-* angles = 0 #all same angle  
-* angles = (0, 90, 45) #choose entries randomly  
-* angles = 0:180 #choose entries randomly  
-* angles = [0, 22, 4, 1, 100, 10, ......] #use entries sequentially in cycle  
-* fonts = "Serif Bold" #all same font  
-* fonts = ("Arial", "Times New Roman", "Tahoma") #choose entries randomly  
-* fonts = ["Arial", "Times New Roman", "Tahoma", ......] #use entries sequentially in cycle  
-* density = 0.55 #default 0.5  
+## Keyword Arguments (Optional)
+### style-related keyword arguments
+* colors = "black" #same color for all words  
+* colors = ("black", (0.5,0.5,0.7), "yellow", "#ff0000", 0.2) #entries are randomly chosen  
+* colors = ["black", (0.5,0.5,0.7), "yellow", "red", (0.5,0.5,0.7), 0.2, ......] #elements are used in a cyclic manner  
+* colors = :seaborn_dark #Using a preset scheme. See `WordCloud.colorschemes` for all supported Symbols. `WordCloud.displayschemes()` may be helpful.
+* angles = 0 #same angle for all words  
+* angles = (0, 90, 45) #randomly select entries  
+* angles = 0:180 #randomly select entries  
+* angles = [0, 22, 4, 1, 100, 10, ......] #use elements in a cyclic manner  
+* fonts = "Serif Bold" #same font for all words  
+* fonts = ("Arial", "Times New Roman", "Tahoma") #randomly select entries  
+* fonts = ["Arial", "Times New Roman", "Tahoma", ......] #use elements in a cyclic manner  
+* density = 0.55 #default is 0.5  
 * spacing = 1  #minimum spacing between words
 
-### mask keyword arguments
-* mask = loadmask("res/heart.jpg", 256, 256) #see the doc of `loadmask`  
-* mask = loadmask("res/heart.jpg", color="red", ratio=2) #see the doc of `loadmask`
-* mask = "res/heart.jpg" #shorthand for loadmask("res/heart.jpg")
-* mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #See the doc of `shape`.
-* mask = box #mask can also be one of `box`, `ellipse`, `squircle`, `ngon`, `star`, `bezingon` and `bezistar`. See the doc of `shape`. 
-* masksize: Can be a tuple `(width, height)`, a single number as a side length hint, or symbols :original, :default, :auto. 
-* backgroundsize: See `shape`. Need to be used with `masksize` to specify the padding size.
-* maskcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original (keep it unchanged), :auto (auto recolor the mask).
-* backgroundcolor: like "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original, :maskcolor, :auto (random choose between :original and :maskcolor)
-* outline, linecolor, smoothness: See function `shape` and `outline`. 
-* transparent = (1,0,0) #set the transparent color in mask  
+### mask-related keyword arguments
+* mask = loadmask("res/heart.jpg", 256, 256) #refer to the documentation of `loadmask`  
+* mask = loadmask("res/heart.jpg", color="red", ratio=2) #refer to the documentation of `loadmask`
+* mask = "res/heart.jpg" #shortcut for loadmask("res/heart.jpg")
+* mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) #refer to the documentation of `shape`.
+* mask = box #mask can also be one of `box`, `ellipse`, `squircle`, `ngon`, `star`, `bezingon` or `bezistar`. Refer to the documentation of `shape`. 
+* masksize: It can be a tuple `(width, height)`, a single number indicating the side length, or one of the symbols :original, :default, or :auto. 
+* backgroundsize: Refer to `shape`. It is used with `masksize` to specify the padding size.
+* maskcolor: It can be "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original (to keep it unchanged), or :auto (to auto recolor the mask).
+* backgroundcolor: It can be "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original, :maskcolor, or :auto (randomly select between :original and :maskcolor).
+outline, linecolor, smoothness: Refer to the `shape` and `outline` functions.
+* transparent = (1,0,0) #set the transparent color in the mask  
 * transparent = nothing #no transparent color  
-* transparent = c->(c[1]+c[2]+c[3])/3*(c[4]/255)>128) #set transparent with a Function. `c` is a (r,g,b,a) Tuple.
----NOTE
-Some arguments depend on whether or not the `mask` is given or the type of the given `mask`.
-
+* transparent = c->(c[1]+c[2]+c[3])/3*(c[4]/255)>128) #set transparency using a function. `c` is an (r,g,b,a) Tuple.
+---
+* NOTE
+  * Some arguments depend on whether the `mask` is provided or on the type of the provided `mask`.
 ### other keyword arguments
-* style, centralword, reorder, rt, level: config the style of `placewords!`. See the doc of `placewords!`.  
-* state = placewords! #default setting, will initialize word's position
-* state = generate! #get result directly
-* state = initwords! #only initialize resources, such as rendering word images
+The keyword argument state is a function. It will be called after the wordcloud object is constructed, which sets the object to a specific state.
+    * style, centralword, reorder, rt, level: Configure the style of `placewords!` Refer to the documentation of `placewords!`.
+* state = placewords! #IIt is the default setting that initializes the position of words
+* state = generate! #get the result directly
+* state = initwords! #only initializes resources, such as word pictures
 * state = identity #do nothing
-The keyword argument `state` is a function. It will be called after the `wordcloud` object constructed. This will set the object to a specific state.
----NOTE
-* After getting the `wordcloud` object, these steps are needed to get the result picture: initwords! -> placewords! -> generate! -> paint
-* You can skip `placewords!` and/or `initwords!`, and these operations will be performed automatically with default parameters
+---
+* NOTE
+  * After obtaining the wordcloud object, the following steps are required to obtain the resulting picture: initwords! -> placewords! -> generate! -> paint
+  * You can skip `placewords!` and/or `initwords!`, and these operations will be automatically performed with default parameters
 """
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter) |> collect, values(counter) |> collect; kargs...)
@@ -282,8 +283,8 @@ index(wc::WC, i) = i
 getparameter(wc, args...) = getindex(wc.params, args...)
 setparameter!(wc, args...) = setindex!(wc.params, args...)
 hasparameter(wc, args...) = haskey(wc.params, args...)
-getdoc = "The 1st argument is wordcloud, the 2nd argument is index which can be string, number, list, or any other standard supported index. And the index argument can be ignored to get all values."
-setdoc = "The 1st argument is wordcloud, the 2nd argument is index which can be string, number, list, or any other standard supported index, the 3rd argument is the value to assign."
+getdoc = "This function accepts two positional arguments: a wordcloud object and an index. The index can be a string, number, list, or any other supported type of index. The index argument is optional, and omitting it will retrieve all the values."
+setdoc = "This function accepts three positional arguments: a wordcloud object, an index, and a value. The index can be a string, number, list, or any other supported type of index. The index argument is optional, and omitting it will retrieve all the values."
 @doc getdoc getcolors(wc::WC, w=:) = wc.params[:colors][index(wc, w)]
 @doc getdoc getangles(wc::WC, w=:) = wc.params[:angles][index(wc, w)]
 @doc getdoc getfonts(wc::WC, w=:) = wc.params[:fonts][index(wc, w)]
@@ -346,12 +347,12 @@ function getbackgroundcolor(wc::WC)
     c == :maskcolor ? getmaskcolor(wc) : c
 end
 setbackgroundcolor!(wc::WC, v) = (setparameter!(wc, v, :backgroundcolor); v)
-@doc getdoc * " Keyword argment `type` can be `getshift` or `getcenter`."
+@doc getdoc * " The keyword argument `type` can be either `getshift` or `getcenter`."
 function getpositions(wc::WC, w=:; type=getshift)
     Stuffing.getpositions(wc.maskqtree, wc.qtrees, index(wc, w), type=type)
 end
 
-@doc setdoc * " Keyword argment `type` can be `setshift!` or `setcenter!`."
+@doc setdoc * " The keyword argument `type` can be either `setshift!` or `setcenter!`."
 function setpositions!(wc::WC, w, x_y; type=setshift!)
     Stuffing.setpositions!(wc.maskqtree, wc.qtrees, index(wc, w), x_y, type=type)
 end

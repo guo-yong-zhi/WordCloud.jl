@@ -8,7 +8,7 @@ function initqtree!(wc, i::Integer; backgroundcolor=(0, 0, 0, 0), spacing=getpar
     wc.qtrees[i] = t
 end
 initqtree!(wc, i; kargs...) = initqtree!.(wc, index(wc, i); kargs...)
-"Initialize word's images and other resources with specified style"
+"Initialize the images and other resources associated with words using the specified style."
 function initwords!(wc, i::Integer; backgroundcolor=(0, 0, 0, 0), spacing=getparameter(wc, :spacing),
                     fontsize=getfontsizes(wc, i), color=wc.params[:colors][i],
                     angle=wc.params[:angles][i], font=wc.params[:fonts][i])
@@ -69,11 +69,11 @@ end
 * placewords!(wc)
 * placewords!(wc, style=:uniform)
 * placewords!(wc, style=:gathering)
-* placewords!(wc, style=:gathering, level=5) #`level` controls the intensity of gathering, typically between 4 and 6, defaults to 5.
-* placewords!(wc, style=:gathering, level=6, rt=0) #rt=0, rectangle; rt=1, ellipse; rt=2, rhombus. defaults to 1.  
-There is also a keyword argument `centralword`. e.g. `centralword=1`, `centralword="Alice"`, `centralword=false`
-When you have set `style=:gathering`, you should disable repositioning in `generate!` at the same time, especially for big words. e.g. `generate!(wc, reposition=0.7)`.
-The keyword argument `reorder` is a function to reorder the words, which affects the order of placement. Like `reverse`, `WordCloud.shuffle`.
+* placewords!(wc, style=:gathering, level=5) #The `level` parameter controls the intensity of gathering, typically ranging from 4 to 6. The default value is 5.
+* placewords!(wc, style=:gathering, level=6, rt=0) #rt=0 for rectangle, rt=1 for ellipse, rt=2 for rhombus. The default value is 1.  
+    There is also a keyword argument `centralword` available. For example, `centralword=1`, `centralword="Alice"` or `centralword=false`.
+When you have set `style=:gathering`, you should also disable repositioning in `generate!`, especially for big words. For example, `generate!(wc, reposition=0.7)`.
+The keyword argument `reorder` is a function used to reorder the words, which affects the order of placement. For example, you can use `reverse` or `WordCloud.shuffle`.
 """
 function placewords!(wc::WC; style=:auto, rt=:auto, centralword=:auto, reorder=:auto, level=:auto, callback=x->x, kargs...)
     if STATEIDS[getstate(wc)] < STATEIDS[:initwords!]
@@ -140,7 +140,7 @@ function placewords!(wc::WC; style=:auto, rt=:auto, centralword=:auto, reorder=:
     wc
 end
 
-"rescale!(wc::WC, ratio::Real)\nRescale all words's size. set `ratio`<1 to shrink, set `ratio`>1 to expand."
+"rescale!(wc::WC, ratio::Real)\nResize all words proportionally. Use a ratio < 1 to shrink the size, and a ratio > 1 to expand the size."
 function rescale!(wc::WC, ratio::Real)
     qts = wc.qtrees
     centers = getcenter.(qts)
@@ -213,17 +213,17 @@ function recolor_clipping!(wc, i::Integer; background=getmask(wc))
 end
 recolor_clipping!(wc, w=:; kargs...) = recolor_clipping!.(wc, index(wc, w); kargs...)
 """
-recolor the words in `wc` in different styles with the background picture.
-The styles supported are `:average`, `:main`, `:clipping`, `:blending`, and :reset (to undo all effects of others).
+Recolor the words in `wc` using different styles based on the background picture.
+The styles supported are `:average`, `:main`, `:clipping`, `:blending`, and :reset (to undo all effects of the other styles).
 e.g.  
 * recolor!(wc, style=:average)
 * recolor!(wc, style=:main)
-* recolor!(wc, style=:clipping, background=blur(getmask(wc))) # `background` is optional
-* recolor!(wc, style=:blending, alpha=0.3) # `background` and `alpha` are optional
+* recolor!(wc, style=:clipping, background=blur(getmask(wc))) # The `background` parameter is optional
+* recolor!(wc, style=:blending, alpha=0.3) # The `alpha` parameter is optional
 * recolor!(wc, style=:reset)
 
-The effects of `:average`, `:main` and `:clipping` are only determined by the `background`. But the effect of `:blending` is also affected by the previous word color. Therefore, `:blending` can also be used in combination with others
-The results of `clipping` and `blending` can not be exported as SVG files, use PNG instead. 
+The effects of `:average`, `:main`, and `:clipping` are determined solely by the background. However, the effect of `:blending` is also influenced by the color of the previous word. Therefore, `:blending` can also be used in combination with other styles. 
+The results of `clipping` and `blending` cannot be exported as SVG files; PNG should be used instead.
 """
 function recolor!(wc, args...; style=:average, kargs...)
     if style == :average
@@ -242,13 +242,13 @@ function recolor!(wc, args...; style=:average, kargs...)
     nothing
 end
 """
-# Positional Args
-* wc: the wordcloud to fit
-* nepoch: training epoch nums
-# Keyword Args
-* patient: number of epochs before repositioning
-* reposition: a Bool value to turn on/off teleport, a Float number `p` between 0~1 indicating the repositioning ratio (Minimum `p`), a Int number `n` equivalent to `i -> i >= n`, a Function index::Int -> doteleport::Boll, or a white list collision.
-* trainer: appoint a training engine
+# Positional Arguments
+* wc: the word cloud object to be fitted
+* epochs: the number of training epochs
+# Keyword Arguments
+* patience: the number of epochs before repositioning
+* reposition: a boolean value that determines whether repositioning is enabled or disabled. Additionally, it can accept a float value p (0 ≤ p ≤ 1) to indicate the repositioning ratio, an integer value n to specify the minimum index for repositioning, a function index::Int -> doreposition::Bool to customize the repositioning behavior, or a whitelist for specific indexes.
+* trainer: specify a training engine
 """
 function fit!(wc, args...; reposition=true, optimiser=SGD(), krags...)
     reposition isa Union{Function,Number} || (reposition = index(wc, reposition)) # Bool <: Number
@@ -273,7 +273,7 @@ function printcollisions(wc)
     colllist = first.(totalcollisions(qtrees))
     get_text(i) = i > 1 ? wc.words[i - 1] : "#MASK#"
     if length(colllist) > 0
-        @warn "Have $(length(colllist)) collisions. Try setting a larger `nepoch` and `retry`, or lower `density` and `spacing` in `wordcloud` to fix it."
+        @warn "Have $(length(colllist)) collisions. Try setting a larger `epochs` and `retry`, or lower `density` and `spacing` in `wordcloud` to fix it."
         print("These words collide: ")
         foreach(ij->print(get_text(ij[1]), " & ", get_text(ij[2]), ", "), colllist)
         println()
@@ -281,14 +281,14 @@ function printcollisions(wc)
 end
 
 """
-# Positional Args
-* wc: the wordcloud to fit
-* nepoch: training epoch nums
-# Keyword Args
-* retry: shrink & retrain times, defaults to 3, set to `1` to disable shrinking
-* patient: number of epochs before repositioning
-* reposition: a Bool value to turn on/off teleport, a Float number `p` between 0~1 indicating the repositioning ratio (Minimum `p`), a Int number `n` equivalent to `i -> i >= n`, a Function index::Int -> doteleport::Boll, or a white list collision.
-* trainer: appoint a training engine
+# Positional Arguments
+* wc: the word cloud object to be fitted
+* epochs: the number of training epochs
+# Keyword Arguments
+* retry: the number of attempts for shrinking and retraining, defaults to 3; set to 1 to disable shrinking
+* patience: the number of epochs before repositioning
+* reposition: a boolean value that determines whether repositioning is enabled or disabled. Additionally, it can accept a float value p (0 ≤ p ≤ 1) to indicate the repositioning ratio, an integer value n to specify the minimum index for repositioning, a function index::Int -> doreposition::Bool to customize the repositioning behavior, or a whitelist for specific indexes.
+* trainer: specify a training engine
 """
 function generate!(wc::WC, args...; retry=3, krags...)
     if STATEIDS[getstate(wc)] < STATEIDS[:placewords!]
@@ -331,12 +331,12 @@ STATEIDS = Dict([s => i for (i, s) in enumerate(STATES)])
 
 
 """
-keep some words and ignore the others, then execute the function. It's the opposite of `ignore`.
+Retain specific words and ignore the rest, and then execute the function. It functions as the opposite of ignore.
 * keep(fun, wc, ws::String) #keep a word
-* keep(fun, wc, ws::Set{String}) #kepp all words in ws
+* keep(fun, wc, ws::Set{String}) #keep all words in ws
 * keep(fun, wc, ws::Vector{String}) #keep all words in ws
 * keep(fun, wc, inds::Union{Integer, Vector{Integer}})
-* keep(fun, wc::WC, mask::AbstractArray{Bool}) #keep words. length(mask)==length(wc)
+* keep(fun, wc::WC, mask::AbstractArray{Bool}) #keep words. The `mask` must have the same length as `wc`
 """
 function keep(fun, wc::WC, mask::AbstractArray{Bool})
     mem = [wc.words, wc.weights, wc.imgs, wc.svgs, wc.qtrees, 
@@ -373,12 +373,12 @@ function keep(fun, wc::WC, mask::AbstractArray{Bool})
 end
  
 """
-pin some words as if they were part of the background, then execute the function.
-* pin(fun, wc, ws::String) #pin a word
+Fix specific words as if they were part of the background, and then execute the function.
+* pin(fun, wc, ws::String) #pin an single  word
 * pin(fun, wc, ws::Set{String}) #pin all words in ws
 * pin(fun, wc, ws::Vector{String}) #pin all words in ws
 * pin(fun, wc, inds::Union{Integer, Vector{Integer}})
-* pin(fun, wc::WC, mask::AbstractArray{Bool}) #pin words. length(mask)==length(wc)
+* pin(fun, wc::WC, mask::AbstractArray{Bool}) #pin words. #pin words. The `mask` must have the same length as `wc`.
 """           
 function pin(fun, wc::WC, mask::AbstractArray{Bool})
     maskqtree = wc.maskqtree
@@ -417,12 +417,12 @@ function keep(fun, wc, ws)
 end
 
 """
-ignore some words as if they don't exist, then execute the function. It's the opposite of `keep`.
+Exclude specific words as if they do not exist, and then execute the function. It functions as the opposite of `keep`.
 * ignore(fun, wc, ws::String) #ignore a word
 * ignore(fun, wc, ws::Set{String}) #ignore all words in ws
 * ignore(fun, wc, ws::Vector{String}) #ignore all words in ws
 * ignore(fun, wc, inds::Union{Integer, Vector{Integer}})
-* ignore(fun, wc::WC, mask::AbstractArray{Bool}) #ignore words. length(mask)==length(wc)
+* ignore(fun, wc::WC, mask::AbstractArray{Bool}) #ignore words. The `mask` must have the same length as `wc`
 """
 function ignore(fun, wc::WC, mask::AbstractArray{Bool})
     keep(fun, wc, .!mask)

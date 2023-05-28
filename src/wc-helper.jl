@@ -15,16 +15,16 @@ function volume_factor(img, args...)
     isinf(sc) ? 1 : sc
 end
 """
-load a img as mask, recolor, or resize, etc
+Load an image as a mask, recolor it, or resize it, among other options.
 ## examples
 * loadmask(open("res/heart.jpg"), 256, 256) #resize to 256*256  
-* loadmask("res/heart.jpg", ratio=0.3) #scale 0.3  
+* loadmask("res/heart.jpg", ratio=0.3) #scaled by 0.3  
 * loadmask("res/heart.jpg", color="red", ratio=2) #set forecolor  
-* loadmask("res/heart.jpg", transparent=rgba->maximum(rgba[1:3])*(rgba[4]/255)>128) #set transparent with a Function 
+* loadmask("res/heart.jpg", transparent=rgba->maximum(rgba[1:3])*(rgba[4]/255)>128) #set transparent using a Function 
 * loadmask("res/heart.jpg", color="red", transparent=(1,1,1)) #set forecolor and transparent  
-* loadmask("res/heart.svg") #other arguments are not supported
-padding: an Integer or a tuple of two Integers  
-About orther keyword arguments like outline, linecolor, smoothness, see function `outline`.
+* loadmask("res/heart.svg") #only a subset of arguments is supported
+padding: an Integer or a tuple of two Integers.  
+For other keyword arguments like outline, linecolor, and smoothness, refer to the function `outline`.
 """
 function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...; 
     color=:auto, backgroundcolor=:auto, transparent=:auto, 
@@ -88,7 +88,7 @@ function loadmask(file, args...; kargs...)
     loadmask(mask, args...; kargs...)
 end
 
-"like `paint` but export svg"
+"Similar to `paint`, but exports SVG"
 function paintsvg(wc::WC; background=true)
     imgs = getsvgimages(wc)
     poss = getpositions(wc)
@@ -122,10 +122,10 @@ end
 """
 # examples
 * paint(wc::WC)
-* paint(wc::WC, background=false) #no background
-* paint(wc::WC, background=outline(wc.mask)) #use a new background
-* paint(wc::WC, ratio=0.5) #resize the result
-* paint(wc::WC, "result.png", ratio=0.5) #save as png file, other bitmap formats may also work
+* paint(wc::WC, background=false) #without background
+* paint(wc::WC, background=outline(wc.mask)) #use a different background
+* paint(wc::WC, ratio=0.5) #resize the output
+* paint(wc::WC, "result.png", ratio=0.5) #save as png file
 * paint(wc::WC, "result.svg") #save as svg file
 """
 function paint(wc::WC, args...; background=true, kargs...)

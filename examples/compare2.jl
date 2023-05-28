@@ -68,7 +68,7 @@ function pinfit!(wc, samewords, ep1, ep2)
     pin(wc, samewords) do
         fit!(wc, ep1)
     end
-    fit!(wc, ep2, reposition=getparameter(wc, :uniquewords)) # only teleport the unique words
+    fit!(wc, ep2, reposition=getparameter(wc, :uniquewords)) # only reposition the unique words
 end
 pos = getpositions(wca, samewords, type=getcenter)
 while getparameter(wca, :epoch) < 2000 && getparameter(wcb, :epoch) < 2000

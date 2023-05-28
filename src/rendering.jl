@@ -261,11 +261,11 @@ function dilate2(mat, r; smoothness=0.5) # better and slower
     return min.(1.0, m[2:end-1, 2:end-1])
 end
 """
-img: a bitmap image
-linewidth: 0 <= linewidth
-color: line color
-transparent: color of the background
-smoothness: 0 <= smoothness <= 1
+img: a bitmap image;  
+linewidth: 0 <= linewidth;  
+color: line color;  
+transparent: color of the background;  
+smoothness: 0 <= smoothness <= 1  
 """
 function outline(img; transparent=:auto, color="black", linewidth=2, smoothness=0.5)
     @assert linewidth >= 0
@@ -296,7 +296,7 @@ function padding(img::SVGImageType, r=maximum(size(img)) ÷ 10; backgroundcolor=
     finish()
     m2
 end
-"return the overlapping view of img1 and img2 when img2's top left corner at img1's (x, y)"
+"Return the overlapping view of img1 and img2 when img2 is positioned with its top left corner at coordinates (x, y) in img1."
 function overlappingarea(img1, img2, x=1, y=1)
     h1, w1 = size(img1)
     h2, w2 = size(img2)
@@ -322,7 +322,7 @@ function overlay(color1::TransparentRGB, color2::TransparentRGB)
     #     @show c, a
     typeof(color1)(min.(1, c)..., min(1, a))
 end
-"put img2 on img1 at (x, y)"
+"Place img2 onto img1 at coordinates (x, y)."
 function overlay!(img1::AbstractMatrix, img2::AbstractMatrix, x=1, y=1)# 左上角重合时(x=1,y=1)
     img1v, img2v = overlappingarea(img1, img2, x, y)
     #     @show (h1, w1),(h2, w2),(x,y)
@@ -405,21 +405,21 @@ function star_area(h, w; npoints=5, starratio=0.5)
 end
 
 """
-generate a box, ellipse, squircle, ngon, star, bezingon or bezistar svg image
+Generate an SVG image of a box, ellipse, squircle, ngon, star, bezingon, or bezistar.
 ## Examples
-* shape(box, 80, 50) #80*50 box
-* shape(box, 80, 50, cornerradius=4) #box with cornerradius=4
-* shape(squircle, 80, 50, rt=0.7) #squircle or superellipse. rt=0, rectangle; rt=1, ellipse; rt=2, rhombus
+* shape(box, 80, 50) #box with dimensions 80*50
+* shape(box, 80, 50, cornerradius=4) #box with corner radius 4
+* shape(squircle, 80, 50, rt=0.7) #squircle or superellipse. rt=0 for rectangle, rt=1 for ellipse, rt=2 for rhombus.
 * shape(ngon, 120, 100, npoints=12, orientation=π/6) #regular dodecagon (12 corners) oriented by π/6 
 * shape(star, 120, 100, npoints=5) #pentagram (5 tips)
-* shape(star, 120, 100, npoints=5, starratio=0.7, orientation=π/2) #0.7 specifies the ratio of the smaller radius of the star and the larger; oriented by π/2
-* shape(ellipse, 80, 50, color="red") #80*50 red ellipse
-* shape(box, 80, 50, backgroundcolor=(0,1,0), backgroundsize=(100, 100)) #80*50 box on 100*100 green background
+* shape(star, 120, 100, npoints=5, starratio=0.7, orientation=π/2) #0.7 specifies the ratio of the smaller and larger radii; oriented by π/2
+* shape(ellipse, 80, 50, color="red") #red ellipse with dimensions 80*50
+* shape(box, 80, 50, backgroundcolor=(0,1,0), backgroundsize=(100, 100)) #80*50 box on a 100*100 green background
 * shape(squircle, 80, 50, outline=3, linecolor="red", backgroundcolor="gray") #add a red outline to the squircle
-outline: an Integer  
-padding: an Integer or a tuple of two Integers  
-backgroundsize: a tuple of two Integers
-color, linecolor, backgroundcolor: anything that can be parsed to a color
+outline: an integer.   
+padding: an integer or a tuple of two integers.   
+backgroundsize: a tuple of two integers. 
+color, linecolor, backgroundcolor: any value that can be parsed as a color.
 """
 function shape(shape_, width, height, args...;
     outline=0, linecolor="black", padding=0,
