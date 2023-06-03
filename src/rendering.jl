@@ -151,7 +151,7 @@ function rendertext(str::AbstractString, size::Real;
     if type != :bitmap
         mat = tobitmap(svg)
     end
-    #     bgcolor = Luxor.ARGB32(bgcolor...) #https://github.com/JuliaGraphics/Luxor.jl/issues/107
+    # bgcolor = Luxor.ARGB32(bgcolor...) # https://github.com/JuliaGraphics/Luxor.jl/issues/107
     bgcolor = mat[1]
     box = boundingbox(mat, bgcolor, border=border)
     mat = crop(mat, box...)
@@ -407,15 +407,15 @@ end
 """
 Generate an SVG image of a box, ellipse, squircle, ngon, star, bezingon, or bezistar.
 ## Examples
-* shape(box, 80, 50) #box with dimensions 80*50
-* shape(box, 80, 50, cornerradius=4) #box with corner radius 4
-* shape(squircle, 80, 50, rt=0.7) #squircle or superellipse. rt=0 for rectangle, rt=1 for ellipse, rt=2 for rhombus.
-* shape(ngon, 120, 100, npoints=12, orientation=π/6) #regular dodecagon (12 corners) oriented by π/6 
-* shape(star, 120, 100, npoints=5) #pentagram (5 tips)
-* shape(star, 120, 100, npoints=5, starratio=0.7, orientation=π/2) #0.7 specifies the ratio of the smaller and larger radii; oriented by π/2
-* shape(ellipse, 80, 50, color="red") #red ellipse with dimensions 80*50
-* shape(box, 80, 50, backgroundcolor=(0,1,0), backgroundsize=(100, 100)) #80*50 box on a 100*100 green background
-* shape(squircle, 80, 50, outline=3, linecolor="red", backgroundcolor="gray") #add a red outline to the squircle
+* shape(box, 80, 50) # box with dimensions 80*50
+* shape(box, 80, 50, cornerradius=4) # box with corner radius 4
+* shape(squircle, 80, 50, rt=0.7) # squircle or superellipse. rt=0 for rectangle, rt=1 for ellipse, rt=2 for rhombus.
+* shape(ngon, 120, 100, npoints=12, orientation=π/6) # regular dodecagon (12 corners) oriented by π/6 
+* shape(star, 120, 100, npoints=5) # pentagram (5 tips)
+* shape(star, 120, 100, npoints=5, starratio=0.7, orientation=π/2) # 0.7 specifies the ratio of the smaller and larger radii; oriented by π/2
+* shape(ellipse, 80, 50, color="red") # red ellipse with dimensions 80*50
+* shape(box, 80, 50, backgroundcolor=(0,1,0), backgroundsize=(100, 100)) # 80*50 box on a 100*100 green background
+* shape(squircle, 80, 50, outline=3, linecolor="red", backgroundcolor="gray") # add a red outline to the squircle
 outline: an integer.   
 padding: an integer or a tuple of two integers.   
 backgroundsize: a tuple of two integers. 

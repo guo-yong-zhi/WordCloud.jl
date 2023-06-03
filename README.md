@@ -30,17 +30,17 @@ paint(wc, "random.svg")
 ```
 Alternatively, it could be
 ```julia
-wc = wordcloud("It's easy to generate word clouds") |> generate! #from a string
+wc = wordcloud("It's easy to generate word clouds") |> generate! # from a string
 ```
 ```julia
-wc = wordcloud(open(pkgdir(WordCloud)*"/res/alice.txt")) |> generate! #from a file
+wc = wordcloud(open(pkgdir(WordCloud)*"/res/alice.txt")) |> generate! # from a file
 ```
 ```julia
-wc = wordcloud(["中文", "需要", "提前", "分词"], fonts="") |> generate! #from a list
+wc = wordcloud(["中文", "需要", "提前", "分词"], fonts="") |> generate! # from a list
 ```
 ```julia
 wc = wordcloud(["the"=>1.0, "to"=>0.51, "and"=>0.50,
-                  "of"=>0.47, "a"=>0.44, "in"=>0.33]) |> generate! #from pairs or a dict
+                  "of"=>0.47, "a"=>0.44, "in"=>0.33]) |> generate! # from pairs or a dict
 ```
 # Advanced Usage
 ```julia

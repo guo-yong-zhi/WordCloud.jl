@@ -129,9 +129,9 @@ end
 rescaleweights(func=identity, p=0)  
 This function takes word length into account. Therefore, the rescaled weights can be used as font size coefficients.  
 The function func(w::Real)->Real is used to remap the weight, expressed as weight = func(weight); `p` represents the exponent of the power mean.
-We set `weight = powermean(1*fontsize, wordlength*fontsize) = ((fontsize^p + (wordlength*fontsize)^p)/2) ^ (1/p)`  
-That is, `weight = fontsize * powermean(1, wordlength)`  
-Overall, this gives us `fontsize = func(weight) / powermean(1, wordlength)`  
+We set `weight = powermean(1*fontsize, wordlength*fontsize) = ((fontsize^p + (wordlength*fontsize)^p)/2) ^ (1/p)`.  
+That is, `weight = fontsize * powermean(1, wordlength)`.  
+Overall, this gives us `fontsize = func(weight) / powermean(1, wordlength)`.  
 When p is -Inf, the power mean is at its minimum, resulting in fontsize=weight. When p is Inf, the power mean is at its maximum, resulting in fontsize=weight/wordlength.  
 When p is -1, the power mean is the harmonic mean. When p is 0, the power mean is the geometric mean, preserving the word area. 
 When p is 1, the power mean is the arithmetic mean. When p is 2, the power mean is the root mean square, preserving the diagonal length.  
@@ -184,9 +184,9 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     weights .+= minweight
     nhuge = sum(m)
     if nhuge == 1
-        print("The weight of the biggest word $(repr(only(words[m]))) is reduced.")
+        print("The weight of the biggest word $(repr(only(words[m]))) has been reduced.")
     elseif nhuge > 1
-        print("The weights of the biggest $nhuge words are reduced.")
+        print("The weights of the biggest $nhuge words have been reduced.")
     end
     print("\n")
     words, weights

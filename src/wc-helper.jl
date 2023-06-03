@@ -17,14 +17,14 @@ end
 """
 Load an image as a mask, recolor it, or resize it, among other options.
 ## examples
-* loadmask(open("res/heart.jpg"), 256, 256) #resize to 256*256  
-* loadmask("res/heart.jpg", ratio=0.3) #scaled by 0.3  
-* loadmask("res/heart.jpg", color="red", ratio=2) #set forecolor  
-* loadmask("res/heart.jpg", transparent=rgba->maximum(rgba[1:3])*(rgba[4]/255)>128) #set transparent using a Function 
-* loadmask("res/heart.jpg", color="red", transparent=(1,1,1)) #set forecolor and transparent  
-* loadmask("res/heart.svg") #only a subset of arguments is supported
+* loadmask(open("res/heart.jpg"), 256, 256) # resize to 256*256  
+* loadmask("res/heart.jpg", ratio=0.3) # scaled by 0.3  
+* loadmask("res/heart.jpg", color="red", ratio=2) # set forecolor  
+* loadmask("res/heart.jpg", transparent=rgba->maximum(rgba[1:3])*(rgba[4]/255)>128) # set transparent using a Function 
+* loadmask("res/heart.jpg", color="red", transparent=(1,1,1)) # set forecolor and transparent  
+* loadmask("res/heart.svg") # only a subset of arguments is supported
 padding: an Integer or a tuple of two Integers.  
-For other keyword arguments like outline, linecolor, and smoothness, refer to the function `outline`.
+For other keyword arguments like outline, linecolor, and smoothness, refer to the function [`outline`](@ref).
 """
 function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...; 
     color=:auto, backgroundcolor=:auto, transparent=:auto, 
@@ -50,11 +50,11 @@ function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...;
             color = parsecolor(color)
             alpha(color) == 1 || @warn "the alpha channel is ignored"
             m = @view img[mask]
-            Render.recolor!(m, color) #保持透明度
+            Render.recolor!(m, color) # 保持透明度
         end
         if backgroundcolor ∉ DEFAULTSYMBOLS
             m = @view img[.~mask]
-            m .= convert.(eltype(img), backgroundcolor) #不保持透明度
+            m .= convert.(eltype(img), backgroundcolor) # 不保持透明度
         end
     end
 
@@ -122,11 +122,11 @@ end
 """
 # examples
 * paint(wc::WC)
-* paint(wc::WC, background=false) #without background
-* paint(wc::WC, background=outline(wc.mask)) #use a different background
-* paint(wc::WC, ratio=0.5) #resize the output
-* paint(wc::WC, "result.png", ratio=0.5) #save as png file
-* paint(wc::WC, "result.svg") #save as svg file
+* paint(wc::WC, background=false) # without background
+* paint(wc::WC, background=outline(wc.mask)) # use a different background
+* paint(wc::WC, ratio=0.5) # resize the output
+* paint(wc::WC, "result.png", ratio=0.5) # save as png file
+* paint(wc::WC, "result.svg") # save as svg file
 """
 function paint(wc::WC, args...; background=true, kargs...)
     if background == true
@@ -141,7 +141,7 @@ function paint(wc::WC, args...; background=true, kargs...)
     end
     overlay!(background, wc.imgs, getpositions(wc))
     if !(isempty(args) && isempty(kargs))
-        background = ARGB.(background) #https://github.com/JuliaImages/ImageTransformations.jl/issues/97
+        background = ARGB.(background) # https://github.com/JuliaImages/ImageTransformations.jl/issues/97
         background = imresize(background, args...; kargs...)
     end
     background

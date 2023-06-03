@@ -3,7 +3,7 @@
 #md# We use the GDP of countries from 2000 to 2020 as an example.
 using WorldBankData
 using DataFrames
-df0 = wdi("NY.GDP.MKTP.CD", "all", 2000, 2020) #GDP from 2000 to 2020
+df0 = wdi("NY.GDP.MKTP.CD", "all", 2000, 2020) # GDP from 2000 to 2020
 df0.year = round.(Int, df0[!, :year])
 df = unstack(df0, :year, :NY_GDP_MKTP_CD)
 country_groups = ["XC", "EU", "XE", "XD", "XF", "ZB", "ZT", "XH", "XI", "XG", "ZJ", "XJ", "XL", "XO", 
@@ -11,8 +11,8 @@ country_groups = ["XC", "EU", "XE", "XD", "XF", "ZB", "ZT", "XH", "XI", "XG", "Z
 countrymask = .!occursin.(r"\d" , df.iso2c) .& .!in.(df.iso2c, Ref(country_groups))
 df = df[countrymask, 2:end]
 df[!, 2:end] .= sqrt.(df[!, 2:end] ./ length.(df.country))
-df.country = replace.(df.country, " "=>"\n") #some names are too long
-for i in 1:size(df, 1) #interpolation, fill missing
+df.country = replace.(df.country, " "=>"\n") # some names are too long
+for i in 1:size(df, 1) # interpolation, fill missing
     for j in 3:size(df, 2)
         if ismissing(df[i, j])
             df[i, j] = df[i, j-1]
@@ -40,7 +40,7 @@ gif = WordCloud.GIF("series")
 println("results are saved in series")
 @assert length(unique(df[!, 1])) == length(df[!, 1])
 initialized = false
-for name in names(df)[2:end] #the first column is word list
+for name in names(df)[2:end] # the first column is word list
     words = df[!, 1]
     weights = df[!, name]
     missingmask = ismissing.(weights)

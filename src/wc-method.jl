@@ -69,8 +69,8 @@ end
 * placewords!(wc)
 * placewords!(wc, style=:uniform)
 * placewords!(wc, style=:gathering)
-* placewords!(wc, style=:gathering, level=5) #The `level` parameter controls the intensity of gathering, typically ranging from 4 to 6. The default value is 5.
-* placewords!(wc, style=:gathering, level=6, rt=0) #rt=0 for rectangle, rt=1 for ellipse, rt=2 for rhombus. The default value is 1.  
+* placewords!(wc, style=:gathering, level=5) # The `level` parameter controls the intensity of gathering, typically ranging from 4 to 6. The default value is 5.
+* placewords!(wc, style=:gathering, level=6, rt=0) # rt=0 for rectangle, rt=1 for ellipse, rt=2 for rhombus. The default value is 1.  
     There is also a keyword argument `centralword` available. For example, `centralword=1`, `centralword="Alice"` or `centralword=false`.
 When you have set `style=:gathering`, you should also disable repositioning in `generate!`, especially for big words. For example, `generate!(wc, reposition=0.7)`.
 The keyword argument `reorder` is a function used to reorder the words, which affects the order of placement. For example, you can use `reverse` or `WordCloud.shuffle`.
@@ -92,14 +92,14 @@ function placewords!(wc::WC; style=:auto, rt=:auto, centralword=:auto, reorder=:
                 || (wc.weights[max_i2] / wc.weights[max_i] < 0.5 
                     && prod(kernelsize(wc.qtrees[max_i2])) / prod(kernelsize(wc.qtrees[max_i])) < 0.5))
         end
-        if centralword #Bool
+        if centralword # Bool
             centralword = max_i
         end
-        #false or Int
+        # false or Int
     end
     arg = ()
     qtrees = wc.qtrees
-    if centralword !== false #Bool, Int or string...
+    if centralword !== false # Bool, Int or string...
         centralword = index(wc, centralword)
         setcenter!(wc.qtrees[centralword],  wc.params[:groundsize] .÷ 2)
         println("center the word $(repr(getwords(wc, centralword)))")
@@ -247,7 +247,7 @@ end
 * epochs: the number of training epochs
 # Keyword Arguments
 * patience: the number of epochs before repositioning
-* reposition: a boolean value that determines whether repositioning is enabled or disabled. Additionally, it can accept a float value p (0 ≤ p ≤ 1) to indicate the repositioning ratio, an integer value n to specify the minimum index for repositioning, a function index::Int -> doreposition::Bool to customize the repositioning behavior, or a whitelist for specific indexes.
+* reposition: a boolean value that determines whether repositioning is enabled or disabled. Additionally, it can accept a float value p (0 ≤ p ≤ 1) to indicate the repositioning ratio, an integer value n to specify the minimum index for repositioning, a function index::Int -> repositionable::Bool to customize the repositioning behavior, or a whitelist for specific indexes.
 * trainer: specify a training engine
 """
 function fit!(wc, args...; reposition=true, optimiser=SGD(), krags...)
@@ -287,7 +287,7 @@ end
 # Keyword Arguments
 * retry: the number of attempts for shrinking and retraining, defaults to 3; set to 1 to disable shrinking
 * patience: the number of epochs before repositioning
-* reposition: a boolean value that determines whether repositioning is enabled or disabled. Additionally, it can accept a float value p (0 ≤ p ≤ 1) to indicate the repositioning ratio, an integer value n to specify the minimum index for repositioning, a function index::Int -> doreposition::Bool to customize the repositioning behavior, or a whitelist for specific indexes.
+* reposition: a boolean value that determines whether repositioning is enabled or disabled. Additionally, it can accept a float value p (0 ≤ p ≤ 1) to indicate the repositioning ratio, an integer value n to specify the minimum index for repositioning, a function index::Int -> repositionable::Bool to customize the repositioning behavior, or a whitelist for specific indexes.
 * trainer: specify a training engine
 """
 function generate!(wc::WC, args...; retry=3, krags...)
@@ -305,7 +305,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
             else
                 rescale!(wc, 0.97)
                 dens = wordsoccupancy!(wc) / getparameter(wc, :volume)
-                println("▸$r. Try setting scale = $(getparameter(wc, :scale)). The density is reduced to $dens")
+                println("▸$r. Try setting scale = $(getparameter(wc, :scale)). The density will be reduced to $dens")
                 printfontsizes(wc)
             end
         else
@@ -332,11 +332,11 @@ STATEIDS = Dict([s => i for (i, s) in enumerate(STATES)])
 
 """
 Retain specific words and ignore the rest, and then execute the function. It functions as the opposite of ignore.
-* keep(fun, wc, ws::String) #keep a word
-* keep(fun, wc, ws::Set{String}) #keep all words in ws
-* keep(fun, wc, ws::Vector{String}) #keep all words in ws
+* keep(fun, wc, ws::String) # keep a word
+* keep(fun, wc, ws::Set{String}) # keep all words in ws
+* keep(fun, wc, ws::Vector{String}) # keep all words in ws
 * keep(fun, wc, inds::Union{Integer, Vector{Integer}})
-* keep(fun, wc::WC, mask::AbstractArray{Bool}) #keep words. The `mask` must have the same length as `wc`
+* keep(fun, wc::WC, mask::AbstractArray{Bool}) # keep words. The `mask` must have the same length as `wc`
 """
 function keep(fun, wc::WC, mask::AbstractArray{Bool})
     mem = [wc.words, wc.weights, wc.imgs, wc.svgs, wc.qtrees, 
@@ -374,11 +374,11 @@ end
  
 """
 Fix specific words as if they were part of the background, and then execute the function.
-* pin(fun, wc, ws::String) #pin an single  word
-* pin(fun, wc, ws::Set{String}) #pin all words in ws
-* pin(fun, wc, ws::Vector{String}) #pin all words in ws
+* pin(fun, wc, ws::String) # pin an single  word
+* pin(fun, wc, ws::Set{String}) # pin all words in ws
+* pin(fun, wc, ws::Vector{String}) # pin all words in ws
 * pin(fun, wc, inds::Union{Integer, Vector{Integer}})
-* pin(fun, wc::WC, mask::AbstractArray{Bool}) #pin words. #pin words. The `mask` must have the same length as `wc`.
+* pin(fun, wc::WC, mask::AbstractArray{Bool}) # pin words. # pin words. The `mask` must have the same length as `wc`.
 """           
 function pin(fun, wc::WC, mask::AbstractArray{Bool})
     maskqtree = wc.maskqtree
@@ -418,11 +418,11 @@ end
 
 """
 Exclude specific words as if they do not exist, and then execute the function. It functions as the opposite of `keep`.
-* ignore(fun, wc, ws::String) #ignore a word
-* ignore(fun, wc, ws::Set{String}) #ignore all words in ws
-* ignore(fun, wc, ws::Vector{String}) #ignore all words in ws
+* ignore(fun, wc, ws::String) # ignore a word
+* ignore(fun, wc, ws::Set{String}) # ignore all words in ws
+* ignore(fun, wc, ws::Vector{String}) # ignore all words in ws
 * ignore(fun, wc, inds::Union{Integer, Vector{Integer}})
-* ignore(fun, wc::WC, mask::AbstractArray{Bool}) #ignore words. The `mask` must have the same length as `wc`
+* ignore(fun, wc::WC, mask::AbstractArray{Bool}) # ignore words. The `mask` must have the same length as `wc`
 """
 function ignore(fun, wc::WC, mask::AbstractArray{Bool})
     keep(fun, wc, .!mask)

@@ -409,7 +409,7 @@ end
 
 # ╔═╡ fa6b3269-357e-4bf9-8514-70aff9df427f
 begin
-    google_fonts #used to adjust cell order
+    google_fonts # used to adjust cell order
     function gen_cloud(words_weights)
         if outlinewidth isa Number && outlinewidth >= 0
             olw = outlinewidth

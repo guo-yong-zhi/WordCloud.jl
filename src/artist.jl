@@ -15,7 +15,7 @@ function checkfonts(fonts::AbstractVector)
             p = position(f)
             for font in fonts
                 rendertext("a", 1 + rand(), font=font) # 相同字体相同字号仅warning一次，故首次执行最准
-                # flush(f) #https://en.cppreference.com/w/cpp/io/c/fseek The standard C++ file streams guarantee both flushing and unshifting 
+                # flush(f) # https://en.cppreference.com/w/cpp/io/c/fseek The standard C++ file streams guarantee both flushing and unshifting 
                 seekend(f)
                 p2 = position(f)
                 push!(r, p2 == p)

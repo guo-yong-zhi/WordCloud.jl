@@ -7,7 +7,7 @@ wc = wordcloud("It's easy to generate a beautiful word cloud.") |> generate!
 paint(wc, "wordcloud.svg")
 ```
 
-Please visit the repository at: https://github.com/guo-yong-zhi/WordCloud.jl
+Please visit the repository at: <https://github.com/guo-yong-zhi/WordCloud.jl>
 """
 module WordCloud
 export wordcloud, processtext, html2text, countwords, lemmatize, lemmatize!, casemerge!, rescaleweights

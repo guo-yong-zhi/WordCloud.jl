@@ -4,14 +4,13 @@ using WordCloud
 Documenter.makedocs(
     clean = true,
     doctest = true,
-    modules = Module[WordCloud],
     repo = "",
     highlightsig = true,
     sitename = "WordCloud.jl",
     expandfirst = [],
     pages = [
         "Index" => "index.md",
-    ]
+    ],
 )
 
 deploydocs(;

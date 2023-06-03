@@ -18,7 +18,7 @@ Pkg.add("WordCloud")
 
 ## Documentation
 ```@autodocs
-Modules = [WordCloud]
+Modules = [WordCloud, WordCloud.TextProcessing, WordCloud.Render]
 ```
 
 ## Gallery
