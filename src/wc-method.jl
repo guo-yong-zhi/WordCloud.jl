@@ -66,12 +66,13 @@ function printfontsizes(wc)
     end
 end
 """
+The `placewords!` function is employed to establish an initial layout for the word cloud.
 * placewords!(wc)
 * placewords!(wc, style=:uniform)
 * placewords!(wc, style=:gathering)
 * placewords!(wc, style=:gathering, level=5) # The `level` parameter controls the intensity of gathering, typically ranging from 4 to 6. The default value is 5.
 * placewords!(wc, style=:gathering, level=6, rt=0) # rt=0 for rectangle, rt=1 for ellipse, rt=2 for rhombus. The default value is 1.  
-    There is also a keyword argument `centralword` available. For example, `centralword=1`, `centralword="Alice"` or `centralword=false`.
+There is also a keyword argument `centralword` available. For example, `centralword=1`, `centralword="Alice"` or `centralword=false`.
 When you have set `style=:gathering`, you should also disable repositioning in `generate!`, especially for big words. For example, `generate!(wc, reposition=0.7)`.
 The keyword argument `reorder` is a function used to reorder the words, which affects the order of placement. For example, you can use `reverse` or `WordCloud.shuffle`.
 """
@@ -166,7 +167,7 @@ function recolor_main!(wc, i::Integer; background=getmask(wc))
     bg = ARGB.(background)
     img = getimages(wc, i)
     x, y = getpositions(wc, i)
-    bg, img = Render.overlappingarea(bg, img, x, y)
+    bg, img = Render.intersection_region(bg, img, x, y)
     m = wordmask(img, (0, 0, 0, 0), 0)
     bkv = @view bg[m]
     c = mostfrequent(bkv)
@@ -177,7 +178,7 @@ function recolor_average!(wc, i::Integer; background=getmask(wc))
     bg = ARGB.(background)
     img = getimages(wc, i)
     x, y = getpositions(wc, i)
-    bg, img = Render.overlappingarea(bg, img, x, y)
+    bg, img = Render.intersection_region(bg, img, x, y)
     m = wordmask(img, (0, 0, 0, 0), 0)
     bkv = @view bg[m]
     c = sum(bkv) / length(bkv)
@@ -189,7 +190,7 @@ function recolor_blending!(wc, i::Integer; alpha=0.5, background=getmask(wc))
     bg = background
     img = getimages(wc, i)
     x, y = getpositions(wc, i)
-    bg, img = Render.overlappingarea(bg, img, x, y)
+    bg, img = Render.intersection_region(bg, img, x, y)
     m = wordmask(img, (0, 0, 0, 0), 0)
     bg = @view bg[m]
     img = @view img[m]
@@ -204,7 +205,7 @@ function recolor_clipping!(wc, i::Integer; background=getmask(wc))
     bg = background
     img = getimages(wc, i)
     x, y = getpositions(wc, i)
-    bg, img = Render.overlappingarea(bg, img, x, y)
+    bg, img = Render.intersection_region(bg, img, x, y)
     m = wordmask(img, (0, 0, 0, 0), 0)
     bg = @view bg[m]
     img = @view img[m]
@@ -213,16 +214,16 @@ function recolor_clipping!(wc, i::Integer; background=getmask(wc))
 end
 recolor_clipping!(wc, w=:; kargs...) = recolor_clipping!.(wc, index(wc, w); kargs...)
 """
-Recolor the words in `wc` using different styles based on the background picture.
+Recolor the words according to the pixel color in the background image.
 The styles supported are `:average`, `:main`, `:clipping`, `:blending`, and :reset (to undo all effects of the other styles).
-e.g.  
+## Examples
 * recolor!(wc, style=:average)
 * recolor!(wc, style=:main)
 * recolor!(wc, style=:clipping, background=blur(getmask(wc))) # The `background` parameter is optional
 * recolor!(wc, style=:blending, alpha=0.3) # The `alpha` parameter is optional
 * recolor!(wc, style=:reset)
 
-The effects of `:average`, `:main`, and `:clipping` are determined solely by the background. However, the effect of `:blending` is also influenced by the color of the previous word. Therefore, `:blending` can also be used in combination with other styles. 
+The effects of `:average`, `:main`, and `:clipping` are determined solely by the background. However, the effect of `:blending` is also influenced by the previous color of the word. Therefore, `:blending` can also be used in combination with other styles. 
 The results of `clipping` and `blending` cannot be exported as SVG files; PNG should be used instead.
 """
 function recolor!(wc, args...; style=:average, kargs...)
@@ -285,7 +286,7 @@ end
 * wc: the word cloud object to be fitted
 * epochs: the number of training epochs
 # Keyword Arguments
-* retry: the number of attempts for shrinking and retraining, defaults to 3; set to 1 to disable shrinking
+* retry: the number of attempts for shrinking and retraining, default is 3; set to 1 to disable shrinking
 * patience: the number of epochs before repositioning
 * reposition: a boolean value that determines whether repositioning is enabled or disabled. Additionally, it can accept a float value p (0 ≤ p ≤ 1) to indicate the repositioning ratio, an integer value n to specify the minimum index for repositioning, a function index::Int -> repositionable::Bool to customize the repositioning behavior, or a whitelist for specific indexes.
 * trainer: specify a training engine

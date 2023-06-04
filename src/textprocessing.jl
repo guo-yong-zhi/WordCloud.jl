@@ -146,9 +146,9 @@ Process the text, filter the words, and adjust the weights. Return a vector of w
 * stopwords: a set of words
 * minlength, maxlength: minimum and maximum length of a word to be included
 * minfrequency: minimum frequency of a word to be included
-* maxnum: maximum number of words, defaults to 500
+* maxnum: maximum number of words, default is 500
 * minweight, maxweight: within 0 ~ 1, set to adjust extreme weight
-* process: a function to process word counter, defaults to `rescaleweights(identity, :wordarea)∘casemerge!∘lemmatize!`
+* process: a function to process word counter, default is `rescaleweights(identity, 0) ∘ casemerge! ∘ lemmatize!`
 """
 function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     stopwords=stopwords,

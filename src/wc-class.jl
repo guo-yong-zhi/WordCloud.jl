@@ -31,7 +31,7 @@ The positional arguments are used to specify words and weights in various forms,
 * fonts = ("Arial", "Times New Roman", "Tahoma") # randomly select entries  
 * fonts = ["Arial", "Times New Roman", "Tahoma", ......] # use elements in a cyclic manner  
 * density = 0.55 # default is 0.5  
-* spacing = 1  # minimum spacing between words
+* spacing = 1  # minimum spacing between words, default is 2
 
 ### mask-related keyword arguments
 * mask = loadmask("res/heart.jpg", 256, 256) # refer to the documentation of [`loadmask`](@ref)  
@@ -39,24 +39,24 @@ The positional arguments are used to specify words and weights in various forms,
 * mask = "res/heart.jpg" # shortcut for loadmask("res/heart.jpg")
 * mask = shape(ellipse, 800, 600, color="white", backgroundcolor=(0,0,0,0)) # refer to the documentation of [`shape`](@ref).
 * mask = box # mask can also be one of `box`, `ellipse`, `squircle`, `ngon`, `star`, `bezingon` or `bezistar`. Refer to the documentation of [`shape`](@ref). 
-* masksize: It can be a tuple `(width, height)`, a single number indicating the side length, or one of the symbols :original, :default, or :auto. 
+* masksize: It can be a tuple `(width, height)`, a single number indicating the side length, or one of the symbols `:original`, `:default`, or `:auto`. 
 * backgroundsize: Refer to [`shape`](@ref). It is used with `masksize` to specify the padding size.
-* maskcolor: It can be "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original (to keep it unchanged), or :auto (to auto recolor the mask).
-* backgroundcolor: It can be "black", "#ff0000", (0.5,0.5,0.7), 0.2, or :default, :original, :maskcolor, or :auto (randomly select between :original and :maskcolor).
-outline, linecolor, smoothness: Refer to the [`shape`](@ref) and [`outline`](@ref) functions.
-* transparent = (1,0,0) # set the transparent color in the mask  
+* maskcolor: It can take various values that represent colors, such as `"black"`, `"#f000f0"`, `(0.5, 0.5, 0.7)`, or `0.2`. Alternatively, it can be set to one of the following options: `:default`, `:original` (to maintain its original color), or `:auto` (to automatically recolor the mask).
+* backgroundcolor: It can take various values that represent colors. Alternatively, it can be set to one of the following options: `:default`, `:original`, `:maskcolor`, or `:auto` (which randomly selects between `:original` and `:maskcolor`).
+* outline, linecolor, smoothness: Refer to the [`shape`](@ref) and [`outline`](@ref) functions.
+* transparent = (1,0,0) # interpret the color `(1,0,0)` as transparent  
 * transparent = nothing # no transparent color  
 * transparent = c->(c[1]+c[2]+c[3])/3*(c[4]/255)>128) # set transparency using a function. `c` is an (r,g,b,a) Tuple.
 ---
 * Notes
   * Some arguments depend on whether the `mask` is provided or on the type of the provided `mask`.
 ### other keyword arguments
-The keyword argument state is a function. It will be called after the wordcloud object is constructed, which sets the object to a specific state.
-* style, centralword, reorder, rt, level: Configure the style of `placewords!` Refer to the documentation of [`placewords!`](@ref).
-* state = placewords! # It is the default setting that initializes the position of words
-* state = generate! # get the result directly
-* state = initwords! # only initializes resources, such as word pictures
-* state = identity # do nothing
+* style, centralword, reorder, rt, level: Configure the layout style of word cloud. Refer to the documentation of [`placewords!`](@ref).
+* The keyword argument state is a function. It will be called after the wordcloud object is constructed, which sets the object to a specific state.
+  * state = placewords! # It is the default setting that initializes the position of words
+  * state = generate! # get the result directly
+  * state = initwords! # only initializes resources, such as word pictures
+  * state = identity # do nothing
 ---
 * Notes
   * After obtaining the wordcloud object, the following steps are required to obtain the resulting picture: initwords! -> placewords! -> generate! -> paint

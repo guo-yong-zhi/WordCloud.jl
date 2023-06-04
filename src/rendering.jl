@@ -261,11 +261,13 @@ function dilate2(mat, r; smoothness=0.5) # better and slower
     return min.(1.0, m[2:end-1, 2:end-1])
 end
 """
-img: a bitmap image;  
-linewidth: 0 <= linewidth;  
-color: line color;  
-transparent: color of the background;  
-smoothness: 0 <= smoothness <= 1  
+## Positional Arguments
+* img: a bitmap image
+## Keyword Arguments
+* linewidth: 0 <= linewidth 
+* color: line color
+* transparent: the color of the transparent area, default is :auto
+* smoothness: 0 <= smoothness <= 1, smoothness of the line, default is 0.5
 """
 function outline(img; transparent=:auto, color="black", linewidth=2, smoothness=0.5)
     @assert linewidth >= 0
@@ -296,8 +298,8 @@ function padding(img::SVGImageType, r=maximum(size(img)) ÷ 10; backgroundcolor=
     finish()
     m2
 end
-"Return the overlapping view of img1 and img2 when img2 is positioned with its top left corner at coordinates (x, y) in img1."
-function overlappingarea(img1, img2, x=1, y=1)
+"Return the intersecting region `view`s of img1 and img2, where img2 is positioned in img1 with its top left corner located at coordinates (x, y)."
+function intersection_region(img1, img2, x=1, y=1)
     h1, w1 = size(img1)
     h2, w2 = size(img2)
     img1v = @view img1[max(1, y):min(h1, y + h2 - 1), max(1, x):min(w1, x + w2 - 1)]
@@ -324,7 +326,7 @@ function overlay(color1::TransparentRGB, color2::TransparentRGB)
 end
 "Place img2 onto img1 at coordinates (x, y)."
 function overlay!(img1::AbstractMatrix, img2::AbstractMatrix, x=1, y=1)# 左上角重合时(x=1,y=1)
-    img1v, img2v = overlappingarea(img1, img2, x, y)
+    img1v, img2v = intersection_region(img1, img2, x, y)
     #     @show (h1, w1),(h2, w2),(x,y)
     img1v .= overlay.(img1v, img2v)
     img1
@@ -406,6 +408,16 @@ end
 
 """
 Generate an SVG image of a box, ellipse, squircle, ngon, star, bezingon, or bezistar.
+## Positional Arguments
+* shape: one of `box`, `ellipse`, `squircle`, `ngon`, `star`, `bezingon`, or `bezistar`
+* width: width of the shape
+* height: height of the shape
+## Keyword Arguments
+* outline: an integer indicating the width of the outline
+* padding: an integer or a tuple of two integers indicating the padding size
+* backgroundsize: a tuple of two integers indicating the size of the background
+* color, linecolor, backgroundcolor: any value that can be parsed as a color. 
+* npoints, starratio, cornerradius, rt: see the Examples section below
 ## Examples
 * shape(box, 80, 50) # box with dimensions 80*50
 * shape(box, 80, 50, cornerradius=4) # box with corner radius 4
@@ -416,10 +428,6 @@ Generate an SVG image of a box, ellipse, squircle, ngon, star, bezingon, or bezi
 * shape(ellipse, 80, 50, color="red") # red ellipse with dimensions 80*50
 * shape(box, 80, 50, backgroundcolor=(0,1,0), backgroundsize=(100, 100)) # 80*50 box on a 100*100 green background
 * shape(squircle, 80, 50, outline=3, linecolor="red", backgroundcolor="gray") # add a red outline to the squircle
-outline: an integer.   
-padding: an integer or a tuple of two integers.   
-backgroundsize: a tuple of two integers. 
-color, linecolor, backgroundcolor: any value that can be parsed as a color.
 """
 function shape(shape_, width, height, args...;
     outline=0, linecolor="black", padding=0,
