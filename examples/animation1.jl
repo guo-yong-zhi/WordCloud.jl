@@ -7,16 +7,16 @@ wc = wordcloud(
     masksize = (300, 200),
     outline = 3,
     angles = 0:90,
-    state = initwords!)
+    state = initialize!)
 #md# ### uniform style
 gifdirectory = "animation1/uniform"
 setpositions!(wc, :, (-1000,-1000))
-@record gifdirectory overwrite=true filter=i->i%(2^(i÷100))==0 placewords!(wc, style=:uniform)
+@record gifdirectory overwrite=true filter=i->i%(2^(i÷100))==0 layout!(wc, style=:uniform)
 #md# ![](animation1/uniform/animation.gif)  
 #md# ### gathering style
 gifdirectory = "animation1/gathering"
 setpositions!(wc, :, (-1000,-1000))
-@record gifdirectory overwrite=true filter=i->i%(2^(i÷100))==0 placewords!(wc, style=:gathering)
+@record gifdirectory overwrite=true filter=i->i%(2^(i÷100))==0 layout!(wc, style=:gathering)
 #md# ![](animation1/gathering/animation.gif)  
 #md# 
 println("results are saved in animation1")

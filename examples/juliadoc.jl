@@ -33,10 +33,10 @@ wc = wordcloud(
 )
 setangles!(wc, "julia", 0)
 # setangles!(wc, "function", 45)
-# initword!(wc, "function")
+# initialize!(wc, "function")
 setcolors!(wc, "julia", (0.796, 0.235, 0.20))
 # setfonts!(wc, "julia", "forte")
-initword!(wc, "julia")
+initialize!(wc, "julia")
 juliacircles = drawjuliacircle(getfontsizes(wc, "∴") |> round)
 setsvgimages!(wc, "∴", juliacircles) # replace image
 sz1 = size(getimages(wc, "∴"))
@@ -48,7 +48,7 @@ setpositions!(wc, "∴", (x1, y1))
 setpositions!(wc, "julia", (x1 + sz1[2], y2))
 
 pin(wc, ["julia", "∴"]) do
-    placewords!(wc)
+    layout!(wc)
     generate!(wc, 2000)
 end
 println("results are saved to juliadoc.svg")

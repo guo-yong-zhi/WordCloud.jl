@@ -39,7 +39,7 @@ function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...;
     backgroundcolor ∉ DEFAULTSYMBOLS && (backgroundcolor = parsecolor(backgroundcolor))
     if padding != 0 # padding before cal imagemask
         bc = backgroundcolor in DEFAULTSYMBOLS ? :auto : backgroundcolor
-        img = Render.padding(img, padding, backgroundcolor=bc)
+        img = pad(img, padding, backgroundcolor=bc)
     end
     if return_bitmask || color ∉ DEFAULTSYMBOLS || backgroundcolor ∉ DEFAULTSYMBOLS
         mask = imagemask(img, transparent)
@@ -79,7 +79,7 @@ function loadmask(img::SVGImageType, args...;
     if padding != 0
         bc = get(kargs, :backgroundcolor, (0,0,0,0))
         bc in DEFAULTSYMBOLS && (bc = (0,0,0,0))
-        img = Render.padding(img, padding, backgroundcolor=bc)
+        img = pad(img, padding, backgroundcolor=bc)
     end
     return_bitmask ? (img, nothing) : img
 end

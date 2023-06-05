@@ -51,16 +51,16 @@ The positional arguments are used to specify words and weights in various forms,
 * Notes
   * Some arguments depend on whether the `mask` is provided or on the type of the provided `mask`.
 ### other keyword arguments
-* style, centralword, reorder, rt, level: Configure the layout style of word cloud. Refer to the documentation of [`placewords!`](@ref).
-* The keyword argument state is a function. It will be called after the wordcloud object is constructed, which sets the object to a specific state.
-  * state = placewords! # It is the default setting that initializes the position of words
+* style, centralword, reorder, rt, level: Configure the layout style of word cloud. Refer to the documentation of [`layout!`](@ref).
+* The keyword argument `state` is a function. It will be called after the wordcloud object is constructed, which sets the object to a specific state.
+  * state = initialize! # only initializes resources, such as word images
+  * state = layout! # It is the default setting that initializes the position of words
   * state = generate! # get the result directly
-  * state = initwords! # only initializes resources, such as word pictures
   * state = identity # do nothing
 ---
 * Notes
-  * After obtaining the wordcloud object, the following steps are required to obtain the resulting picture: initwords! -> placewords! -> generate! -> paint
-  * You can skip `placewords!` and/or `initwords!`, and these operations will be automatically performed with default parameters
+  * After obtaining the wordcloud object, the following steps are required to obtain the resulting picture: initialize! -> layout! -> generate! -> paint
+  * You can skip `initialize!` and/or `layout!`, and these operations will be automatically performed with default parameters
 """
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter) |> collect, values(counter) |> collect; kargs...)
@@ -71,11 +71,11 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
                 colors=:auto, angles=:auto, 
                 mask=:auto, fonts=:auto,
                 transparent=:auto, minfontsize=:auto, maxfontsize=:auto, spacing::Integer=2, density=0.5,
-                state=placewords!, style=:auto, centralword=:auto, reorder=:auto, level=:auto, kargs...)
+                state=layout!, style=:auto, centralword=:auto, reorder=:auto, level=:auto, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol,Any}()
 
-    # parameters for placewords!
+    # parameters for layout!
     params[:style] = style
     params[:centralword] = centralword
     params[:reorder] = reorder
@@ -347,23 +347,23 @@ function getbackgroundcolor(wc::WC)
     c == :maskcolor ? getmaskcolor(wc) : c
 end
 setbackgroundcolor!(wc::WC, v) = (setparameter!(wc, v, :backgroundcolor); v)
-@doc getdoc * " The keyword argument `type` can be either `getshift` or `getcenter`."
-function getpositions(wc::WC, w=:; type=getshift)
-    Stuffing.getpositions(wc.maskqtree, wc.qtrees, index(wc, w), type=type)
+@doc getdoc * " The keyword argument `mode` can be either `getshift` or `getcenter`."
+function getpositions(wc::WC, w=:; mode=getshift)
+    Stuffing.getpositions(wc.maskqtree, wc.qtrees, index(wc, w), mode=mode)
 end
 
-@doc setdoc * " The keyword argument `type` can be either `setshift!` or `setcenter!`."
-function setpositions!(wc::WC, w, x_y; type=setshift!)
-    Stuffing.setpositions!(wc.maskqtree, wc.qtrees, index(wc, w), x_y, type=type)
+@doc setdoc * " The keyword argument `mode` can be either `setshift!` or `setcenter!`."
+function setpositions!(wc::WC, w, x_y; mode=setshift!)
+    Stuffing.setpositions!(wc.maskqtree, wc.qtrees, index(wc, w), x_y, mode=mode)
 end
 
 Base.show(io::IO, m::MIME"image/png", wc::WC) = Base.show(io, m, paint(wc::WC))
 Base.show(io::IO, m::MIME"image/svg+xml", wc::WC) = Base.show(io, m, paintsvg(wc::WC))
 Base.show(io::IO, m::MIME"text/plain", wc::WC) = print(io, "wordcloud(", wc.words, ") # ", length(wc), "words")
 function Base.showable(::MIME"image/png", wc::WC)
-    STATEIDS[getstate(wc)] >= STATEIDS[:initwords!] && showable("image/png", zeros(ARGB, (1, 1)))
+    STATEIDS[getstate(wc)] >= STATEIDS[:initialize!] && showable("image/png", zeros(ARGB, (1, 1)))
 end
 function Base.showable(::MIME"image/svg+xml", wc::WC)
-    STATEIDS[getstate(wc)] >= STATEIDS[:initwords!] && (wc.svgmask !== nothing || !showable("image/png", wc))
+    STATEIDS[getstate(wc)] >= STATEIDS[:initialize!] && (wc.svgmask !== nothing || !showable("image/png", wc))
 end
 Base.show(io::IO, wc::WC) = Base.show(io, "text/plain", wc)

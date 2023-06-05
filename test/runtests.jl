@@ -19,16 +19,16 @@ include("test_textprocessing.jl")
     @test getparameter(wc, :volume) == WordCloud.occupancy(WordCloud.QTrees.kernel(wc.maskqtree[1]), WordCloud.QTrees.FULL)
     # animation
     setpositions!(wc, :, (-1000,-1000))
-    @record "animation1-test" filter=i->i%(2^(i÷100+3))==0 overwrite=true placewords!(wc, style=:gathering)
+    @record "animation1-test" filter=i->i%(2^(i÷100+3))==0 overwrite=true layout!(wc, style=:gathering)
     @record outputdir="animation2-test" filter=i->i%10==0 overwrite=true generate!(wc, 100)
 
-    # placewords!
-    placewords!(wc, style=:gathering)
+    # layout!
+    layout!(wc, style=:gathering)
     words = ["." for i in 1:500]
     weights = [1 for i in 1:length(words)]
     @test_throws ErrorException begin # no room
         wc = wordcloud(words, weights, mask=ellipse, masksize=(5, 5), backgroundsize=(10, 10), density=1000, angles=0, maxfontsize=5)
-        placewords!(wc)
+        layout!(wc)
     end
 
     # wordcloud factory
@@ -111,7 +111,7 @@ include("test_textprocessing.jl")
         setpositions!(wc, 1, (2, 2))
         setpositions!(wc, [1, "Alice", "one"], (-1, -2))
         setpositions!(wc, [1, "Alice", "one"], [(10, 10),(10, 20),(21, 2)])
-        setpositions!(wc, "time", (0, 0), type=setcenter!)
+        setpositions!(wc, "time", (0, 0), mode=setcenter!)
         setfontsizes!(wc, [WordCloud.ID(66), "Alice", "one"], [9, 8, 7.6])
         @test getwords(wc, WordCloud.ID(12:14)) == words[12:14]
     end
@@ -127,7 +127,7 @@ include("test_textprocessing.jl")
     setimages!(wc, 1, wc.imgs[[4,5]])
     setimages!(wc, 1, wc.imgs[4])
     setsvgimages!(wc, 1, wc.svgs[6])
-    setsvgimages!(wc, 6, wc.svgs[6]) # the results of setsvgimages! and initword! may not be identical
+    setsvgimages!(wc, 6, wc.svgs[6]) # the results of setsvgimages! and initialize! may not be identical
     @test wc.imgs[1] == wc.imgs[6]
 
     for s = [:main, :reset, :average, :clipping, :blending, :reset]
