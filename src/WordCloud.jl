@@ -14,12 +14,12 @@ export wordcloud, processtext, html2text, countwords, lemmatize, lemmatize!, cas
 export parsecolor, rendertext, shape, ellipse, box, squircle, star, ngon, bezistar, bezingon,
     loadmask, outline, padding, paint, paintsvg, svgstring
 export imageof, showmask, showmask!
-export record, @record, placewords!, rescale!, recolor!, take, keep, ignore, pin, runexample, showexample, generate!, fit!
+export record, @record, layout!, rescale!, recolor!, keep, ignore, pin, runexample, showexample, generate!, fit!
 export getparameter, setparameter!, hasparameter, getstate, setstate!,
     getcolors, getangles, getwords, getweights, setcolors!, setangles!, setwords!, setweights!,
     getpositions, setpositions!, getimages, getsvgimages, setimages!, setsvgimages!, getmask, getsvgmask, 
     getfontsizes, setfontsizes!, getfonts, setfonts!, getmaskcolor, getbackgroundcolor, setbackgroundcolor!, 
-    initword!, initwords!
+    initialize!
 export getshift, getcenter, setshift!, setcenter!
 
 using Stuffing

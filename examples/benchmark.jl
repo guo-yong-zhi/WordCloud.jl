@@ -27,7 +27,7 @@ for (i, wc) in enumerate(wcs)
     i == 4 && deleteat!(ts, lastindex(ts)-2:lastindex(ts)) # too slow
     for (j, t) in enumerate(ts)
         println("\n", i - 1, "==== ", j, "/", length(ts), " ", nameof(t))
-        placewords!(wc, style=:uniform)
+        layout!(wc, style=:uniform)
         @time e = @elapsed generate!(wc, trainer=t, retry=1)
         push!(es[i], "$(nameof(t)) - $(getparameter(wc, :epoch))" * (getstate(wc) == :generate! ? "✔ " : "✘ ") => e)
     end

@@ -9,7 +9,7 @@ function initqtree!(wc, i::Integer; backgroundcolor=(0, 0, 0, 0), spacing=getpar
 end
 initqtree!(wc, i; kargs...) = initqtree!.(wc, index(wc, i); kargs...)
 "Initialize the images and other resources associated with words using the specified style."
-function initwords!(wc, i::Integer; backgroundcolor=(0, 0, 0, 0), spacing=getparameter(wc, :spacing),
+function initialize!(wc, i::Integer; backgroundcolor=(0, 0, 0, 0), spacing=getparameter(wc, :spacing),
                     fontsize=getfontsizes(wc, i), color=wc.params[:colors][i],
                     angle=wc.params[:angles][i], font=wc.params[:fonts][i])
     img, svg = prepareword(wc.words[i], fontsize, color, angle,
@@ -19,8 +19,8 @@ function initwords!(wc, i::Integer; backgroundcolor=(0, 0, 0, 0), spacing=getpar
     initqtree!(wc, i, backgroundcolor=backgroundcolor, spacing=spacing)
     nothing
 end
-initwords!(wc, i; kargs...) = initword!.(wc, index(wc, i); kargs...)
-function initwords!(wc::WC; maxiter=5, tolerance=0.02)
+initialize!(wc, i; kargs...) = initialize!.(wc, index(wc, i); kargs...)
+function initialize!(wc::WC; maxiter=5, tolerance=0.02)
     params = wc.params
     weights = wc.weights
     wc.weights .= weights ./ √(sum(weights.^2 .* length.(wc.words)) / length(weights))
@@ -39,11 +39,10 @@ function initwords!(wc::WC; maxiter=5, tolerance=0.02)
     println("set density = $(params[:density])")
     findscale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
     printfontsizes(wc)
-    initword!(wc, :)
-    setstate!(wc, nameof(initwords!))
+    initialize!(wc, :)
+    setstate!(wc, nameof(initialize!))
     wc
 end
-initword! = initwords!
 function printfontsizes(wc)
     nsmall = findlast(i->getfontsizes(wc, i)<=wc.params[:minfontsize], length(wc):-1:1)
     nsmall === nothing && (nsmall = 0)
@@ -66,19 +65,19 @@ function printfontsizes(wc)
     end
 end
 """
-The `placewords!` function is employed to establish an initial layout for the word cloud.
-* placewords!(wc)
-* placewords!(wc, style=:uniform)
-* placewords!(wc, style=:gathering)
-* placewords!(wc, style=:gathering, level=5) # The `level` parameter controls the intensity of gathering, typically ranging from 4 to 6. The default value is 5.
-* placewords!(wc, style=:gathering, level=6, rt=0) # rt=0 for rectangle, rt=1 for ellipse, rt=2 for rhombus. The default value is 1.  
+The `layout!` function is employed to establish an initial layout for the word cloud.
+* layout!(wc)
+* layout!(wc, style=:uniform)
+* layout!(wc, style=:gathering)
+* layout!(wc, style=:gathering, level=5) # The `level` parameter controls the intensity of gathering, typically ranging from 4 to 6. The default value is 5.
+* layout!(wc, style=:gathering, level=6, rt=0) # rt=0 for rectangle, rt=1 for ellipse, rt=2 for rhombus. The default value is 1.  
 There is also a keyword argument `centralword` available. For example, `centralword=1`, `centralword="Alice"` or `centralword=false`.
 When you have set `style=:gathering`, you should also disable repositioning in `generate!`, especially for big words. For example, `generate!(wc, reposition=0.7)`.
 The keyword argument `reorder` is a function used to reorder the words, which affects the order of placement. For example, you can use `reverse` or `WordCloud.shuffle`.
 """
-function placewords!(wc::WC; style=:auto, rt=:auto, centralword=:auto, reorder=:auto, level=:auto, callback=x->x, kargs...)
-    if STATEIDS[getstate(wc)] < STATEIDS[:initwords!]
-        initwords!(wc)
+function layout!(wc::WC; style=:auto, rt=:auto, centralword=:auto, reorder=:auto, level=:auto, callback=x->x, kargs...)
+    if STATEIDS[getstate(wc)] < STATEIDS[:initialize!]
+        initialize!(wc)
     end
     @assert style in [:uniform, :gathering, :auto]
     centralword == :auto && hasparameter(wc, :centralword) && (centralword = getparameter(wc, :centralword))
@@ -136,7 +135,7 @@ function placewords!(wc::WC; style=:auto, rt=:auto, centralword=:auto, reorder=:
         end
         if ind === nothing error("no room for placement") end
     end
-    setstate!(wc, nameof(placewords!))
+    setstate!(wc, nameof(layout!))
     setparameter!(wc, 0, :epoch)
     wc
 end
@@ -146,12 +145,12 @@ function rescale!(wc::WC, ratio::Real)
     qts = wc.qtrees
     centers = getcenter.(qts)
     wc.params[:scale] *= ratio
-    initword!(wc, :)
+    initialize!(wc, :)
     setcenter!.(wc.qtrees, centers)
     wc
 end
 
-recolor_reset!(wc, i::Integer) = initword!(wc, i)
+recolor_reset!(wc, i::Integer) = initialize!(wc, i)
 recolor_reset!(wc, w=:; kargs...) = recolor_reset!.(wc, index(wc, w); kargs...)
 function counter(iter; C=Dict{eltype(iter),Int}())
     for e in iter
@@ -171,7 +170,7 @@ function recolor_main!(wc, i::Integer; background=getmask(wc))
     m = wordmask(img, (0, 0, 0, 0), 0)
     bkv = @view bg[m]
     c = mostfrequent(bkv)
-    initword!(wc, i, color=c)
+    initialize!(wc, i, color=c)
 end
 recolor_main!(wc, w=:; kargs...) = recolor_main!.(wc, index(wc, w); kargs...)
 function recolor_average!(wc, i::Integer; background=getmask(wc))
@@ -182,7 +181,7 @@ function recolor_average!(wc, i::Integer; background=getmask(wc))
     m = wordmask(img, (0, 0, 0, 0), 0)
     bkv = @view bg[m]
     c = sum(bkv) / length(bkv)
-    initword!(wc, i, color=c)
+    initialize!(wc, i, color=c)
 end
 recolor_average!(wc, w=:; kargs...) = recolor_average!.(wc, index(wc, w); kargs...)
 
@@ -253,8 +252,8 @@ end
 """
 function fit!(wc, args...; reposition=true, optimiser=SGD(), krags...)
     reposition isa Union{Function,Number} || (reposition = index(wc, reposition)) # Bool <: Number
-    if STATEIDS[getstate(wc)] < STATEIDS[:placewords!]
-        placewords!(wc)
+    if STATEIDS[getstate(wc)] < STATEIDS[:layout!]
+        layout!(wc)
     end
     qtrees = [wc.maskqtree, wc.qtrees...]
     ep, nc = train!(qtrees, args...; reposition=reposition, optimiser=optimiser, krags...)
@@ -265,7 +264,7 @@ function fit!(wc, args...; reposition=true, optimiser=SGD(), krags...)
         # colllist = first.(totalcollisions(qtrees))
         # @assert length(colllist) == 0
     else
-        setstate!(wc, nameof(placewords!))
+        setstate!(wc, nameof(layout!))
     end
     wc
 end
@@ -292,8 +291,8 @@ end
 * trainer: specify a training engine
 """
 function generate!(wc::WC, args...; retry=3, krags...)
-    if STATEIDS[getstate(wc)] < STATEIDS[:placewords!]
-        placewords!(wc)
+    if STATEIDS[getstate(wc)] < STATEIDS[:layout!]
+        layout!(wc)
     end
     for r in 1:retry
         if r != 1
@@ -327,7 +326,7 @@ function generate!(wc::WC, args...; retry=3, krags...)
     wc
 end
 
-STATES = nameof.([wordcloud, initwords!, placewords!, fit!, generate!])
+STATES = nameof.([wordcloud, initialize!, layout!, fit!, generate!])
 STATEIDS = Dict([s => i for (i, s) in enumerate(STATES)])
 
 

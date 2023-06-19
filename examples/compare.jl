@@ -28,9 +28,9 @@ wcb = wordcloud(
     backgroundcolor=:maskcolor,
     maskcolor=getmaskcolor(wca),
     fonts=fs,
-    state=identity, # disables the useless initword! and placewords! in advance
+    state=identity, # disables the useless initialize! and layout! in advance
 )
-#md# Follow these steps to generate a wordcloud: initword! -> placewords! -> generate!
+#md# Follow these steps to generate a wordcloud: initialize! -> layout! -> generate!
 samewords = getwords(wca) ∩ getwords(wcb)
 println(length(samewords), " same words")
 
@@ -39,20 +39,20 @@ for w in samewords
     setangles!(wcb, w, getangles(wca, w))
     setfonts!(wcb, w, getfonts(wca, w))
 end
-initwords!(wcb)
+initialize!(wcb)
 
 println("=ignore defferent words=")
 keep(wcb, samewords) do
     @assert Set(wcb.words) == Set(samewords)
-    centers = getpositions(wca, samewords, type=getcenter)
-    setpositions!(wcb, samewords, centers, type=setcenter!) # manually initialize the position,
-    setstate!(wcb, :placewords!) # and set the state flag
+    centers = getpositions(wca, samewords, mode=getcenter)
+    setpositions!(wcb, samewords, centers, mode=setcenter!) # manually initialize the position,
+    setstate!(wcb, :layout!) # and set the state flag
     generate!(wcb, 1000, reposition=false, retry=1) # disables repositioning; retry=1 means no rescale
 end
 
 println("=pin same words=")
 pin(wcb, samewords) do
-    placewords!(wcb, style=:uniform)
+    layout!(wcb, style=:uniform)
     generate!(wcb, 1000, retry=1) # enables repositioning while disabling rescaling
 end
 

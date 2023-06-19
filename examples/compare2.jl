@@ -14,7 +14,7 @@ wca = wordcloud(
     density=dens,
     backgroundcolor=:maskcolor,
     fonts=fs,
-    state=identity, # turn off the initword! and placewords! in advance
+    state=identity, # turn off the initialize! and layout! in advance
 )
 wcb = wordcloud(
     processtext(open(pkgdir(WordCloud) * "/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.stopwords_en ∪ stwords),
@@ -41,26 +41,26 @@ for w in samewords
     setfonts!(wcb, w, getfonts(wca, w))
 end
 #md# ### Put the same words at same position
-initwords!(wca)
-initwords!(wcb)
+initialize!(wca)
+initialize!(wcb)
 keep(wca, samewords) do
-    placewords!(wca, style=:uniform)
+    layout!(wca, style=:uniform)
     fit!(wca, 1000)
 end
 pin(wca, samewords) do
-    placewords!(wca, style=:uniform) # place other words
+    layout!(wca, style=:uniform) # place other words
 end
-centers = getpositions(wca, samewords, type=getcenter)
-setpositions!(wcb, samewords, centers, type=setcenter!) # manually initialize the position,
+centers = getpositions(wca, samewords, mode=getcenter)
+setpositions!(wcb, samewords, centers, mode=setcenter!) # manually initialize the position,
 pin(wcb, samewords) do
-    placewords!(wcb, style=:uniform) # place other words
+    layout!(wcb, style=:uniform) # place other words
 end
 #md# ### Fit them all
 function syncposition(samewords, pos, wca, wcb)
-    pos2 = getpositions(wca, samewords, type=getcenter)
+    pos2 = getpositions(wca, samewords, mode=getcenter)
     if pos != pos2
-        setpositions!(wcb, samewords, pos2, type=setcenter!)
-        setstate!(wcb, :placewords!)
+        setpositions!(wcb, samewords, pos2, mode=setcenter!)
+        setstate!(wcb, :layout!)
     end
     pos2
 end
@@ -70,7 +70,7 @@ function pinfit!(wc, samewords, ep1, ep2)
     end
     fit!(wc, ep2, reposition=getparameter(wc, :uniquewords)) # only reposition the unique words
 end
-pos = getpositions(wca, samewords, type=getcenter)
+pos = getpositions(wca, samewords, mode=getcenter)
 while getparameter(wca, :epoch) < 2000 && getparameter(wcb, :epoch) < 2000
     global pos
     pinfit!(wca, samewords, 200, 50)

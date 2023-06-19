@@ -37,7 +37,7 @@ wc = wordcloud(
     density=0.3,
     colors=0.3,
     backgroundcolor=:maskcolor,
-    state=initwords!,
+    state=initialize!,
     # angles = (0, 45), fonts = "Eras Bold ITC", maskcolor=0.98,
 )
 
@@ -49,8 +49,8 @@ sz = collect(reverse(size(wc.mask)))'
 sz0 = collect(getparameter(wc, :masksize)[1:2])'
 pos = round.(Int, pos .* sz0 .+ sz ./ 2)
 
-setpositions!(wc, words, eachrow(pos), type=setcenter!)
-setstate!(wc, :placewords!)
+setpositions!(wc, words, eachrow(pos), mode=setcenter!)
+setstate!(wc, :layout!)
 generate!(wc, reposition=false)
 paint(wc, "semantic_embedding.png")
 #md# ![](semantic_embedding.png)  

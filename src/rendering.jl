@@ -2,7 +2,7 @@ module Render
 export rendertext, overlay!,
     shape, ellipse, box, squircle, star, ngon, bezistar, bezingon, ellipse_area, box_area, squircle_area,
     star_area, ngon_area, GIF, generate, parsecolor, rendertextoutlines,
-    colorschemes, torgba, imagemask, outline, padding, dilate!, imresize, recolor!, recolor
+    colorschemes, torgba, imagemask, outline, pad, dilate!, imresize, recolor!, recolor
 export issvg, save, load, tobitmap, SVGImageType, svgstring
 using Luxor
 using Colors
@@ -282,13 +282,13 @@ function outline(img; transparent=:auto, color="black", linewidth=2, smoothness=
     bg
 end
 
-function padding(img::AbstractMatrix, r=maximum(size(img)) ÷ 10; backgroundcolor=:auto)
+function pad(img::AbstractMatrix, r=maximum(size(img)) ÷ 10; backgroundcolor=:auto)
     color = convert(eltype(img), parsecolor(_backgroundcolor(img, backgroundcolor)))
     r = ceil.(Int, r)
     bg = fill(color, size(img) .+ 2 .* r)
     overlay!(bg, img, reverse((0, 0) .+ r)...)
 end
-function padding(img::SVGImageType, r=maximum(size(img)) ÷ 10; backgroundcolor=(0, 0, 0, 0))
+function pad(img::SVGImageType, r=maximum(size(img)) ÷ 10; backgroundcolor=(0, 0, 0, 0))
     color = parsecolor(backgroundcolor)
     sz = size(img) .+ 2 .* ceil.(Int, r)
     m2 = Drawing(reverse(sz)..., :svg)
@@ -417,7 +417,7 @@ Generate an SVG image of a box, ellipse, squircle, ngon, star, bezingon, or bezi
 * padding: an integer or a tuple of two integers indicating the padding size
 * backgroundsize: a tuple of two integers indicating the size of the background
 * color, linecolor, backgroundcolor: any value that can be parsed as a color. 
-* npoints, starratio, cornerradius, rt: see the Examples section below
+* npoints, starratio, orientation, cornerradius, rt: see the Examples section below
 ## Examples
 * shape(box, 80, 50) # box with dimensions 80*50
 * shape(box, 80, 50, cornerradius=4) # box with corner radius 4

@@ -15,7 +15,7 @@ wc = wordcloud(
     state=identity,
 )
 #md# place words in the center of the background to prevent encountering the mask boundary
-placewords!(wc, style=:gathering, reorder=WordCloud.shuffle, level=6, rt=1) # a proper level is important, and so is luck
+layout!(wc, style=:gathering, reorder=WordCloud.shuffle, level=6, rt=1) # a proper level is important, and so is luck
 paint(wc, "nomask-placewords.svg")
 #md# ![](nomask-placewords.svg)
 #md# prevent repositioning words to the surrounding blank space
