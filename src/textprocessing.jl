@@ -132,7 +132,7 @@ The function func(w::Real)->Real is used to remap the weight, expressed as weigh
 We set `weight = powermean(1*fontsize, wordlength*fontsize) = ((fontsize^p + (wordlength*fontsize)^p)/2) ^ (1/p)`.  
 That is, `weight = fontsize * powermean(1, wordlength)`.  
 Overall, this gives us `fontsize = func(weight) / powermean(1, wordlength)`.  
-When p is -Inf, the power mean is at its minimum, resulting in fontsize=weight. When p is Inf, the power mean is at its maximum, resulting in fontsize=weight/wordlength.  
+When p is -Inf, the power mean is the minimum value, resulting in fontsize=weight. When p is Inf, the power mean is the maximum value, resulting in fontsize=weight/wordlength.
 When p is -1, the power mean is the harmonic mean. When p is 0, the power mean is the geometric mean, preserving the word area. 
 When p is 1, the power mean is the arithmetic mean. When p is 2, the power mean is the root mean square, preserving the diagonal length.  
 """
