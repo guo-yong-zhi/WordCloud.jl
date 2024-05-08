@@ -1,14 +1,13 @@
 module TextProcessing
-export countwords, processtext, html2text, stopwords_en, stopwords_cn, stopwords,
-    lemmatize, lemmatize!, casemerge!, rescaleweights
-dir = @__DIR__
-stopwords_en = Set(readlines(dir * "/../res/stopwords_en.txt"))
-stopwords_cn = Set(readlines(dir * "/../res/stopwords_cn.txt"))
-stopwords = stopwords_en ∪ stopwords_cn
+export countwords, processtext, html2text, STOPWORDS, casemerge!, rescaleweights
+
+using StopWords
+using LanguageIdentification
+
 include("wordlists.jl")
 
 "only handles the simple cases of plural nouns and third person singular verbs"
-function lemmatize(word)
+function lemmatizer_eng(word)
     if (!endswith(word, "s")) || endswith(word, "ss") # quick return
         return word
     end
@@ -36,10 +35,39 @@ function lemmatize(word)
     return word[1:prevind(word, end, 1)]
 end
 
-function splitwords(text::AbstractString, regexp=r"\w[\w']+")
-    words = findall(regexp, text)
-    words = [endswith(text[i], "'s") ? text[i][1:prevind(text[i], end, 2)] : text[i] for i in words]
+function lemmatizer_eng!(d::AbstractDict)
+    for w in keys(d)
+        lw = lemmatizer_eng(w)
+        if lw != w
+            d[lw] = get(d, lw, 0) + d[w]
+            pop!(d, w)
+        end
+    end
+    d
 end
+
+function tokenizer(text::AbstractString, regexp=r"\w+")
+    [text[i] for i in findall(regexp, text)]
+end
+
+function tokenizer_eng(text::AbstractString, regexp=r"\w[\w']+")
+    indices = findall(regexp, text)
+    [endswith(text[i], "'s") ? text[i][1:prevind(text[i], end, 2)] : text[i] for i in indices]
+end
+
+TOKENIZERS = Dict(
+    [
+        "_default_" => tokenizer,
+        "eng" => tokenizer_eng,
+    ]
+)
+STOPWORDS = stopwords
+LEMMATIZERS = Dict(
+    [
+        "_default_" => identity,
+        "eng" => lemmatizer_eng!,
+    ]
+)
 
 function countwords(words::AbstractVector{<:AbstractString};
     regexp=r"\S(?:[\s\S]*\S)?", counter=Dict{String,Int}())
@@ -57,12 +85,16 @@ function countwords(words::AbstractVector{<:AbstractString};
     counter
 end
 
-function countwords(text::AbstractString; regexp=r"\w[\w']+", kargs...)
-    countwords(splitwords(text, regexp); regexp=nothing, kargs...)
+function countwords(text::AbstractString; language=:auto, kargs...)
+    language == :auto && (language = detect_language(text))
+    tokenizer_ = get(TOKENIZERS, language, TOKENIZERS["_default_"])
+    counter = countwords(tokenizer_(text); kargs...)
+    lemmatizer_ = get(LEMMATIZERS, language, LEMMATIZERS["_default_"])
+    lemmatizer_(counter)
 end
 
 raw"""
-countwords(text; regexp=r"\w[\w']+", lemmatizer=lemmatize, counter=Dict{String,Int}(), kargs...)
+countwords(text; regexp=r"\w[\w']+", counter=Dict{String,Int}(), kargs...)
 Count words in text. And use `regexp` to split. And save results into `counter`. 
 `text` can be a String, a Vector of String, or an opend file (IO).
 """
@@ -73,13 +105,6 @@ function countwords(textfile::IO; counter=Dict{String,Int}(), kargs...)
     counter
 end
 
-# function countwords(textfiles::AbstractVector{<:IO};counter=Dict{String,Int}(), kargs...)
-#     for f in textfiles
-#         countwords(f;counter=counter, kargs...)
-#     end
-#     counter
-# end
-
 function casemerge!(d)
     for w in keys(d)
         if length(w) > 0 && isuppercase(w[1]) && islowercase(w[end])
@@ -88,17 +113,6 @@ function casemerge!(d)
                 d[lw] += d[w]
                 pop!(d, w)
             end
-        end
-    end
-    d
-end
-
-function lemmatize!(d::AbstractDict)
-    for w in keys(d)
-        lw = lemmatize(w)
-        if lw != w
-            d[lw] = get(d, lw, 0) + d[w]
-            pop!(d, w)
         end
     end
     d
@@ -138,6 +152,26 @@ When p is 1, the power mean is the arithmetic mean. When p is 2, the power mean 
 """
 rescaleweights(func=identity, p=0) = dict -> _rescaleweights(dict, func, p)
 
+function _detect_language(text)
+    language = langid(text)
+    println("Language: $language")
+    if !haskey(STOPWORDS, language)
+        println("No built-in stopwords for $(language)!")
+    end
+    if !haskey(TOKENIZERS, language)
+        println("No built-in tokenizer for $(language)!")
+    end
+    return language
+end
+function detect_language(text)
+    _detect_language(text)
+end
+function detect_language(text::IO)
+    p = position(text)
+    l = _detect_language(text)
+    seek(text, p)
+    return l
+end
 """
 Process the text, filter the words, and adjust the weights. Return a vector of words and a vector of weights.
 ## Positional Arguments
@@ -148,15 +182,19 @@ Process the text, filter the words, and adjust the weights. Return a vector of w
 * minfrequency: minimum frequency of a word to be included
 * maxnum: maximum number of words, default is 500
 * minweight, maxweight: within 0 ~ 1, set to adjust extreme weight
-* process: a function to process word counter, default is `rescaleweights(identity, 0) ∘ casemerge! ∘ lemmatize!`
+* process: a function to process word count dict, default is `rescaleweights(identity, 0) ∘ casemerge!`
 """
 function processtext(counter::AbstractDict{<:AbstractString,<:Real};
-    stopwords=stopwords,
+    language=:auto,
+    stopwords=:auto,
     minlength=1, maxlength=30,
     minfrequency=0,
     maxnum=500,
     minweight=1 / maxnum, maxweight=:auto,
-    process=rescaleweights(identity, 0) ∘ casemerge! ∘ lemmatize!)
+    process=rescaleweights(identity, 0) ∘ casemerge!)
+
+    language == :auto && (language = detect_language(keys(counter)))
+    stopwords == :auto && (stopwords = get(STOPWORDS, language, Set()))
     stopwords isa AbstractSet || (stopwords = Set(stopwords))
     counter = process(counter)
     print("Total words: $(round(sum(values(counter)), digits=2)). ")
@@ -192,10 +230,12 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     words, weights
 end
 
-function processtext(text; kargs...)
+function processtext(text; language=:auto, kargs...)
+    language == :auto && (language = detect_language(text))
     cwkw = (:counter, :regexp)
     processtext(
-        countwords(text; filter(kw -> first(kw) ∈ cwkw, kargs)...);
+        countwords(text; language=language, filter(kw -> first(kw) ∈ cwkw, kargs)...);
+        language=language,
         filter(kw -> first(kw) ∉ cwkw, kargs)...)
 end
 processtext(fun::Function; kargs...) = processtext(fun(); kargs...)

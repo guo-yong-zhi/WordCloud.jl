@@ -45,7 +45,7 @@ wc = wordcloud(["the"=>1.0, "to"=>0.51, "and"=>0.50,
 # Advanced Usage
 ```julia
 using WordCloud
-stopwords = WordCloud.stopwords_en ∪ ["said"]
+stopwords = WordCloud.STOPWORDS["eng"] ∪ ["said"]
 textfile = pkgdir(WordCloud)*"/res/alice.txt"
 maskfile = pkgdir(WordCloud)*"/res/alice_mask.png"
 wc = wordcloud(
