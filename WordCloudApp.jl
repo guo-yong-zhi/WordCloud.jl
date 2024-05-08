@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.25
+# v0.19.42
 
 using Markdown
 using InteractiveUtils
@@ -18,6 +18,7 @@ end
 begin
     import Pkg
     Pkg.activate(homedir())
+    # Pkg.activate()
     using PlutoUI
     using WordCloud
     using HTTP
@@ -38,7 +39,7 @@ md"**max word count:** $(@bind maxnum NumberField(1:5000, default=500))　　**m
 
 # ╔═╡ 852810b2-1830-4100-ad74-18b8e96afafe
 md"""
-**word blacklist:** $(@bind wordblacklist_ TextField(default="")) $(@bind enablestopwords　　CheckBox(default=true))enable the built-in stop word list"""
+**language:** $(@bind language_ TextField(default="auto"))　　**word blacklist:** $(@bind wordblacklist_ TextField(default="")) $(@bind enablestopwords　　CheckBox(default=true)) built-in list"""
 
 # ╔═╡ 0dddeaf5-08c3-46d0-8a79-30b5ce42ef2b
 begin
@@ -222,6 +223,90 @@ begin
     nothing
 end
 
+# ╔═╡ d8e73850-f0a6-4170-be45-5a7527f1ec39
+begin
+    function text_from_url(url)
+        resp = HTTP.request("GET", url, redirect=true)
+        println(resp.request)
+        resp.body |> String |> html2text
+    end
+    go
+    words_weights = ([], [])
+    wordsnum = 0
+    try
+        if texttype == "Web"
+            if !isempty(url)
+                text = text_from_url(url)
+            end
+        elseif texttype == "Text"
+            text = text_
+        elseif texttype == "File"
+            if uploadedfile !== nothing
+                text = read(IOBuffer(uploadedfile["data"]), String)
+            end
+        else
+            text = read_table(text_)
+        end
+        dict_process = rescaleweights(rescale_func, tan(word_length_balance * π / 2)) ∘ casemerge!
+		lang = language_
+		if lang == "auto"
+        	lang = Symbol(lang)
+		end
+		lang = WordCloud.TextProcessing.detect_language(text, lang)
+		_stopwords = enablestopwords ? get(WordCloud.STOPWORDS, lang, Set())∪ wordblacklist : wordblacklist
+        global words_weights = processtext(
+            text, 
+			language=lang,
+			maxnum=maxnum,
+            minlength=minlength,
+            stopwords=_stopwords,
+            process=dict_process)
+        global wordsnum = length(words_weights[1])
+    catch e
+        # rethrow(e)
+    end
+    nothing
+end
+
+# ╔═╡ 77e13474-8987-4cc6-93a9-ea68ca53b217
+begin
+    colors__ = colors_
+    if colorstyle == :gradient
+        if colors__ == :auto
+            colors__ = rand(WordCloud.Schemes)
+        end
+        md"""
+        **gradient range:** $(@bind colorstart NumberField(0.:0.01:1., default=0.)) to $(@bind colorstop NumberField(0.:0.01:1., default=1.)). $wordsnum colors of $colors__   
+        """
+    else
+        if colors__ == :auto
+            md"use random color scheme"
+        else
+            md"**sampling probability:** $(@bind colorprob NumberField(0.1:0.01:1., default=0.5))"
+        end
+    end
+end
+
+# ╔═╡ a758178c-b6e6-491c-83a3-8b3fa594fc9e
+begin
+    colors = colors__
+    if colors != :auto
+        C = WordCloud.colorschemes[colors]
+        if colorstyle == :random
+            colors_vec = WordCloud.randsubseq(C.colors, colorprob)
+            isempty(colors_vec) && (colors_vec = C.colors)
+            colors = tuple(colors_vec...)
+            colors_vec
+        elseif colorstyle == :gradient
+            colors = WordCloud.gradient(words_weights[end], scheme=colors, section=(colorstart, max(colorstart, colorstop)))
+        else
+            C
+        end
+    else
+        md""
+    end
+end
+
 # ╔═╡ 397fdd42-d2b2-46db-bf74-957909f47a58
 begin
     function svgshapemask(svgstr, masksize; preservevolume=true, kargs...)
@@ -296,115 +381,12 @@ begin
         "EB Garamond", "Comfortaa", "Exo", "Vollkorn", "Teko", "Catamaran", "Kanit", "Cairo", "Amatic SC", "IBM Plex Sans", "Cuprum", "Poiret One", "Rokkitt", "Bebas Neue", "Acme", "PT Sans Caption", "Righteous", "Noto Sans SC", "Alegreya Sans", "Alegreya", "Barlow Condensed", "Prompt", "Gloria Hallelujah", "Patua One", "Crete Round", "Permanent Marker"]
     empty!(WordCloud.AvailableFonts)
     append!(WordCloud.AvailableFonts, ["$f$w" for w in WordCloud.CandiWeights, f in google_fonts])
-    nothing
-end
-
-# ╔═╡ b09620ef-4495-4c83-ad1c-2d8b0ed70710
-begin
-    function ischinese(text::AbstractString)
-        ch = 0
-        total = 0
-        for c in text
-            if match(r"\w", string(c)) !== nothing
-                total += 1
-                if '\u4e00' <= c <= '\u9fa5'
-                    ch += 1
-                end
-            end
-        end
-        if total > 0
-            # println("total: $total; chinese: $ch; ratio: $(ch/total)")
-            return ch / total > 0.05
-        else
-            return false
-        end
-    end
-
-    function wordseg_cn(t)
+	function wordseg_cn(t)
         jieba = pyimport("jieba")
         pyconvert(Vector{String}, jieba.lcut(t))
     end
+	WordCloud.TextProcessing.TOKENIZERS["zho"] = wordseg_cn
     nothing
-end
-
-# ╔═╡ d8e73850-f0a6-4170-be45-5a7527f1ec39
-begin
-    function text_from_url(url)
-        resp = HTTP.request("GET", url, redirect=true)
-        println(resp.request)
-        resp.body |> String |> html2text
-    end
-    go
-    words_weights = ([], [])
-    wordsnum = 0
-    try
-        if texttype == "Web"
-            if !isempty(url)
-                text = text_from_url(url)
-            end
-        elseif texttype == "Text"
-            text = text_
-        elseif texttype == "File"
-            if uploadedfile !== nothing
-                text = read(IOBuffer(uploadedfile["data"]), String)
-            end
-        else
-            text = read_table(text_)
-        end
-        dict_process = rescaleweights(rescale_func, tan(word_length_balance * π / 2)) ∘ casemerge! ∘ lemmatize!
-        if text isa AbstractString && ischinese(text)
-            println("检测到中文")
-            text = wordseg_cn(text)
-        end
-        global words_weights = processtext(
-            text, maxnum=maxnum,
-            minlength=minlength,
-            stopwords=enablestopwords ? WordCloud.stopwords ∪ wordblacklist : wordblacklist,
-            process=dict_process)
-        global wordsnum = length(words_weights[1])
-    catch e
-        # rethrow(e)
-    end
-    nothing
-end
-
-# ╔═╡ 77e13474-8987-4cc6-93a9-ea68ca53b217
-begin
-    colors__ = colors_
-    if colorstyle == :gradient
-        if colors__ == :auto
-            colors__ = rand(WordCloud.Schemes)
-        end
-        md"""
-        **gradient range:** $(@bind colorstart NumberField(0.:0.01:1., default=0.)) to $(@bind colorstop NumberField(0.:0.01:1., default=1.)). $wordsnum colors of $colors__   
-        """
-    else
-        if colors__ == :auto
-            md"use random color scheme"
-        else
-            md"**sampling probability:** $(@bind colorprob NumberField(0.1:0.01:1., default=0.5))"
-        end
-    end
-end
-
-# ╔═╡ a758178c-b6e6-491c-83a3-8b3fa594fc9e
-begin
-    colors = colors__
-    if colors != :auto
-        C = WordCloud.colorschemes[colors]
-        if colorstyle == :random
-            colors_vec = WordCloud.randsubseq(C.colors, colorprob)
-            isempty(colors_vec) && (colors_vec = C.colors)
-            colors = tuple(colors_vec...)
-            colors_vec
-        elseif colorstyle == :gradient
-            colors = WordCloud.gradient(words_weights[end], scheme=colors, section=(colorstart, max(colorstart, colorstop)))
-        else
-            C
-        end
-    else
-        md""
-    end
 end
 
 # ╔═╡ fa6b3269-357e-4bf9-8514-70aff9df427f
@@ -482,5 +464,4 @@ end
 # ╟─9396cf96-d553-43db-a839-273fc9febd5a
 # ╟─1a4d1e62-6a41-4a75-a759-839445dacf4f
 # ╟─e7ec8cd7-f60b-4eb0-88fc-76d694976f9d
-# ╟─b09620ef-4495-4c83-ad1c-2d8b0ed70710
 # ╟─daf38998-c448-498a-82e2-b48a6a2b9c27
