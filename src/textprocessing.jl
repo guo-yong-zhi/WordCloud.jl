@@ -69,7 +69,7 @@ LEMMATIZERS = Dict(
     ]
 )
 
-function countwords(words::AbstractVector{<:AbstractString};
+function countwords(words::AbstractVector{<:AbstractString}; language=:auto,
     regexp=r"\S(?:[\s\S]*\S)?", counter=Dict{String,Int}())
     for w in words
         if regexp !== nothing

@@ -147,4 +147,10 @@ include("test_textprocessing.jl")
     s = showmask(bg, mask)
     @test all(bg[mask] .== s[mask])
     @test all(bg[.!mask] .!= s[.!mask])
+
+    # overall
+    wordcloud(["中文", "需要", "提前", "分词"], fonts="") |> generate!
+    wordcloud(["the"=>1.0, "to"=>0.51, "and"=>0.50,
+              "of"=>0.47, "a"=>0.44, "in"=>0.33]) |> generate!
+    wordcloud("It's easy to generate word clouds") |> generate!
 end
