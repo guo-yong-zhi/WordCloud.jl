@@ -1,7 +1,7 @@
 name = "WordCloud"
 uuid = "6385f0a0-cb03-45b6-9089-4e0acc74b26b"
 authors = ["guoyongzhi <guo-yong-zhi@outlook.com>"]
-version = "0.12.2"
+version = "0.13.0"
 
 [deps]
 ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
@@ -25,4 +25,4 @@ LanguageIdentification = "1.0.1"
 Luxor = "3.6"
 Statistics = "1"
 Stuffing = "0.10"
-julia = "1.6"
+julia = "1.9"
