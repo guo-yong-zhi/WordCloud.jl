@@ -151,7 +151,7 @@ function findscale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tolerance=0.
         setparameter!(wc, sc1, :scale)
         tg1 = wordsoccupancy!(wc)
         dens = tg1 / area
-        println("⋯scale=$(getparameter(wc, :scale)), density=$dens\t", dens > density ? "↑" : "↓")
+        @debug "⋯scale=$(getparameter(wc, :scale)), density=$dens\t" * (dens > density ? "↑" : "↓")
         if tg1 > target
             if best_tar_H > tg1
                 best_tar_H = tg1
@@ -169,18 +169,18 @@ function findscale!(wc::WC; initialscale=0, density=0.3, maxiter=5, tolerance=0.
         if !(best_scale_L < sc2 < best_scale_H)
             if isfinite(best_tar_H + best_tar_L)
                 sc2_ = √((best_scale_H^2 + best_scale_L^2) / 2.)
-                println("bisection search takes effect: scale $sc2 -> $sc2_")
+                @debug "bisection search takes effect: scale $sc2 -> $sc2_"
                 sc2 = sc2_
 #                 @show best_scale_L best_scale_H
             elseif isfinite(best_tar_H)
                 sc2_ = sc1 * (0.95^oneway_count)
                 oneway_count += 1
-                println("one-way search takes effect: scale $sc2 -> $sc2_")
+                @debug "one-way search takes effect: scale $sc2 -> $sc2_"
                 sc2 = sc2_
             elseif isfinite(best_tar_L)
                 sc2_ = sc1 / (0.95^oneway_count)
                 oneway_count += 1
-                println("one-way search takes effect: scale $sc2 -> $sc2_")
+                @debug "one-way search takes effect: scale $sc2 -> $sc2_"
                 sc2 = sc2_
             else
                 error("`findscale!` failed")

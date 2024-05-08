@@ -93,7 +93,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
         error("Have you set the right `transparent`? e.g. `transparent=mask[1,1]`")
     end
     avgsize = round(Int, sqrt(volume / length(words)))
-    println("mask size: $(size(mask, 1))×$(size(mask, 2)), volume: $(round(Int, √volume))² ($(avgsize)²/word)")
+    @debug "mask size: $(size(mask, 1))×$(size(mask, 2)), volume: $(round(Int, √volume))² ($(avgsize)²/word)"
     params[:maxfontsize0] = maxfontsize
     if maxfontsize == :auto
         maxfontsize = minimum(size(mask))
@@ -103,7 +103,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
         minfontsize = min(maxfontsize, 8, sqrt(volume / length(words) / 8))
         # 只和单词数量有关，和单词长度无关。不管单词多长，字号小了依然看不见。
     end
-    println("set fontsize ∈ [$minfontsize, $maxfontsize]")
+    @debug "set fontsize ∈ [$minfontsize, $maxfontsize]"
     params[:minfontsize] = minfontsize
     params[:maxfontsize] = maxfontsize
     params[:spacing] = spacing
@@ -359,7 +359,7 @@ end
 
 Base.show(io::IO, m::MIME"image/png", wc::WC) = Base.show(io, m, paint(wc::WC))
 Base.show(io::IO, m::MIME"image/svg+xml", wc::WC) = Base.show(io, m, paintsvg(wc::WC))
-Base.show(io::IO, m::MIME"text/plain", wc::WC) = print(io, "wordcloud(", wc.words, ") # ", length(wc), "words")
+Base.show(io::IO, m::MIME"text/plain", wc::WC) = println(io, "wordcloud(", wc.words, ") # ", length(wc), "words")
 function Base.showable(::MIME"image/png", wc::WC)
     STATEIDS[getstate(wc)] >= STATEIDS[:initialize!] && showable("image/png", zeros(ARGB, (1, 1)))
 end

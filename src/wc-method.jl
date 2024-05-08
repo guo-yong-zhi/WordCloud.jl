@@ -36,7 +36,7 @@ function initialize!(wc::WC; maxiter=5, tolerance=0.02)
     wc.params[:wordids] = @view wc.params[:wordids][si]
     wc.params[:word2index] = nothing
     wc.params[:id2index] = nothing
-    println("set density = $(params[:density])")
+    @debug "set density = $(params[:density])"
     findscale!(wc, density=params[:density], maxiter=maxiter, tolerance=tolerance)
     printfontsizes(wc)
     initialize!(wc, :)
@@ -46,10 +46,10 @@ end
 function printfontsizes(wc)
     nsmall = findlast(i->getfontsizes(wc, i)<=wc.params[:minfontsize], length(wc):-1:1)
     nsmall === nothing && (nsmall = 0)
-    println("fontsize ∈ [$(getfontsizes(wc, length(wc))), $(getfontsizes(wc, 1))]")
+    @debug "fontsize ∈ [$(getfontsizes(wc, length(wc))), $(getfontsizes(wc, 1))]"
     if nsmall > 0
         perc = round(Int, nsmall/length(wc)*100)
-        println("$nsmall words($perc%) are limited to the minimum font size.")
+        @debug "$nsmall words($perc%) are limited to the minimum font size."
         if perc > 70
             msg = "It seems too crowded. Word size may be seriously distorted. You need to reduce the number of words or set a larger mask."
             ratio = volumeproposal(wc.words, wc.weights) / √getparameter(wc, :volume)
