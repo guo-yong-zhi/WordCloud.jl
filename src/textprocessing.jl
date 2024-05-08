@@ -55,6 +55,7 @@ function tokenizer_eng(text::AbstractString, regexp=r"\w[\w']+")
     [endswith(text[i], "'s") ? text[i][1:prevind(text[i], end, 2)] : text[i] for i in indices]
 end
 
+# ISO 639-3 macrolanguages
 TOKENIZERS = Dict(
     [
         "_default_" => tokenizer,
@@ -86,7 +87,10 @@ function countwords(words::AbstractVector{<:AbstractString}; language=:auto,
 end
 
 function countwords(text::AbstractString; language=:auto, kargs...)
-    language == :auto && (language = detect_language(text))
+    language = detect_language(text, language)
+    if !haskey(TOKENIZERS, language)
+        @warn "No built-in tokenizer for $(language)!"
+    end
     tokenizer_ = get(TOKENIZERS, language, TOKENIZERS["_default_"])
     counter = countwords(tokenizer_(text); kargs...)
     lemmatizer_ = get(LEMMATIZERS, language, LEMMATIZERS["_default_"])
@@ -94,8 +98,8 @@ function countwords(text::AbstractString; language=:auto, kargs...)
 end
 
 raw"""
-countwords(text; regexp=r"\w[\w']+", counter=Dict{String,Int}(), kargs...)
-Count words in text. And use `regexp` to split. And save results into `counter`. 
+countwords(text; counter=Dict{String,Int}(), kargs...)
+Count words in text. And save results into `counter`. 
 `text` can be a String, a Vector of String, or an opend file (IO).
 """
 function countwords(textfile::IO; counter=Dict{String,Int}(), kargs...)
@@ -152,31 +156,30 @@ When p is 1, the power mean is the arithmetic mean. When p is 2, the power mean 
 """
 rescaleweights(func=identity, p=0) = dict -> _rescaleweights(dict, func, p)
 
-function _detect_language(text)
-    language = langid(text)
-    println("Language: $language")
-    if !haskey(STOPWORDS, language)
-        println("No built-in stopwords for $(language)!")
+function _detect_language(text, language=:auto)
+    if language !== :auto
+        return StopWords.normcode(language)
+    else
+        language = langid(text)
+        println("Language: $language")
+        return StopWords.normcode(language)
     end
-    if !haskey(TOKENIZERS, language)
-        println("No built-in tokenizer for $(language)!")
-    end
-    return language
 end
-function detect_language(text)
-    _detect_language(text)
+function detect_language(text, language=:auto)
+    _detect_language(text, language)
 end
-function detect_language(text::IO)
+function detect_language(text::IO, language=:auto)
     p = position(text)
-    l = _detect_language(text)
+    l = _detect_language(text, language)
     seek(text, p)
     return l
 end
 """
 Process the text, filter the words, and adjust the weights. Return a vector of words and a vector of weights.
 ## Positional Arguments
-* text: string, a vector of words, an opened file (IO), a counter, a Dict{<:String, <:Real}, a Vector{Pair}, a Vector{Tuple}, or two Vectors.
+* text: a string, a vector of words, an opened file (IO), a counter, a Dict{<:String, <:Real}, a Vector{Pair}, a Vector{Tuple}, or two Vectors.
 ## Optional Keyword Arguments
+* language: language of the text, default is :auto. 
 * stopwords: a set of words
 * minlength, maxlength: minimum and maximum length of a word to be included
 * minfrequency: minimum frequency of a word to be included
@@ -193,7 +196,10 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     minweight=1 / maxnum, maxweight=:auto,
     process=rescaleweights(identity, 0) ∘ casemerge!)
 
-    language == :auto && (language = detect_language(keys(counter)))
+    language = detect_language(keys(counter), language)
+    if !haskey(STOPWORDS, language)
+        @warn "No built-in stopwords for $(language)!"
+    end
     stopwords == :auto && (stopwords = get(STOPWORDS, language, Set()))
     stopwords isa AbstractSet || (stopwords = Set(stopwords))
     counter = process(counter)
@@ -231,7 +237,7 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
 end
 
 function processtext(text; language=:auto, kargs...)
-    language == :auto && (language = detect_language(text))
+    language = detect_language(text, language)
     cwkw = (:counter, :regexp)
     processtext(
         countwords(text; language=language, filter(kw -> first(kw) ∈ cwkw, kargs)...);

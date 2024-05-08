@@ -18,6 +18,11 @@ The positional arguments are used to specify words and weights in various forms,
 * counter::AbstractDict
 * counter::AbstractVector{<:Pair}
 ## Optional Keyword Arguments
+### text-related keyword arguments
+* language: language of the text, default is :auto. 
+* stopwords: a set of words
+* maxnum: maximum number of words, default is 500
+
 ### style-related keyword arguments
 * colors = "black" # same color for all words  
 * colors = ("black", (0.5,0.5,0.7), "yellow", "#ff0000", 0.2) # entries are randomly chosen  
@@ -65,7 +70,9 @@ The positional arguments are used to specify words and weights in various forms,
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter) |> collect, values(counter) |> collect; kargs...)
 wordcloud(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
-wordcloud(text; kargs...) = wordcloud(processtext(text); kargs...)
+function wordcloud(text; language=:auto, stopwords=:auto, maxnum=500, kargs...)
+    wordcloud(processtext(text, language=language, stopwords=stopwords, maxnum=maxnum); kargs...)
+end
 wordcloud(words, weight::Number; kargs...) = wordcloud(words, repeat([weight], length(words)); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=:auto, angles=:auto, 
