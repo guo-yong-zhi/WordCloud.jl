@@ -1,4 +1,4 @@
-#md# WordCloud.jl can process English text. For Chinese text, please refer to the example [`中文`](#中文). For other languages, you can input the data in the form of "word => weight" list, as shown in the example below.
+#md# For languages that are not processed perfectly, you can refer to [the example for Chinese](#中文) or you can input the data in the form of a "word => weight" list, as illustrated in the following example.
 using WordCloud
 words_weights = [
     "普通话" => 939.0,
