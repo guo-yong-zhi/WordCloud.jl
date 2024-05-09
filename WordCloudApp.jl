@@ -24,7 +24,8 @@ begin
     using HTTP
     using ImageIO
     using PythonCall
-	# Pkg.add(["PlutoUI", "WordCloud", "HTTP", "ImageIO", "PythonCall", "CondaPkg
+	import TinySegmenter
+	# Pkg.add(["PlutoUI", "WordCloud", "HTTP", "ImageIO", "PythonCall", "CondaPkg", "TinySegmenter"])
     # using CondaPkg; CondaPkg.add("jieba")
 end
 
@@ -387,6 +388,7 @@ begin
         pyconvert(Vector{String}, jieba.lcut(t))
     end
 	WordCloud.settokenizer!("zho", wordseg_cn)
+	WordCloud.settokenizer!("jpn", TinySegmenter.tokenize)
     nothing
 end
 
