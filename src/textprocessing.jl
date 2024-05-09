@@ -165,18 +165,16 @@ When p is 1, the power mean is the arithmetic mean. When p is 2, the power mean 
 rescaleweights(func=identity, p=0) = dict -> _rescaleweights(dict, func, p)
 
 function _detect_language(text, language=:auto)
-    if language !== :auto
-        return StopWords.normcode(language)
-    else
-        language = langid(text)
-        println("Language: $language")
-        return StopWords.normcode(language)
-    end
+    language = langid(text)
+    println("Language: $language")
+    return language
 end
 function detect_language(text, language=:auto)
+    language !== :auto && return StopWords.normcode(language)
     _detect_language(text, language)
 end
 function detect_language(text::IO, language=:auto)
+    language !== :auto && return StopWords.normcode(language)
     p = position(text)
     l = _detect_language(text, language)
     seek(text, p)
