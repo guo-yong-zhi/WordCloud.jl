@@ -77,7 +77,8 @@ function setlemmatizer!(lang::AbstractString, str_to_str_func)
 end
 
 function countwords(words::AbstractVector{<:AbstractString}; language=:auto,
-    regexp=r"\S(?:[\s\S]*\S)?", counter=Dict{String,Int}())
+    regexp=r"(?:\S[\s\S]*)?\w(?:[\s\S]*\S)?", counter=Dict{String,Int}())
+    # strip whitespace and filter out pure punctuation string
     language = detect_language(words, language)
     for w in words
         if regexp !== nothing
