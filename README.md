@@ -90,14 +90,7 @@ WordCloud.jl stands out from other tools due to its unique approach based on ima
 * [x] 训练失败检测和提前中断
 * [x] 主题配色等
 * [x] 并行计算
-# Note
-linux添加中文字体  
-> mv wqy-microhei.ttc ~/.fonts  
-> fc-cache -vf  
 
-配置ffmpeg环境变量
-> add /path/to/ffmpeg-4.2.1/lib to ENV["LD_LIBRARY_PATH"]  
-> add /path/to/ffmpeg-4.2.1/bin to ENV["PATH"]  
 # Other word cloud generators
 * [word_cloud (Python)](https://github.com/amueller/word_cloud)  
 * [d3-cloud](https://github.com/jasondavies/d3-cloud)  
