@@ -16,7 +16,7 @@ end
 
 # ╔═╡ daf38998-c448-498a-82e2-b48a6a2b9c27
 # ╠═╡ show_logs = false
-begin 
+begin
     import Pkg
     Pkg.activate(homedir())
     # Pkg.activate()
@@ -25,8 +25,8 @@ begin
     using HTTP
     using ImageIO
     using PythonCall
-	import TinySegmenter
-	# Pkg.add(["PlutoUI", "WordCloud", "HTTP", "ImageIO", "PythonCall", "CondaPkg", "TinySegmenter"])
+    import TinySegmenter
+    # Pkg.add(["PlutoUI", "WordCloud", "HTTP", "ImageIO", "PythonCall", "CondaPkg", "TinySegmenter"])
     # using CondaPkg; CondaPkg.add("jieba")
 end
 
@@ -43,7 +43,7 @@ md"![](https://github.com/guo-yong-zhi/WordCloud-Gallery/blob/instruction/wordcl
 
 # ╔═╡ ffa6f9f4-0a00-409c-a4c3-b00a0060877f
 md"""
-#### ❋ Core Algorithm 
+#### ❋ Core Algorithm
 How to generate a word cloud with algorithm? A direct answer to this question would be that we initially place the words and then carefully adjust their positions until they do not overlap. Hence, our core algorithm includes two stages: placement and adjustment.
 """
 
@@ -257,10 +257,10 @@ html"""<div align="right"><i>For more details, check out our <a href="https://gi
 # ╔═╡ 21ba4b81-07aa-4828-875d-090e0b918c76
 begin
     defaulttext = """
-    A word cloud (tag cloud or wordle) is a novelty visual representation of text data, 
-    typically used to depict keyword metadata (tags) on websites, or to visualize free form text. 
-    Tags are usually single words, and the importance of each tag is shown with font size or color. Bigger term means greater weight. 
-    This format is useful for quickly perceiving the most prominent terms to determine its relative prominence.  
+    A word cloud (tag cloud or wordle) is a novelty visual representation of text data,
+    typically used to depict keyword metadata (tags) on websites, or to visualize free form text.
+    Tags are usually single words, and the importance of each tag is shown with font size or color. Bigger term means greater weight.
+    This format is useful for quickly perceiving the most prominent terms to determine its relative prominence.
     """
     defaultttable = """
         বাংলা, 234
@@ -296,7 +296,7 @@ end
 
 # ╔═╡ 9191230b-b72a-4707-b7cf-1a51c9cdb217
 if texttype == "Web"
-    md"""🌐 $(@bind url TextField(70, default="http://en.wikipedia.org/wiki/Special:random"))  
+    md"""🌐 $(@bind url TextField(70, default="http://en.wikipedia.org/wiki/Special:random"))
 
     We retrieve the html content using the [`HTTP.jl`](https://github.com/JuliaWeb/HTTP.jl) package and then convert it into plain text.
     """
@@ -306,9 +306,10 @@ elseif texttype == "File"
     @bind uploadedfile FilePicker()
 else
     md"""
-	*The first column contains words, the second column contains weights.*
-	$(@bind text_ TextField((20, 15), defaultttable))
-	"""
+    *The first column contains words, the second column contains weights.*
+
+    $(@bind text_ TextField((20, 15), defaultttable))
+    """
 end
 
 # ╔═╡ 66f4b71e-01e5-4279-858b-04d44aeeb574
@@ -356,20 +357,20 @@ begin
             text = read_table(text_)
         end
         dict_process = rescaleweights(rescale_func, tan(word_length_balance * π / 2)) ∘ casemerge!
-		lang = language_
-		if lang == "auto"
-        	lang = Symbol(lang)
-		end
-		if texttype == "Table"
-			lang = WordCloud.TextProcessing.detect_language(first.(text), lang)
-		else
-			lang = WordCloud.TextProcessing.detect_language(text, lang)
-		end
-		_stopwords = enablestopwords ? get(WordCloud.STOPWORDS, lang, Set())∪ wordblacklist : wordblacklist
+        lang = language_
+        if lang == "auto"
+            lang = Symbol(lang)
+        end
+        if texttype == "Table"
+            lang = WordCloud.TextProcessing.detect_language(first.(text), lang)
+        else
+            lang = WordCloud.TextProcessing.detect_language(text, lang)
+        end
+        _stopwords = enablestopwords ? get(WordCloud.STOPWORDS, lang, Set())∪ wordblacklist : wordblacklist
         global words_weights = processtext(
-            text, 
-			language=lang,
-			maxnum=maxnum,
+            text,
+            language=lang,
+            maxnum=maxnum,
             minlength=minlength,
             stopwords=_stopwords,
             process=dict_process)
@@ -377,7 +378,7 @@ begin
     catch e
         # rethrow(e)
     end
-	md"""###### ✿ Text Processing
+    md"""###### ✿ Text Processing
 The initial step involves word segmentation. While some languages' text can be readily segmented using spaces, others pose a greater challenge in this regard. To tackle this, we employ [`PythonCall.jl`](https://github.com/cjdoris/PythonCall.jl) to invoke [`jieba`](https://github.com/fxsjy/jieba), a tool that efficiently handles Chinese word segmentation. Similarly, for Japanese, we utilize [`TinySegmenter`](https://github.com/JuliaStrings/TinySegmenter.jl).
     """
 end
@@ -390,7 +391,7 @@ begin
             colors__ = rand(WordCloud.Schemes)
         end
         md"""
-        **gradient range:** $(@bind colorstart NumberField(0.:0.01:1., default=0.)) to $(@bind colorstop NumberField(0.:0.01:1., default=1.)). $wordsnum colors of $colors__   
+        **gradient range:** $(@bind colorstart NumberField(0.:0.01:1., default=0.)) to $(@bind colorstop NumberField(0.:0.01:1., default=1.)). $wordsnum colors of $colors__
         """
     else
         if colors__ == :auto
@@ -496,18 +497,18 @@ begin
         "EB Garamond", "Comfortaa", "Exo", "Vollkorn", "Teko", "Catamaran", "Kanit", "Cairo", "Amatic SC", "IBM Plex Sans", "Cuprum", "Poiret One", "Rokkitt", "Bebas Neue", "Acme", "PT Sans Caption", "Righteous", "Noto Sans SC", "Alegreya Sans", "Alegreya", "Barlow Condensed", "Prompt", "Gloria Hallelujah", "Patua One", "Crete Round", "Permanent Marker"]
     empty!(WordCloud.AvailableFonts)
     append!(WordCloud.AvailableFonts, ["$f$w" for w in WordCloud.CandiWeights, f in google_fonts])
-	function wordseg_cn(t)
+    function wordseg_cn(t)
         jieba = pyimport("jieba")
         pyconvert(Vector{String}, jieba.lcut(t))
     end
-	WordCloud.settokenizer!("zho", wordseg_cn)
-	WordCloud.settokenizer!("jpn", TinySegmenter.tokenize)
+    WordCloud.settokenizer!("zho", wordseg_cn)
+    WordCloud.settokenizer!("jpn", TinySegmenter.tokenize)
     nothing
 end
 
 # ╔═╡ fa6b3269-357e-4bf9-8514-70aff9df427f
 begin
-	google_fonts # used to adjust cell order
+    google_fonts # used to adjust cell order
     function gen_cloud(words_weights)
         if outlinewidth isa Number && outlinewidth >= 0
             olw = outlinewidth
