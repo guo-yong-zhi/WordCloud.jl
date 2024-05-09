@@ -10,7 +10,7 @@
     @test !("to" in words) # stopwords
 
     lemmatizer_eng = WordCloud.TextProcessing.lemmatizer_eng
-    lemmatizer_eng! = WordCloud.TextProcessing.lemmatizer_eng!
+    groupwords! = WordCloud.TextProcessing.groupwords!
     @test lemmatizer_eng("Cars") == "Car"
     @test lemmatizer_eng("monkeys") == "monkey"
     @test lemmatizer_eng("politics") == "politics"
@@ -33,12 +33,21 @@
     @test lemmatizer_eng("lives") in ("life", "live")
     @test lemmatizer_eng("cos") == "cos"
     @test lemmatizer_eng("中文") == "中文"
-    @test lemmatizer_eng!(Dict("dog" => 1, "dogs" => 2)) == Dict("dog" => 3)
-    @test lemmatizer_eng!(Dict("cat" => 1, "dogs" => 2)) == Dict("dog" => 2, "cat" => 1)
+    @test groupwords!(Dict("dog" => 1, "dogs" => 2), lemmatizer_eng) == Dict("dog" => 3)
+    @test groupwords!(Dict("cat" => 1, "dogs" => 2), lemmatizer_eng) == Dict("dog" => 2, "cat" => 1)
     @test length(processtext("cat cats dogs Dog dog dogs", language="eng")[1]) == 2 # lemmatizer
+    @test length(processtext(split("cat cats dogs Dog dog"), language="eng")[1]) == 2 # lemmatizer
     @test processtext(["cat" => 3, "Dog" => 1, "dog" => 2])[2] |> diff |> only |> iszero # casemerge
     @test processtext("word cloud", language="eng") == processtext(["word","cloud"], [12,12], language="eng") == processtext([("word", 3), ("cloud", 3)], language="eng")
 
+    # settokenizer! ...
+    WordCloud.settokenizer!("mylang", t->split(t, "a"))
+    @test Set(processtext("bananais", language="mylang")[1]) == Set(["b", "n", "is"])
+    WordCloud.setlemmatizer!("mylang", uppercase)
+    @test Set(processtext("bananais", language="mylang")[1]) == Set(["B", "N", "IS"])
+    WordCloud.setstopwords!("mylang", ["B", "WW"])
+    @test Set(processtext("bananais", language="mylang")[1]) == Set(["N", "IS"])
+    
     pm = WordCloud.TextProcessing.powermeanwith1
     @test pm(1, -12.34) == 1
     @test abs(pm(7, 1e-8) - sqrt(7)) < 1e-6

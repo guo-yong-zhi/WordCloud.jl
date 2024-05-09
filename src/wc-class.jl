@@ -366,7 +366,7 @@ end
 
 Base.show(io::IO, m::MIME"image/png", wc::WC) = Base.show(io, m, paint(wc::WC))
 Base.show(io::IO, m::MIME"image/svg+xml", wc::WC) = Base.show(io, m, paintsvg(wc::WC))
-Base.show(io::IO, m::MIME"text/plain", wc::WC) = println(io, "wordcloud(", wc.words, ") # ", length(wc), "words")
+Base.show(io::IO, m::MIME"text/plain", wc::WC) = println(io, "wordcloud(", wc.words, ") # ", length(wc), " words")
 function Base.showable(::MIME"image/png", wc::WC)
     STATEIDS[getstate(wc)] >= STATEIDS[:initialize!] && showable("image/png", zeros(ARGB, (1, 1)))
 end

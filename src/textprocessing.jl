@@ -1,5 +1,5 @@
 module TextProcessing
-export countwords, processtext, html2text, STOPWORDS, casemerge!, rescaleweights
+export countwords, processtext, html2text, STOPWORDS, casemerge!, rescaleweights, settokenizer!, setlemmatizer!, setstopwords!
 
 using StopWords
 using LanguageIdentification
@@ -35,11 +35,11 @@ function lemmatizer_eng(word)
     return word[1:prevind(word, end, 1)]
 end
 
-function lemmatizer_eng!(d::AbstractDict)
+function groupwords!(d::AbstractDict, remap)
     for w in keys(d)
-        lw = lemmatizer_eng(w)
-        if lw != w
-            d[lw] = get(d, lw, 0) + d[w]
+        w2 = remap(w)
+        if w2 != w
+            d[w2] = get(d, w2, 0) + d[w]
             pop!(d, w)
         end
     end
@@ -56,22 +56,29 @@ function tokenizer_eng(text::AbstractString, regexp=r"\w[\w']+")
 end
 
 # ISO 639-3 macrolanguages
-TOKENIZERS = Dict(
-    [
-        "_default_" => tokenizer,
-        "eng" => tokenizer_eng,
-    ]
-)
 STOPWORDS = stopwords
-LEMMATIZERS = Dict(
-    [
-        "_default_" => identity,
-        "eng" => lemmatizer_eng!,
-    ]
+TOKENIZERS = Dict(
+    "_default_" => tokenizer,
+    "eng" => tokenizer_eng,
 )
+LEMMATIZERS = Dict(
+    "_default_" => identity,
+    "eng" => lemmatizer_eng,
+)
+
+function settokenizer!(lang::AbstractString, str_to_list_func)
+    TOKENIZERS[StopWords.normcode(String(lang))] = str_to_list_func
+end
+function setstopwords!(lang::AbstractString, str_set)
+    STOPWORDS[StopWords.normcode(String(lang))] = str_set
+end
+function setlemmatizer!(lang::AbstractString, str_to_str_func)
+    LEMMATIZERS[StopWords.normcode(String(lang))] = str_to_str_func
+end
 
 function countwords(words::AbstractVector{<:AbstractString}; language=:auto,
     regexp=r"\S(?:[\s\S]*\S)?", counter=Dict{String,Int}())
+    language = detect_language(words, language)
     for w in words
         if regexp !== nothing
             m = match(regexp, w)
@@ -83,6 +90,8 @@ function countwords(words::AbstractVector{<:AbstractString}; language=:auto,
             counter[w] = get(counter, w, 0) + 1
         end
     end
+    lemmatizer_ = get(LEMMATIZERS, language, LEMMATIZERS["_default_"])
+    groupwords!(counter, lemmatizer_)
     counter
 end
 
@@ -92,9 +101,7 @@ function countwords(text::AbstractString; language=:auto, kargs...)
         @warn "No built-in tokenizer for $(language)!"
     end
     tokenizer_ = get(TOKENIZERS, language, TOKENIZERS["_default_"])
-    counter = countwords(tokenizer_(text); kargs...)
-    lemmatizer_ = get(LEMMATIZERS, language, LEMMATIZERS["_default_"])
-    lemmatizer_(counter)
+    countwords(tokenizer_(text); language=language, kargs...)
 end
 
 raw"""
@@ -113,7 +120,7 @@ function casemerge!(d)
     for w in keys(d)
         if length(w) > 0 && isuppercase(w[1]) && islowercase(w[end])
             lw = lowercase(w)
-            if lw in keys(d) && d[lw] > d[w]
+            if lw != w &&lw in keys(d) && d[lw] > d[w]
                 d[lw] += d[w]
                 pop!(d, w)
             end
