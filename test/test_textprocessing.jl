@@ -35,11 +35,18 @@
     @test lemmatizer_eng("中文") == "中文"
     @test groupwords!(Dict("dog" => 1, "dogs" => 2), lemmatizer_eng) == Dict("dog" => 3)
     @test groupwords!(Dict("cat" => 1, "dogs" => 2), lemmatizer_eng) == Dict("dog" => 2, "cat" => 1)
-    @test length(processtext("cat cats dogs Dog dog dogs", language="eng")[1]) == 2 # lemmatizer
-    @test length(processtext(split("cat cats dogs Dog dog"), language="eng")[1]) == 2 # lemmatizer
+
+    @test countwords(" cat cats dogs Dog dog dogs is \t", language="english")|>values|>sum == 7 # count, no-stopwords
+    @test length(processtext("cat cats dogs Dog\tdog dogs is", language="eng")[1]) == 2 # lemmatizer, stopwords
+    @test length(processtext(split("cat cats dogs Dog dog is"), language="eng")[1]) == 2 # lemmatizer, stopwords
     @test processtext(["cat" => 3, "Dog" => 1, "dog" => 2])[2] |> diff |> only |> iszero # casemerge
     @test processtext("word cloud", language="eng") == processtext(["word","cloud"], [12,12], language="eng") == processtext([("word", 3), ("cloud", 3)], language="eng")
-
+    @test processtext(["dogs ", " （"], language="eng")[1] |> only == "dog" # lemmatizer
+    @test processtext(["dogs ", " （"], language="eng", regexp=nothing)[1] |> length == 2 # lemmatizer
+    @test processtext(["dogs "=>1, "is"=>1.5], language="eng")[1] |> only == "dogs " # no-lemmatizer, stopwords
+    @test processtext(countwords(["dogs "=>1, "\t（"=>2], language="en"), language="eng")[1] |> only == "dog" # lemmatizer
+    @test processtext(["dogs "=>1, " （"=>2], language="eng", process=countwords)[1] |> only == "dog" # lemmatizer
+    @test processtext(countwords(["  《dogs 》 "=>1, " （"=>2, " 《\t》 "=>2], language="eng"), language="en")[1] |> only == "《dogs 》" # lemmatizer
     # settokenizer! ...
     WordCloud.settokenizer!("mylang", t->split(t, "a"))
     @test Set(processtext("bananais", language="mylang")[1]) == Set(["b", "n", "is"])

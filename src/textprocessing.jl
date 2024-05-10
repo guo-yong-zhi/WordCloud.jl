@@ -76,26 +76,25 @@ function setlemmatizer!(lang::AbstractString, str_to_str_func)
     LEMMATIZERS[StopWords.normcode(String(lang))] = str_to_str_func
 end
 
-function countwords(words::AbstractVector{<:AbstractString}; language=:auto,
+function countwords(words, counts; language=:auto,
     regexp=r"(?:\S[\s\S]*)?\w(?:[\s\S]*\S)?", counter=Dict{String,Int}())
     # strip whitespace and filter out pure punctuation string
     language = detect_language(words, language)
-    for w in words
+    for (w, c) in zip(words, counts)
         if regexp !== nothing
             m = match(regexp, w)
             if m !== nothing
                 w = m.match
-                counter[w] = get(counter, w, 0) + 1
+                counter[w] = get(counter, w, 0) + c
             end
         else
-            counter[w] = get(counter, w, 0) + 1
+            counter[w] = get(counter, w, 0) + c
         end
     end
     lemmatizer_ = get(LEMMATIZERS, language, LEMMATIZERS["_default_"])
     groupwords!(counter, lemmatizer_)
     counter
 end
-
 function countwords(text::AbstractString; language=:auto, kargs...)
     language = detect_language(text, language)
     if !haskey(TOKENIZERS, language)
@@ -104,7 +103,12 @@ function countwords(text::AbstractString; language=:auto, kargs...)
     tokenizer_ = get(TOKENIZERS, language, TOKENIZERS["_default_"])
     countwords(tokenizer_(text); language=language, kargs...)
 end
-
+countwords(words::AbstractVector{<:AbstractString}; kargs...) = countwords(words, Iterators.repeated(1); kargs...)
+countwords(counter::AbstractDict{<:AbstractString,<:Real}; kargs...) = countwords(keys(counter), values(counter); kargs...)
+countwords(wordscounts::Tuple; kargs...) = countwords(wordscounts...; kargs...)
+function countwords(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}; kargs...)
+    countwords(first.(counter), [v[2] for v in counter]; kargs...)
+end
 raw"""
 countwords(text; counter=Dict{String,Int}(), kargs...)
 Count words in text. And save results into `counter`. 
