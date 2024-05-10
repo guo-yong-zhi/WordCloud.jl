@@ -37,6 +37,11 @@
     @test groupwords!(Dict("cat" => 1, "dogs" => 2), lemmatizer_eng) == Dict("dog" => 2, "cat" => 1)
 
     @test countwords(" cat cats dogs Dog dog dogs is \t", language="english")|>values|>sum == 7 # count, no-stopwords
+    @test countwords(["# 1994 "]) |> isempty # pure punctuation and number string
+    @test countwords(["\t# 1994年"]) |>keys|>only == "# 1994年"
+    @test countwords([" # 1994 "], regexp=r"(?:\S[\s\S]*)?\w(?:[\s\S]*\S)?")|>keys|>only == "# 1994"
+    @test processtext([" # 1994 "], regexp=r"(?:\S[\s\S]*)?\w(?:[\s\S]*\S)?")[1]|>only == "# 1994"
+    @test processtext([" # 1994 "], regexp=nothing)[1]|>only == " # 1994 "
     @test length(processtext("cat cats dogs Dog\tdog dogs is", language="eng")[1]) == 2 # lemmatizer, stopwords
     @test length(processtext(split("cat cats dogs Dog dog is"), language="eng")[1]) == 2 # lemmatizer, stopwords
     @test processtext(["cat" => 3, "Dog" => 1, "dog" => 2])[2] |> diff |> only |> iszero # casemerge
