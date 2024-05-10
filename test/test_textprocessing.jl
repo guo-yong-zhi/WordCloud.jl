@@ -52,6 +52,11 @@
     @test processtext(countwords(["dogs "=>1, "\t（"=>2], language="en"), language="eng")[1] |> only == "dog" # lemmatizer
     @test processtext(["dogs "=>1, " （"=>2], language="eng", process=countwords)[1] |> only == "dog" # lemmatizer
     @test processtext(countwords(["  《dogs 》 "=>1, " （"=>2, " 《\t》 "=>2], language="eng"), language="en")[1] |> only == "《dogs 》" # lemmatizer
+    # stopwords_extra
+    @test length(processtext("word cloud is a cloud", language="en", stopwords=nothing)[1]) == 4
+    @test length(processtext("word cloud is a cloud", language="en", stopwords=("cloud", ""))[1]) == 3
+    @test length(processtext("word cloud is a cloud", language="en", stopwords_extra=[])[1]) == 2
+    @test processtext("word cloud is a cloud", language="en", stopwords_extra=["word"])[1] |> only == "cloud"
     # settokenizer! ...
     WordCloud.settokenizer!("mylang", t->split(t, "a"))
     @test Set(processtext("bananais", language="mylang")[1]) == Set(["b", "n", "is"])

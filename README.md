@@ -45,11 +45,12 @@ wc = wordcloud(["the"=>1.0, "to"=>0.51, "and"=>0.50,
 # Advanced Usage
 ```julia
 using WordCloud
-stopwords = WordCloud.STOPWORDS["eng"] ∪ ["said"]
 textfile = pkgdir(WordCloud)*"/res/alice.txt"
 maskfile = pkgdir(WordCloud)*"/res/alice_mask.png"
 wc = wordcloud(
-    processtext(open(textfile), stopwords=stopwords, maxnum=500), 
+    open(textfile),
+    stopwords_extra = ["said"],
+    maxnum = 500, 
     mask = maskfile,
     maskcolor = "#faeef8",
     outline = 4,

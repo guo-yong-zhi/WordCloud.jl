@@ -98,7 +98,7 @@ include("test_textprocessing.jl")
     wc = wordcloud(["test"], [1], mask=pngfile, padding=100, masksize=:default)
     @test all(size(wc.mask) .> 700)
     # get & set & id
-    words, weights = processtext(open("../res/alice.txt"), stopwords=WordCloud.STOPWORDS["eng"] ∪ ["said"], maxnum=300)
+    words, weights = processtext(open("../res/alice.txt"), stopwords_extra=["said"], maxnum=300)
     wc = wordcloud(
             words, weights, 
             mask="../res/alice_mask.png", maskcolor="#faeef8", backgroundcolor=0.97,

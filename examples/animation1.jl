@@ -1,6 +1,6 @@
 #md# This animation shows how the initial layout is generated.
 using WordCloud
-stopwords = WordCloud.STOPWORDS["eng"] ∪ ["said"]
+stopwords_extra = ["said"]
 textfile = pkgdir(WordCloud)*"/res/alice.txt"
 wc = wordcloud(
     processtext(open(textfile), stopwords=stopwords, maxnum=300), 

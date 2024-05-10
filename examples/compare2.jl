@@ -8,7 +8,7 @@ as = WordCloud.randomangles() # (0,90,45,-45)#
 fs = WordCloud.randomfonts()
 dens = 0.45 # not too high
 wca = wordcloud(
-    processtext(open(pkgdir(WordCloud) * "/res/Barack Obama's First Inaugural Address.txt"), stopwords=WordCloud.STOPWORDS["eng"] ∪ stwords), 
+    processtext(open(pkgdir(WordCloud) * "/res/Barack Obama's First Inaugural Address.txt"), stopwords_extra=stwords), 
     colors=cs,
     angles=as,
     density=dens,
@@ -17,7 +17,7 @@ wca = wordcloud(
     state=identity, # turn off the initialize! and layout! in advance
 )
 wcb = wordcloud(
-    processtext(open(pkgdir(WordCloud) * "/res/Donald Trump's Inaugural Address.txt"), stopwords=WordCloud.STOPWORDS["eng"] ∪ stwords),
+    processtext(open(pkgdir(WordCloud) * "/res/Donald Trump's Inaugural Address.txt"), stopwords_extra=stwords),
     mask=getsvgmask(wca),
     masksize=:original,
     colors=cs,

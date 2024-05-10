@@ -1,6 +1,6 @@
 using WordCloud
 wc = wordcloud(
-    processtext(open(pkgdir(WordCloud) * "/res/alice.txt"), stopwords=WordCloud.STOPWORDS["eng"] ∪ ["said"]), 
+    processtext(open(pkgdir(WordCloud) * "/res/alice.txt"), stopwords_extra=["said"]), 
     mask=pkgdir(WordCloud) * "/res/alice_mask.png",
 	color="#faeef8",
     colors=:seaborn_dark,

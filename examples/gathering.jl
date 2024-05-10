@@ -1,7 +1,7 @@
 #md# By setting `style=:gathering` in the `layout!` function, larger words will be positioned closer to the center.
 using WordCloud
 wc = wordcloud(
-    processtext(open(pkgdir(WordCloud) * "/res/alice.txt"), stopwords=WordCloud.STOPWORDS["eng"] ∪ ["said"]), 
+    processtext(open(pkgdir(WordCloud) * "/res/alice.txt"), stopwords_extra=["said"]), 
     angles=0, density=0.55,
     mask=squircle, rt=2.5 * rand(),
     state=initialize!)

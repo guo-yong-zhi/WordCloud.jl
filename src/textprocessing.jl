@@ -91,7 +91,7 @@ function setlemmatizer!(lang::AbstractString, str_to_str_func)
     LEMMATIZERS[StopWords.normcode(String(lang))] = str_to_str_func
 end
 
-"""
+@doc raw"""
 countwords(text_or_counter; counter=Dict{String,Int}(), language=:auto, regexp=r"(?:\S[\s\S]*)?[^0-9_\W](?:[\s\S]*\S)?")  
 
 Count words in text. And save results into `counter`.  
@@ -202,13 +202,14 @@ function detect_language(text::IO, language=:auto)
     return l
 end
 
-"""
+@doc raw"""
 Process the text, filter the words, and adjust the weights. Return a vector of words and a vector of weights.
 ## Positional Arguments
 * text_or_counter: a string, a vector of words, an opened file (IO), a Dict{<:String, <:Real}, a Vector{Pair}, a Vector{Tuple}, or two Vectors.
 ## Optional Keyword Arguments
-* language: language of the text, default is :auto. 
-* stopwords: a set of words
+* language: language of the text, default is `:auto``. 
+* stopwords: a set of words, default is `:auto` which means decided by language.  
+* stopwords_extra: an additional set of stopwords. By setting this while keeping the `stopwords` argument as `:auto`, the built-in stopword list will be preserved.
 * minlength, maxlength: minimum and maximum length of a word to be included
 * minfrequency: minimum frequency of a word to be included
 * maxnum: maximum number of words, default is 500
@@ -219,6 +220,7 @@ Process the text, filter the words, and adjust the weights. Return a vector of w
 function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     language=:auto,
     stopwords=:auto,
+    stopwords_extra=nothing,
     minlength=1, maxlength=30,
     minfrequency=0,
     maxnum=500,
@@ -229,8 +231,10 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     if !haskey(STOPWORDS, language)
         @warn "No built-in stopwords for $(language)!"
     end
-    stopwords == :auto && (stopwords = get(STOPWORDS, language, Set()))
+    stopwords == :auto && (stopwords = get(STOPWORDS, language, nothing))
+    stopwords === nothing && (stopwords = Set{String}())
     stopwords isa AbstractSet || (stopwords = Set(stopwords))
+    stopwords_extra === nothing || (stopwords = stopwords ∪ stopwords_extra)
     counter = process(counter)
     print("Total words: $(round(sum(values(counter)), digits=2)). ")
     print("Unique words: $(length(counter)). ")

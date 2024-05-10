@@ -19,8 +19,10 @@ The positional arguments are used to specify words and weights in various forms,
 * counter::AbstractVector{<:Pair}
 ## Optional Keyword Arguments
 ### text-related keyword arguments
-* language: language of the text, default is :auto. 
-* stopwords: a set of words
+For more sophisticated text processing, please utilize the function [`processtext`](@ref).
+* language: language of the text, default is `:auto`. 
+* stopwords: a set of words, default is `:auto` which means decided by language.  
+* stopwords_extra: an additional set of stopwords. By setting this while keeping the `stopwords` argument as `:auto`, the built-in stopword list will be preserved.
 * maxnum: maximum number of words, default is 500
 
 ### style-related keyword arguments
@@ -70,8 +72,8 @@ The positional arguments are used to specify words and weights in various forms,
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter) |> collect, values(counter) |> collect; kargs...)
 wordcloud(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
-function wordcloud(text; language=:auto, stopwords=:auto, maxnum=500, kargs...)
-    wordcloud(processtext(text, language=language, stopwords=stopwords, maxnum=maxnum); kargs...)
+function wordcloud(text; language=:auto, stopwords=:auto, stopwords_extra=nothing, maxnum=500, kargs...)
+    wordcloud(processtext(text, language=language, stopwords=stopwords, stopwords_extra=stopwords_extra, maxnum=maxnum); kargs...)
 end
 wordcloud(words, weight::Number; kargs...) = wordcloud(words, repeat([weight], length(words)); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 

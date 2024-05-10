@@ -257,22 +257,13 @@ begin
             text = read_table(text_)
         end
         dict_process = rescaleweights(rescale_func, tan(word_length_balance * π / 2)) ∘ casemerge!
-        lang = language_
-        if lang == "auto"
-            lang = Symbol(lang)
-        end
-        if texttype == "Table"
-            lang = WordCloud.TextProcessing.detect_language(first.(text), lang)
-        else
-            lang = WordCloud.TextProcessing.detect_language(text, lang)
-        end
-        _stopwords = enablestopwords ? get(WordCloud.STOPWORDS, lang, Set())∪ wordblacklist : wordblacklist
         global words_weights = processtext(
             text,
-            language=lang,
+            language=language_ == "auto" ? :auto : language_,
             maxnum=maxnum,
             minlength=minlength,
-            stopwords=_stopwords,
+            stopwords=enablestopwords ? :auto : nothing,
+            stopwords_extra=wordblacklist,
             process=dict_process)
         global wordsnum = length(words_weights[1])
     catch e
