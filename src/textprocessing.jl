@@ -67,32 +67,32 @@ LEMMATIZERS = Dict(
 )
 
 """
-settokenizer!(lang::AbstractString, str_to_list_func)  
+    settokenizer!(lang::AbstractString, str_to_list_func)  
 
-customize tokenizer for language `lang`
+Customize tokenizer for language `lang`
 """
 function settokenizer!(lang::AbstractString, str_to_list_func)
     TOKENIZERS[StopWords.normcode(String(lang))] = str_to_list_func
 end
 """
-setstopwords!(lang::AbstractString, str_set)  
+    setstopwords!(lang::AbstractString, str_set)  
 
-customize stopwords for language `lang`
+Customize stopwords for language `lang`
 """
 function setstopwords!(lang::AbstractString, str_set)
     STOPWORDS[StopWords.normcode(String(lang))] = str_set
 end
 """
-setlemmatizer!(lang::AbstractString, str_to_str_func)  
+    setlemmatizer!(lang::AbstractString, str_to_str_func)  
 
-customize lemmatizer for language `lang`
+Customize lemmatizer for language `lang`
 """
 function setlemmatizer!(lang::AbstractString, str_to_str_func)
     LEMMATIZERS[StopWords.normcode(String(lang))] = str_to_str_func
 end
 
 @doc raw"""
-countwords(text_or_counter; counter=Dict{String,Int}(), language=:auto, regexp=r"(?:\S[\s\S]*)?[^0-9_\W](?:[\s\S]*\S)?")  
+    countwords(text_or_counter; counter=Dict{String,Int}(), language=:auto, regexp=r"(?:\S[\s\S]*)?[^0-9_\W](?:[\s\S]*\S)?")  
 
 Count words in text. And save results into `counter`.  
 `text_or_counter` can be a String, a Vector of Strings, an opend file (IO) or a Dict.  
@@ -173,13 +173,15 @@ function _rescaleweights(dict, func=identity, p=0)
 end
 
 """
-rescaleweights(func=identity, p=0)  
+    rescaleweights(func=identity, p=0)
+
 This function takes word length into account. Therefore, the rescaled weights can be used as font size coefficients.  
-The function func(w::Real)->Real is used to remap the weight, expressed as weight = func(weight); `p` represents the exponent of the power mean.
+The function `func(w::Real)->Real` is used to remap the weight, expressed as `weight = func(weight)`; `p` represents the exponent of the power mean.
 We set `weight = powermean(1*fontsize, wordlength*fontsize) = ((fontsize^p + (wordlength*fontsize)^p)/2) ^ (1/p)`.  
 That is, `weight = fontsize * powermean(1, wordlength)`.  
 Overall, this gives us `fontsize = func(weight) / powermean(1, wordlength)`.  
-When p is -Inf, the power mean is the minimum value, resulting in fontsize=weight. When p is Inf, the power mean is the maximum value, resulting in fontsize=weight/wordlength.
+When p is -Inf, the power mean is the minimum value, resulting in `fontsize=weight`. 
+When p is Inf, the power mean is the maximum value, resulting in `fontsize=weight/wordlength`.
 When p is -1, the power mean is the harmonic mean. When p is 0, the power mean is the geometric mean, preserving the word area. 
 When p is 1, the power mean is the arithmetic mean. When p is 2, the power mean is the root mean square, preserving the diagonal length.  
 """
@@ -207,7 +209,7 @@ Process the text, filter the words, and adjust the weights. Return a vector of w
 ## Positional Arguments
 * text_or_counter: a string, a vector of words, an opened file (IO), a Dict{<:String, <:Real}, a Vector{Pair}, a Vector{Tuple}, or two Vectors.
 ## Optional Keyword Arguments
-* language: language of the text, default is `:auto``. 
+* language: language of the text, default is `:auto`. 
 * stopwords: a set of words, default is `:auto` which means decided by language.  
 * stopwords_extra: an additional set of stopwords. By setting this while keeping the `stopwords` argument as `:auto`, the built-in stopword list will be preserved.
 * minlength, maxlength: minimum and maximum length of a word to be included

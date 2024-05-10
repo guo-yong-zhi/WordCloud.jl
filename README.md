@@ -48,17 +48,17 @@ using WordCloud
 textfile = pkgdir(WordCloud)*"/res/alice.txt"
 maskfile = pkgdir(WordCloud)*"/res/alice_mask.png"
 wc = wordcloud(
-    open(textfile),
-    stopwords_extra = ["said"],
-    maxnum = 500, 
-    mask = maskfile,
-    maskcolor = "#faeef8",
-    outline = 4,
-    linecolor = "purple",
-    colors = :Set1_5,
-    angles = (0, 90),
-    fonts = "Tahoma",
-    density = 0.55,
+    open(textfile),
+    stopwords_extra = ["said"],
+    maxnum = 500, 
+    mask = maskfile,
+    maskcolor = "#faeef8",
+    outline = 4,
+    linecolor = "purple",
+    colors = :Set1_5,
+    angles = (0, 90),
+    fonts = "Tahoma",
+    density = 0.55,
     spacing = 3,) |> generate!
 paint(wc, "alice.png", ratio=0.5)
 ```

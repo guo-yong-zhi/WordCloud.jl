@@ -16,7 +16,7 @@ function volume_factor(img, args...)
 end
 """
 Load an image as a mask, recolor it, or resize it, among other options.
-## examples
+## Examples
 * loadmask(open("res/heart.jpg"), 256, 256) # resize to 256*256  
 * loadmask("res/heart.jpg", ratio=0.3) # scaled by 0.3  
 * loadmask("res/heart.jpg", color="red", ratio=2) # set forecolor  
@@ -120,7 +120,7 @@ function paintsvg(wc::WC, file, args...; kargs...)
 end
 
 """
-# examples
+# Examples
 * paint(wc::WC)
 * paint(wc::WC, background=false) # without background
 * paint(wc::WC, background=outline(wc.mask)) # use a different background
@@ -182,8 +182,7 @@ end
 runexample(example=:random) = @time evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
 showexample(example=:random) = read(pkgdir(WordCloud)*"/examples/$(example).jl", String)|>print
 examples = [e[1:prevind(e, end, 3)] for e in basename.(readdir(pkgdir(WordCloud)*"/examples")) if endswith(e, ".jl")]
-@doc "Available values: [" * join(":".*examples, ", ") * "]" runexample
-@doc "Available values: [" * join(":".*examples, ", ") * "]" showexample
+@doc "Available values: [" * join(":".*examples, ", ") * "]" runexample showexample
 function runexamples(examples=examples)
     println(length(examples), " examples: ", examples)
     for (i,e) in enumerate(examples)
