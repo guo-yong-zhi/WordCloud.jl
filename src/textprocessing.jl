@@ -66,16 +66,38 @@ LEMMATIZERS = Dict(
     "eng" => lemmatizer_eng,
 )
 
+"""
+settokenizer!(lang::AbstractString, str_to_list_func)  
+
+customize tokenizer for language `lang`
+"""
 function settokenizer!(lang::AbstractString, str_to_list_func)
     TOKENIZERS[StopWords.normcode(String(lang))] = str_to_list_func
 end
+"""
+setstopwords!(lang::AbstractString, str_set)  
+
+customize stopwords for language `lang`
+"""
 function setstopwords!(lang::AbstractString, str_set)
     STOPWORDS[StopWords.normcode(String(lang))] = str_set
 end
+"""
+setlemmatizer!(lang::AbstractString, str_to_str_func)  
+
+customize lemmatizer for language `lang`
+"""
 function setlemmatizer!(lang::AbstractString, str_to_str_func)
     LEMMATIZERS[StopWords.normcode(String(lang))] = str_to_str_func
 end
 
+"""
+countwords(text_or_counter; counter=Dict{String,Int}(), language=:auto, regexp=r"(?:\S[\s\S]*)?[^0-9_\W](?:[\s\S]*\S)?")  
+
+Count words in text. And save results into `counter`.  
+`text_or_counter` can be a String, a Vector of Strings, an opend file (IO) or a Dict.  
+`regexp` is a regular expression to partially match and filter words. For example, `regexp=r"\S(?:[\s\S]*\S)?"` will trim whitespaces then eliminate empty words.  
+"""
 function countwords(words, counts; language=:auto,
     regexp=r"(?:\S[\s\S]*)?[^0-9_\W](?:[\s\S]*\S)?", counter=Dict{String,Int}())
     # strip whitespace and filter out pure punctuation and number string
@@ -109,11 +131,6 @@ countwords(wordscounts::Tuple; kargs...) = countwords(wordscounts...; kargs...)
 function countwords(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}; kargs...)
     countwords(first.(counter), [v[2] for v in counter]; kargs...)
 end
-raw"""
-countwords(text; counter=Dict{String,Int}(), kargs...)
-Count words in text. And save results into `counter`. 
-`text` can be a String, a Vector of String, or an opend file (IO).
-"""
 function countwords(textfile::IO; counter=Dict{String,Int}(), kargs...)
     for l in eachline(textfile)
         countwords(l; counter=counter, kargs...)
@@ -184,10 +201,11 @@ function detect_language(text::IO, language=:auto)
     seek(text, p)
     return l
 end
+
 """
 Process the text, filter the words, and adjust the weights. Return a vector of words and a vector of weights.
 ## Positional Arguments
-* text: a string, a vector of words, an opened file (IO), a counter, a Dict{<:String, <:Real}, a Vector{Pair}, a Vector{Tuple}, or two Vectors.
+* text_or_counter: a string, a vector of words, an opened file (IO), a Dict{<:String, <:Real}, a Vector{Pair}, a Vector{Tuple}, or two Vectors.
 ## Optional Keyword Arguments
 * language: language of the text, default is :auto. 
 * stopwords: a set of words
@@ -195,6 +213,7 @@ Process the text, filter the words, and adjust the weights. Return a vector of w
 * minfrequency: minimum frequency of a word to be included
 * maxnum: maximum number of words, default is 500
 * minweight, maxweight: within 0 ~ 1, set to adjust extreme weight
+* regexp: a regular expression to partially match and filter words. For example, `regexp=r"\S(?:[\s\S]*\S)?"` will trim whitespaces then eliminate empty words. This argument is not available when `text_or_counter` is a counter.
 * process: a function to process word count dict, default is `rescaleweights(identity, 0) ∘ casemerge!`
 """
 function processtext(counter::AbstractDict{<:AbstractString,<:Real};
