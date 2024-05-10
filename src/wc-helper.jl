@@ -182,7 +182,9 @@ end
 runexample(example=:random) = @time evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
 showexample(example=:random) = read(pkgdir(WordCloud)*"/examples/$(example).jl", String)|>print
 examples = [e[1:prevind(e, end, 3)] for e in basename.(readdir(pkgdir(WordCloud)*"/examples")) if endswith(e, ".jl")]
-@doc "Available values: [" * join(":".*examples, ", ") * "]" runexample showexample
+exampledoc = "Available values: [" * join(":".*examples, ", ") * "]"
+@doc exampledoc runexample
+@doc exampledoc showexample
 function runexamples(examples=examples)
     println(length(examples), " examples: ", examples)
     for (i,e) in enumerate(examples)
