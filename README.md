@@ -10,7 +10,7 @@ Word cloud (tag cloud or wordle) is a novelty visual representation of text data
 
 [🌐 Try the online generator 🌐](https://mybinder.org/v2/gh/guo-yong-zhi/pluto-on-binder/master?urlpath=pluto/open?url=https%3A%2F%2Fraw.githubusercontent.com%2Fguo-yong-zhi%2FWordCloud.jl%2Fmaster%2FWordCloudApp.jl)  
 
-[✨ Go to the gallery ✨](https://github.com/guo-yong-zhi/WordCloud-Gallery) 
+[✨ Go to the gallery ✨](https://github.com/guo-yong-zhi/WordCloud-Gallery/blob/main/README.md) 
 
 <br>
 

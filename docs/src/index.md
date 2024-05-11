@@ -22,7 +22,7 @@ Modules = [WordCloud, WordCloud.TextProcessing, WordCloud.Render]
 ```
 
 ## Gallery
-* [WordCloud-Gallery](https://github.com/guo-yong-zhi/WordCloud-Gallery)
+* [WordCloud-Gallery](https://github.com/guo-yong-zhi/WordCloud-Gallery/blob/main/README.md)
 
 ## Index
 ```@index
