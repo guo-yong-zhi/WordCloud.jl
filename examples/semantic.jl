@@ -1,7 +1,6 @@
 #md# ### Words
 using WordCloud
-stwords = ["us"];
-words_weights = processtext(open(pkgdir(WordCloud) * "/res/Barack Obama's First Inaugural Address.txt"), stopwords_extra=stwords)
+words_weights = processtext(open(pkgdir(WordCloud) * "/res/Barack Obama's First Inaugural Address.txt"))
 words_weights = Dict(zip(words_weights...))
 #md# ### Embedding
 #md# The positions of words can be initialized with pre-trained word vectors so that similar words will appear near each other.

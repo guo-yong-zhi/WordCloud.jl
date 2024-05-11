@@ -1,4 +1,4 @@
-#md# 中文需要分词，可以通过PythonCall调用python版的结巴分词  
+#md# 中文分词功能没有内建，可以通过PythonCall调用python版的结巴分词。
 
 using CondaPkg; CondaPkg.add("jieba")
 using WordCloud
@@ -10,6 +10,11 @@ TheInternationale = "起来，饥寒交迫的奴隶！\n起来，全世界受苦
 
 jieba.add_word("英特纳雄耐尔")
 
+#md# 方案1：你可以使用`WordCloud.settokenizer!`为中文注册分词器。当检测到中文文本输入时该分词器会被自动调用。
+WordCloud.settokenizer!("zh", t->pyconvert(Vector{String}, jieba.lcut(t)))
+wc = wordcloud(TheInternationale)
+@show wc
+#md# 方案2：如果你只是单次使用不想注册，也可以传入手动分词之后的的词列表。
 wc = wordcloud(
     processtext(pyconvert(Vector{String}, jieba.lcut(TheInternationale))), 
     colors="#DE2910",

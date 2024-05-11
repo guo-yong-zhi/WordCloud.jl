@@ -1,9 +1,8 @@
 #md# This animation shows how the initial layout is generated.
 using WordCloud
-stopwords_extra = ["said"]
 textfile = pkgdir(WordCloud)*"/res/alice.txt"
 wc = wordcloud(
-    processtext(open(textfile), stopwords=stopwords, maxnum=300), 
+    processtext(open(textfile), maxnum=300), 
     masksize = (300, 200),
     outline = 3,
     angles = 0:90,

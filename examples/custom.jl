@@ -1,6 +1,6 @@
 using WordCloud
 wc = wordcloud(
-    processtext(open(pkgdir(WordCloud) * "/res/alice.txt"), stopwords_extra=["said"], maxweight=1, maxnum=300), 
+    processtext(open(pkgdir(WordCloud) * "/res/alice.txt"), maxweight=1, maxnum=300), 
     # mask = pad(WordCloud.tobitmap(shape(ellipse, 600, 500, color=(0.98, 0.97, 0.99), backgroundcolor=0.97)), 0.1),
     mask=shape(ellipse, 600, 500, color=(0.98, 0.97, 0.99), backgroundcolor=0.97, backgroundsize=(700, 550)),
     masksize=:original,
