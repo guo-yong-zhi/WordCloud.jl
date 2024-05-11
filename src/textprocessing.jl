@@ -226,7 +226,7 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     minlength=1, maxlength=30,
     minfrequency=0,
     maxnum=500,
-    minweight=1 / maxnum, maxweight=:auto,
+    minweight=:auto, maxweight=:auto,
     process=rescaleweights(identity, 0) ∘ casemerge!)
 
     language = detect_language(keys(counter), language)
@@ -257,7 +257,8 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     print("The top $(length(words)) words are kept. ")
     @assert !isempty(weights)
     weights = weights ./ sum(weights)
-    maxweight == :auto && (maxweight = max(20minweight, 20 / maxnum))
+    minweight == :auto && (minweight = min(0.01, 1 / length(words)))
+    maxweight == :auto && (maxweight = max(20minweight, 10 / length(words)))
     m = weights .> maxweight
     weights[m] .= log1p.(weights[m] .- maxweight) ./ 10 .+ maxweight
     weights .+= minweight

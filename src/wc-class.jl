@@ -111,6 +111,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     if minfontsize == :auto
         minfontsize = min(maxfontsize, 8, sqrt(volume / length(words) / 8))
         # 只和单词数量有关，和单词长度无关。不管单词多长，字号小了依然看不见。
+        # 单词平均长度为4，volume大约为12*12*length(words)，故sqrt(12*12*单词平均长度/8)约等于8.5
     end
     @debug "set fontsize ∈ [$minfontsize, $maxfontsize]"
     params[:minfontsize] = minfontsize
