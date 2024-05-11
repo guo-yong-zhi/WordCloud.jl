@@ -1,4 +1,4 @@
-#md# For languages that are not processed perfectly, you can refer to [the example for Chinese](#中文) or you can input the data in the form of a "word => weight" list, as illustrated in the following example.
+#md# For languages that are not processed perfectly, you can refer to [the example for Chinese](#中文) and [the example for Japanese](#japanese). Or you can directly input the data in the form of a "word => weight" list, as illustrated in the following example.
 using WordCloud
 words_weights = [
     "普通话" => 939.0,
