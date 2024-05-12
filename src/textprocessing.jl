@@ -294,11 +294,16 @@ function processtext(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}
 end
 function html2text(content::AbstractString)
     patterns = [
+        r"\"[\s\S]*?\"" => " ",
         r"<[\s]*?script[^>]*?>[\s\S]*?<[\s]*?/[\s]*?script[\s]*?>" => " ",
         r"<[\s]*?style[^>]*?>[\s\S]*?<[\s]*?/[\s]*?style[\s]*?>" => " ",
-        r"<!--[\s\S]*?-->" => " ",
         "<br>" => "\n",
         r"<[\s\S]*?>" => " ",
+    ]
+    for p in patterns
+        content = replace(content, p) # single pass not work
+    end
+    patterns = [
         "&nbsp;" => " ",
         "&quot;" => "\"",
         "&amp;" => "&",
@@ -306,10 +311,7 @@ function html2text(content::AbstractString)
         "&gt;" => ">",
         r"&#?\w{1,6};" => " ",
     ]
-    for p in patterns
-        content = replace(content, p)
-    end
-    content
+    replace(content, patterns...)
 end
 html2text(file::IO) = html2text(read(file, String))
 end

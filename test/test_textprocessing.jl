@@ -75,4 +75,7 @@
     @test abs(pm(12.5, 2-1e-8) - sqrt(12.5^2/2+1/2)) < 1e-6
     @test pm(π, Inf) ≈ π
     @test pm(7π, -Inf) == 1.
+
+    htstr = """&pound;abcd<div x-component-name="DisasterSokuho" x-component-data="{&quot;earthquake&quot;:&quot;&lt;!-- 地震速報のメッセージを消しました （2024-04-25 12:00:08）-->\n&quot;,&quot;tsunami&quot;:&quot;&lt;!-- 津波速報のメッセージを消しました （2024-04-25 12:05:35）-->\n&quot;}"><div class="tYQVs"><div>"""
+    @test strip(html2text(htstr)) == "abcd"
 end
