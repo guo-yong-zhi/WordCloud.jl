@@ -14,11 +14,16 @@ function checkfonts(fonts::AbstractVector)
         redirect_stderr(f) do
             p = position(f)
             for font in fonts
-                rendertext("a", 1 + rand(), font=font) # 相同字体相同字号仅warning一次，故首次执行最准
+                err = false
+                try
+                    rendertext("a", 1 + rand(), font=font) # 相同字体相同字号仅warning一次，故首次执行最准
+                catch
+                    err = true
+                end
                 # flush(f) # https://en.cppreference.com/w/cpp/io/c/fseek The standard C++ file streams guarantee both flushing and unshifting 
                 seekend(f)
                 p2 = position(f)
-                push!(r, p2 == p)
+                push!(r, (p2 == p) && !err)
                 p = p2
             end
         end
@@ -30,8 +35,12 @@ function filterfonts(;fonts=CandiFonts, weights=CandiWeights)
     candi = ["$f$w" for w in weights, f in fonts] |> vec
     candi[checkfonts(candi)]
 end
-AvailableFonts = filterfonts()
-push!(AvailableFonts, "")
+if Sys.iswindows()
+    AvailableFonts = [""]
+else
+    AvailableFonts = filterfonts()
+    push!(AvailableFonts, "")
+end
 
 Schemes_colorbrewer = filter(s -> occursin("colorbrewer", colorschemes[s].category), collect(keys(colorschemes)))
 Schemes_colorbrewer =  filter(s -> (occursin("Accent", String(s)) 
