@@ -73,6 +73,7 @@ wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter) |> collect, values(counter) |> collect; kargs...)
 wordcloud(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
 function wordcloud(text; language=:auto, stopwords=:auto, stopwords_extra=nothing, maxnum=500, kargs...)
+    language = detect_language(text, language)
     wordcloud(processtext(text, language=language, stopwords=stopwords, stopwords_extra=stopwords_extra, maxnum=maxnum); language=language, kargs...)
 end
 wordcloud(words, weight::Number; kargs...) = wordcloud(words, repeat([weight], length(words)); kargs...)
@@ -249,8 +250,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
             Render.recolor!(mask, maskcolor) # tobitmap后有杂色 https://github.com/JuliaGraphics/Luxor.jl/issues/160
         end
     end
-    lang = language in DEFAULTSYMBOLS ? "" : language
-    fonts in DEFAULTSYMBOLS && (fonts = randomfonts(lang))
+    fonts in DEFAULTSYMBOLS && (fonts = randomfonts(detect_language(words, language)))
     fonts = Iterators.take(iter_expand(fonts), length(words)) |> collect
     colors, angles, mask, svgmask, fonts, transparent
 end

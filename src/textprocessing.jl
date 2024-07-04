@@ -1,5 +1,5 @@
 module TextProcessing
-export countwords, processtext, html2text, STOPWORDS, casemerge!, rescaleweights, settokenizer!, setlemmatizer!, setstopwords!
+export countwords, processtext, html2text, STOPWORDS, casemerge!, rescaleweights, settokenizer!, setlemmatizer!, setstopwords!, detect_language
 
 using StopWords
 using LanguageIdentification
