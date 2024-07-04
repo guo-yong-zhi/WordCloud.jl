@@ -379,26 +379,8 @@ begin
 end
 
 
-# ╔═╡ b09620ef-4495-4c83-ad1c-2d8b0ed70710
-begin
-    google_fonts = ["Roboto", "Open Sans", "Lato", "Montserrat", "Noto Sans JP", "Roboto Condensed", "Oswald", "Source Sans Pro", "Slabo 27px", "Raleway", "PT Sans", "Poppins", "Roboto Slab", "Merriweather", "Noto Sans", "Ubuntu", "Roboto Mono", "Lora", "Playfair Display", "Nunito", "PT Serif", "Titillium Web", "PT Sans Narrow", "Arimo", "Noto Serif",
-        "Rubik", "Fira Sans", "Work Sans", "Noto Sans KR", "Quicksand", "Dosis", "Inconsolata", "Oxygen", "Mukta", "Bitter", "Nanum Gothic", "Yanone Kaffeesatz", "Nunito Sans", "Lobster", "Cabin", "Fjalla One", "Indie Flower", "Anton", "Arvo", "Josefin Sans", "Karla", "Libre Baskerville", "Noto Sans TC", "Hind", "Crimson Text", "Hind Siliguri",
-        "Inter", "Heebo", "Abel", "Libre Franklin", "Barlow", "Varela Round", "Pacifico", "Dancing Script", "Exo 2", "Source Code Pro", "Shadows Into Light", "Merriweather Sans", "Asap", "Bree Serif", "Archivo Narrow", "Play", "Ubuntu Condensed", "Questrial", "Abril Fatface", "Source Serif Pro", "Maven Pro", "Francois One", "Signika",
-        "EB Garamond", "Comfortaa", "Exo", "Vollkorn", "Teko", "Catamaran", "Kanit", "Cairo", "Amatic SC", "IBM Plex Sans", "Cuprum", "Poiret One", "Rokkitt", "Bebas Neue", "Acme", "PT Sans Caption", "Righteous", "Noto Sans SC", "Alegreya Sans", "Alegreya", "Barlow Condensed", "Prompt", "Gloria Hallelujah", "Patua One", "Crete Round", "Permanent Marker"]
-    empty!(WordCloud.AvailableFonts)
-    append!(WordCloud.AvailableFonts, ["$f$w" for w in WordCloud.CandiWeights, f in google_fonts])
-    function wordseg_cn(t)
-        jieba = pyimport("jieba")
-        pyconvert(Vector{String}, jieba.lcut(t))
-    end
-    WordCloud.settokenizer!("zho", wordseg_cn)
-    WordCloud.settokenizer!("jpn", TinySegmenter.tokenize)
-    nothing
-end
-
 # ╔═╡ fa6b3269-357e-4bf9-8514-70aff9df427f
 begin
-    google_fonts # used to adjust cell order
     function gen_cloud(words_weights)
         if outlinewidth isa Number && outlinewidth >= 0
             olw = outlinewidth
@@ -440,6 +422,17 @@ begin
     end
 end
 
+
+# ╔═╡ b09620ef-4495-4c83-ad1c-2d8b0ed70710
+begin
+    function wordseg_cn(t)
+        jieba = pyimport("jieba")
+        pyconvert(Vector{String}, jieba.lcut(t))
+    end
+    WordCloud.settokenizer!("zho", wordseg_cn)
+    WordCloud.settokenizer!("jpn", TinySegmenter.tokenize)
+    nothing
+end
 
 # ╔═╡ Cell order:
 # ╟─bda3fa85-04a3-4033-9890-a5b4f10e2a77

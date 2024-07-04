@@ -1,45 +1,66 @@
 using Random
-SansSerifFonts = ["Trebuchet MS", "Heiti TC", "微軟正黑體", "Arial Unicode MS", "Droid Fallback Sans", "sans-serif", "Helvetica", "Verdana", "Hei",
-    "Arial", "Tahoma", "Microsoft Yahei", "Comic Sans MS", "Impact", "Segoe Script", "STHeiti", "Apple LiGothic", "MingLiU", "Ubuntu", "Segoe UI", 
-    "DejaVu Sans", "DejaVu Sans Mono", "Noto Sans CJK", "Arial Black", "Gadget", "cursive", "Charcoal", "Lucida Sans Unicode", "Lucida Grande", "Geneva"]
-SerifFonts = ["Baskerville", "Times New Roman", "Times", "華康儷金黑 Std", "華康儷宋 Std",  "DFLiKingHeiStd-W8", "DFLiSongStd-W5", "DejaVu Serif", "SimSun",
-    "Hiragino Mincho Pro", "LiSong Pro", "新細明體", "serif", "Georgia", "STSong", "FangSong", "KaiTi", "STKaiti", "Courier", "Courier New", "monospace",
-    "Palatino Linotype", "Book Antiqua", "Palatino", "Lucida Console", "Monaco"]
-CandiFonts = union(SansSerifFonts, SerifFonts)
-CandiWeights = ["", " Regular", " Normal", " Medium", " Bold", " Light"]
-function checkfonts(fonts::AbstractVector)
-    fname = tempname()
-    r = Bool[]
-    open(fname, "w") do f
-        redirect_stderr(f) do
-            p = position(f)
-            for font in fonts
-                err = false
-                try
-                    rendertext("a", 1 + rand(), font=font) # 相同字体相同字号仅warning一次，故首次执行最准
-                catch
-                    err = true
-                end
-                # flush(f) # https://en.cppreference.com/w/cpp/io/c/fseek The standard C++ file streams guarantee both flushing and unshifting 
-                seekend(f)
-                p2 = position(f)
-                push!(r, (p2 == p) && !err)
-                p = p2
+import Fontconfig: list, Pattern
+using StopWords
+
+FontCandidates::Dict{String, Vector{String}} = Dict{String, Vector{String}}()
+WeightCandidates::Vector{String} = ["", " Regular", " Normal", " Medium", " Bold", " Light"]
+
+function listfonts(lang="")
+    if !isempty(lang)
+        ps = list(Pattern(lang=lang))
+    else
+        ps = list(Pattern())
+    end
+    names = String[]
+    for p in ps
+        name = string(p)
+        b = findfirst("\"", name)
+        e = findfirst(":", name)
+        if b !== nothing && e !== nothing
+            b = nextind(name, first(b), 1)
+            e = prevind(name, first(e), 1)
+            if 0 < b < e < length(name)
+                push!(names, name[b:e])
             end
         end
     end
-    return r
+    return names
 end
-checkfonts(f) = checkfonts([f]) |> only
-function filterfonts(;fonts=CandiFonts, weights=CandiWeights)
-    candi = ["$f$w" for w in weights, f in fonts] |> vec
-    candi[checkfonts(candi)]
+function reverse_dict(d)
+    rd = Dict{String, Vector{String}}()
+    for (k, v) in d
+        get!(rd, v) do
+            String[]
+        end
+        push!(rd[v], k)
+    end
+    return rd
 end
-if Sys.iswindows()
-    AvailableFonts = [""]
-else
-    AvailableFonts = filterfonts()
-    push!(AvailableFonts, "")
+const id_part1 = reverse_dict(StopWords.part1_id)
+const mid_iid = reverse_dict(StopWords.iid_mid)
+function expandlangcode(c)
+    c in StopWords.id_all || (c = get(StopWords.name_id, c, c))
+    c in StopWords.id_all || (c = get(StopWords.name_id, titlecase(c), c))
+    cs = []
+    for c1 in Iterators.flatten((get(mid_iid, c, []), [c]))
+        for c2 in Iterators.flatten((get(id_part1, c1, []), [c1]))
+            push!(cs, c2)
+        end
+    end
+    cs
+end
+function fontsof(lang)
+    union((listfonts(l) for l in expandlangcode(lang))...)
+end
+function getfonts(lang)
+    if haskey(FontCandidates, lang)
+        return FontCandidates[lang]
+    else
+        fs = fontsof(lang)
+        push!(fs, "")
+        FontCandidates[lang] = fs
+        return fs
+    end
 end
 
 Schemes_colorbrewer = filter(s -> occursin("colorbrewer", colorschemes[s].category), collect(keys(colorschemes)))
@@ -333,11 +354,13 @@ function randomlinecolor(colors)
     linecolor
 end
 randomoutline() = rand((0, 0, 0, rand(2:10)))
-function randomfonts()
+function randomfonts(lang="")
     if rand() < 0.8
-        fonts = rand(AvailableFonts)
+        fonts = rand(getfonts(lang))
+        fonts = fonts * rand(WeightCandidates)
     else
-        fonts = rand(AvailableFonts, 2 + floor(Int, 2randexp()))
+        fonts = rand(getfonts(lang), 2 + floor(Int, 2randexp()))
+        fonts = [f * rand(WeightCandidates) for f in fonts]
         rand() > 0.5 && (fonts = tuple(fonts...))
     end
     @show fonts

@@ -73,12 +73,12 @@ wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter) |> collect, values(counter) |> collect; kargs...)
 wordcloud(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
 function wordcloud(text; language=:auto, stopwords=:auto, stopwords_extra=nothing, maxnum=500, kargs...)
-    wordcloud(processtext(text, language=language, stopwords=stopwords, stopwords_extra=stopwords_extra, maxnum=maxnum); kargs...)
+    wordcloud(processtext(text, language=language, stopwords=stopwords, stopwords_extra=stopwords_extra, maxnum=maxnum); language=language, kargs...)
 end
 wordcloud(words, weight::Number; kargs...) = wordcloud(words, repeat([weight], length(words)); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=:auto, angles=:auto, 
-                mask=:auto, fonts=:auto,
+                mask=:auto, fonts=:auto, language=:auto,
                 transparent=:auto, minfontsize=:auto, maxfontsize=:auto, spacing::Integer=2, density=0.5,
                 state=layout!, style=:auto, centralword=:auto, reorder=:auto, level=:auto, kargs...)
     @assert length(words) == length(weights) > 0
@@ -90,8 +90,8 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:reorder] = reorder
     params[:level] = level
 
-    colors, angles, mask, svgmask, fonts, transparent = getstylescheme(words, weights; colors=colors, angles=angles, 
-                                                    mask=mask, fonts=fonts, transparent=transparent, params=params, kargs...)
+    colors, angles, mask, svgmask, fonts, transparent = getstylescheme(words, weights; colors=colors, angles=angles, mask=mask, 
+                                                    fonts=fonts, language=language, transparent=transparent, params=params, kargs...)
     params[:colors] = Any[colors...]
     params[:angles] = angles
     params[:transparent] = transparent
@@ -138,7 +138,7 @@ end
 function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
                 masksize=:auto, maskcolor=:default, keepmaskarea=:auto,
                 backgroundcolor=:default, padding=:default,
-                outline=:default, linecolor=:auto, fonts=:auto,
+                outline=:default, linecolor=:auto, fonts=:auto, language=:auto,
                 transparent=:auto, params=Dict{Symbol,Any}(), kargs...)
     merge!(params, kargs)
     colors in DEFAULTSYMBOLS && (colors = randomscheme(weights))
@@ -249,7 +249,8 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
             Render.recolor!(mask, maskcolor) # tobitmap后有杂色 https://github.com/JuliaGraphics/Luxor.jl/issues/160
         end
     end
-    fonts in DEFAULTSYMBOLS && (fonts = randomfonts())
+    lang = language in DEFAULTSYMBOLS ? "" : language
+    fonts in DEFAULTSYMBOLS && (fonts = randomfonts(lang))
     fonts = Iterators.take(iter_expand(fonts), length(words)) |> collect
     colors, angles, mask, svgmask, fonts, transparent
 end
