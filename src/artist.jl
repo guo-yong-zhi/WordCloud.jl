@@ -1,5 +1,5 @@
 using Random
-import Fontconfig: list, Pattern
+import Fontconfig: list, Pattern, format
 using StopWords
 
 FontCandidates::Dict{String, Vector{String}} = Dict{String, Vector{String}}()
@@ -11,20 +11,7 @@ function listfonts(lang="")
     else
         ps = list(Pattern())
     end
-    names = String[]
-    for p in ps
-        name = string(p)
-        b = findfirst("\"", name)
-        e = findfirst(":", name)
-        if b !== nothing && e !== nothing
-            b = nextind(name, first(b), 1)
-            e = prevind(name, first(e), 1)
-            if 0 < b < e < length(name)
-                push!(names, name[b:e])
-            end
-        end
-    end
-    return names
+    return [format(p, "%{family[0]}") for p in ps]
 end
 function reverse_dict(d)
     rd = Dict{String, Vector{String}}()
