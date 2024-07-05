@@ -39,7 +39,8 @@ end
 function fontsof(lang)
     union((listfonts(l) for l in expandlangcode(lang))...)
 end
-function getfonts(lang)
+function getfontcandidates(lang)
+    lang = StopWords.normcode(String(lang))
     if haskey(FontCandidates, lang)
         return FontCandidates[lang]
     else
@@ -48,6 +49,15 @@ function getfonts(lang)
         FontCandidates[lang] = fs
         return fs
     end
+end
+
+"""
+    setfontcandidates!(lang::AbstractString, str_set)  
+
+Customize font candidates for language `lang`
+"""
+function setfontcandidates!(lang::AbstractString, str_list)
+    FontCandidates[StopWords.normcode(String(lang))] = str_list
 end
 
 Schemes_colorbrewer = filter(s -> occursin("colorbrewer", colorschemes[s].category), collect(keys(colorschemes)))
@@ -343,10 +353,10 @@ end
 randomoutline() = rand((0, 0, 0, rand(2:10)))
 function randomfonts(lang="")
     if rand() < 0.8
-        fonts = rand(getfonts(lang))
+        fonts = rand(getfontcandidates(lang))
         fonts = fonts * rand(WeightCandidates)
     else
-        fonts = rand(getfonts(lang), 2 + floor(Int, 2randexp()))
+        fonts = rand(getfontcandidates(lang), 2 + floor(Int, 2randexp()))
         fonts = [f * rand(WeightCandidates) for f in fonts]
         rand() > 0.5 && (fonts = tuple(fonts...))
     end

@@ -160,4 +160,10 @@ include("test_textprocessing.jl")
     wordcloud(["the"=>1.0, "to"=>0.51, "and"=>0.50,
               "of"=>0.47, "a"=>0.44, "in"=>0.33]) |> generate!
     wordcloud("It's easy to generate word clouds", maxnum=10) |> generate!
+    
+    # font
+    WordCloud.setfontcandidates!("zh", ["CJK"])
+    @test WordCloud.getfontcandidates("zh") == WordCloud.getfontcandidates("zho") == ["CJK"]
+
+    @show keys(WordCloud.FontCandidates)
 end
