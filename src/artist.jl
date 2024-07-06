@@ -52,7 +52,7 @@ function getfontcandidates(lang)
 end
 
 """
-    setfontcandidates!(lang::AbstractString, str_set)  
+    setfontcandidates!(lang::AbstractString, str_list)  
 
 Customize font candidates for language `lang`
 """
