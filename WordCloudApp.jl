@@ -71,6 +71,9 @@ md"**layout style:** $(@bind style Select([:auto, :uniform, :gathering]))"
 # ╔═╡ 1e8947ee-5f2a-4bed-99d5-f24ebc6cfbf3
 md"""**text density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　**min word spacing:** $(@bind spacing NumberField(0:100, default=2))"""
 
+# ╔═╡ f1b1e1f5-cfcb-4645-8eb6-93c9b5c0140e
+md"""**average text size:** $(@bind avgfontsize NumberField(1:100, default=12))　*You can use it to manage the size of output image*"""
+
 # ╔═╡ 9bb3b69a-fd5b-469a-998f-23b6c9e23e5d
 md"""###### ✿ Mask Style"""
 
@@ -401,6 +404,7 @@ begin
                 colors=colors,
                 angles=angles,
                 fonts=fonts,
+				avgfontsize=avgfontsize,
                 mask=mask,
                 masksize=masksize,
                 maskcolor=maskcolor,
@@ -445,6 +449,7 @@ end
 # ╟─b199e23c-de37-4bcf-b563-70bccb59ba4e
 # ╟─6e614caa-38dc-4028-b0a7-05f7030d5b43
 # ╟─1e8947ee-5f2a-4bed-99d5-f24ebc6cfbf3
+# ╟─f1b1e1f5-cfcb-4645-8eb6-93c9b5c0140e
 # ╟─9bb3b69a-fd5b-469a-998f-23b6c9e23e5d
 # ╟─f4844a5f-260b-4713-84bf-69cd8123c7fc
 # ╟─1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
