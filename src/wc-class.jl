@@ -41,7 +41,7 @@ For more sophisticated text processing, please utilize the function [`processtex
 * maxfontsize: The maximum font size in pixel.
 * avgfontsize: The average font size in pixel, default is 12. It is used to control the size of the generated picture when `masksize` is not specified.
 * density = 0.55 # default is 0.5  
-* spacing = 1  # minimum spacing between words, default is 2
+* spacing = 1  # minimum spacing between words, default is :auto
 
 ### mask-related keyword arguments
 * mask = loadmask("res/heart.jpg", 256, 256) # refer to the documentation of [`loadmask`](@ref)  
@@ -82,9 +82,9 @@ end
 wordcloud(words, weight::Number; kargs...) = wordcloud(words, repeat([weight], length(words)); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=:auto, angles=:auto, 
-                mask=:auto, fonts=:auto, language=:auto,
+                mask=:auto, masksize=:auto, fonts=:auto, language=:auto,
                 transparent=:auto, minfontsize=:auto, maxfontsize=:auto, avgfontsize=12,
-                spacing::Integer=2, density=0.5,
+                spacing=:auto, density=0.5,
                 state=layout!, style=:auto, centralword=:auto, reorder=:auto, level=:auto, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol,Any}()
@@ -95,7 +95,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:reorder] = reorder
     params[:level] = level
 
-    colors, angles, mask, svgmask, fonts, transparent = getstylescheme(words, weights; colors=colors, angles=angles, mask=mask, 
+    colors, angles, mask, svgmask, fonts, transparent = getstylescheme(words, weights; colors=colors, angles=angles, mask=mask, masksize=masksize,
                                                     fonts=fonts, avgfontsize=avgfontsize, language=language, transparent=transparent, params=params, kargs...)
     params[:colors] = Any[colors...]
     params[:angles] = angles
@@ -123,6 +123,9 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:maxfontsize] = maxfontsize
     params[:avgfontsize] = avgfontsize
 
+    if spacing == :auto
+        spacing = Int(masksize == :auto ? avgfontsize ÷ 6 : 2)
+    end
     params[:spacing] = spacing
     params[:density] = density
     params[:fonts] = fonts

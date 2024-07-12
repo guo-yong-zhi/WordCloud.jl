@@ -59,7 +59,7 @@ begin
         (n -> n^2) => "x²",
         expm1 => "exp x",
     ]
-    md"**scale:** $(@bind rescale_func Select(weightscale_funcs))　　**word length balance:** $(@bind word_length_balance Slider(-1:0.01:1, default=0, show_value=true))"
+    md"**weight scale:** $(@bind rescale_func Select(weightscale_funcs))　　**word length balance:** $(@bind word_length_balance Slider(-1:0.01:1, default=0, show_value=true))"
 end
 
 # ╔═╡ b199e23c-de37-4bcf-b563-70bccb59ba4e
@@ -69,18 +69,19 @@ md"""###### ✿ Overall Layout"""
 md"**layout style:** $(@bind style Select([:auto, :uniform, :gathering]))"
 
 # ╔═╡ 1e8947ee-5f2a-4bed-99d5-f24ebc6cfbf3
-md"""**text density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　**min word spacing:** $(@bind spacing NumberField(0:100, default=2))"""
+md"""**text density:** $(@bind density NumberField(0.1:0.01:10.0, default=0.5))　　**min word spacing:** $(@bind spacing NumberField(-1:100, default=-1))　*-1 means auto*"""
 
 # ╔═╡ f1b1e1f5-cfcb-4645-8eb6-93c9b5c0140e
-md"""**average text size:** $(@bind avgfontsize NumberField(1:100, default=12))　*You can use it to manage the size of output image*"""
+md"""**average font size:** $(@bind avgfontsize NumberField(1:100, default=12))　*You can use "average font size" or "mask size" to manage the output image size*
+
+**mask size:** $(@bind masksize_ TextField(default="auto"))　*e.g. 400,300*"""
 
 # ╔═╡ 9bb3b69a-fd5b-469a-998f-23b6c9e23e5d
 md"""###### ✿ Mask Style"""
 
 # ╔═╡ f4844a5f-260b-4713-84bf-69cd8123c7fc
 md"""**mask shape:** $(@bind mask_ Select([:auto, :customsvg, box, ellipse, squircle, ngon, star, bezingon, bezistar])) $(@bind configshape　　CheckBox(default=false))additional config
-
-**mask size:** $(@bind masksize_ TextField(default="auto"))　*e.g. 400,300*"""
+"""
 
 # ╔═╡ 1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
 begin
@@ -411,7 +412,7 @@ begin
                 backgroundcolor=backgroundcolor,
                 outline=olw,
                 density=density,
-                spacing=spacing,
+                spacing=spacing < 0 ? :auto : spacing,
                 style=style,
                 maskkwargs...
             ) |> generate!
