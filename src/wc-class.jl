@@ -37,6 +37,9 @@ For more sophisticated text processing, please utilize the function [`processtex
 * fonts = "Serif Bold" # same font for all words  
 * fonts = ("Arial", "Times New Roman", "Tahoma") # randomly select entries  
 * fonts = ["Arial", "Times New Roman", "Tahoma", ......] # use elements in a cyclic manner  
+* minfontsize: The minimum font size in pixel.
+* maxfontsize: The maximum font size in pixel.
+* avgfontsize: The average font size in pixel, default is 12. It is used to control the size of the generated picture when `masksize` is not specified.
 * density = 0.55 # default is 0.5  
 * spacing = 1  # minimum spacing between words, default is 2
 
@@ -80,7 +83,8 @@ wordcloud(words, weight::Number; kargs...) = wordcloud(words, repeat([weight], l
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=:auto, angles=:auto, 
                 mask=:auto, fonts=:auto, language=:auto,
-                transparent=:auto, minfontsize=:auto, maxfontsize=:auto, spacing::Integer=2, density=0.5,
+                transparent=:auto, minfontsize=:auto, maxfontsize=:auto, avgfontsize=12,
+                spacing::Integer=2, density=0.5,
                 state=layout!, style=:auto, centralword=:auto, reorder=:auto, level=:auto, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol,Any}()
@@ -92,7 +96,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:level] = level
 
     colors, angles, mask, svgmask, fonts, transparent = getstylescheme(words, weights; colors=colors, angles=angles, mask=mask, 
-                                                    fonts=fonts, language=language, transparent=transparent, params=params, kargs...)
+                                                    fonts=fonts, avgfontsize=avgfontsize, language=language, transparent=transparent, params=params, kargs...)
     params[:colors] = Any[colors...]
     params[:angles] = angles
     params[:transparent] = transparent
@@ -117,6 +121,8 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     @debug "set fontsize ∈ [$minfontsize, $maxfontsize]"
     params[:minfontsize] = minfontsize
     params[:maxfontsize] = maxfontsize
+    params[:avgfontsize] = avgfontsize
+
     params[:spacing] = spacing
     params[:density] = density
     params[:fonts] = fonts
@@ -139,7 +145,7 @@ end
 function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
                 masksize=:auto, maskcolor=:default, keepmaskarea=:auto,
                 backgroundcolor=:default, padding=:default,
-                outline=:default, linecolor=:auto, fonts=:auto, language=:auto,
+                outline=:default, linecolor=:auto, fonts=:auto, avgfontsize=12, language=:auto,
                 transparent=:auto, params=Dict{Symbol,Any}(), kargs...)
     merge!(params, kargs)
     colors in DEFAULTSYMBOLS && (colors = randomscheme(weights))
@@ -160,7 +166,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         if keepmaskarea in DEFAULTSYMBOLS
             keepmaskarea = masksize in DEFAULTSYMBOLS
         end
-        masksize in DEFAULTSYMBOLS && (masksize = volumeproposal(words, weights))
+        masksize in DEFAULTSYMBOLS && (masksize = volumeproposal(words, weights, avgfontsize))
         if backgroundcolor in DEFAULTSYMBOLS
             backgroundcolor = maskcolor0 in DEFAULTSYMBOLS ? rand(((1, 1, 1, 0), :maskcolor)) : (1, 1, 1, 0)
         end
@@ -187,7 +193,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         transparent = c -> c != torgba(maskcolor)
     else
         if masksize == :auto
-            ms = volumeproposal(words, weights)
+            ms = volumeproposal(words, weights, avgfontsize)
         elseif masksize in DEFAULTSYMBOLS
             ms = ()
         else

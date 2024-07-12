@@ -108,9 +108,9 @@ function ternary_wordmask(img, bgcolor, border)
     tmask
 end
 
-function volumeproposal(words, weights)
+function volumeproposal(words, weights, avgfontsize=12)
     weights = weights ./ (sum(weights) / length(weights)) # 权重为平均值的单词为中等大小的单词。weights不平方，即按条目平均，而不是按面积平均
-    12 * √sum(length.(words) .* weights .^ 2) # 中等大小的单词其每个字母占据12 pixel*12 pixel 
+    avgfontsize * √sum(length.(words) .* weights .^ 2) # 中等大小的单词其每个字母占据12 pixel*12 pixel 
 end
 
 ## findscale!

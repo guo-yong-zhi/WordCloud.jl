@@ -51,7 +51,7 @@ function printfontsizes(wc)
         perc = round(Int, nsmall/length(wc)*100)
         @debug "$nsmall words($perc%) are limited to the minimum font size."
         if perc > 70
-            msg = "It seems too crowded. Word size may be seriously distorted. You need to reduce the number of words or set a larger mask."
+            msg = "It seems too crowded. Word size may be seriously distorted. You need to reduce the number of words or set a larger mask. Please inspect the parameters `avgfontsize` and `masksize`."
             ratio = volumeproposal(wc.words, wc.weights) / √getparameter(wc, :volume)
             if ratio > 1.1
                 msg = msg * " Recommended mask scaling: ratio=$(round(ratio, digits=3))."
