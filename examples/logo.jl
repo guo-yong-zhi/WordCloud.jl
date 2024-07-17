@@ -15,7 +15,7 @@ function cloudshape(height, args...; backgroundcolor=(0, 0, 0, 0))
     Luxor.setcolor(parsecolor((0.796, 0.235, 0.20)))
     Luxor.Luxor.pie(-r, r, r, -π, 0, :fill)
     Luxor.finish()
-    d
+    WordCloud.SVG(Luxor.svgstring(), d.height, d.width)
 end
 wc = wordcloud(
     repeat(string.('a':'z'), 5),

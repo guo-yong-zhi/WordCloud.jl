@@ -20,6 +20,7 @@ wc = wordcloud(
     angles=(0, 90),
     density=0.7) |> generate!
 paint(wc, "highdensity.png", ratio=0.5)
+#md# Instead of setting the mask with a larger size explicitly, you can set `avgfontsize`. Try something like `wordcloud(text, avgfontsize=24)`
 #md# 
 println("results are saved to highdensity.png")
 wc

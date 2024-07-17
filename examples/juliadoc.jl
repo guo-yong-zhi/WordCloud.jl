@@ -1,11 +1,11 @@
 using WordCloud
 function drawjuliacircle(sz)
-    juliacirclessvg = WordCloud.Render.Drawing(sz, sz, :svg)
+    d = WordCloud.Render.Drawing(sz, sz, :svg)
     WordCloud.Render.origin()
     WordCloud.Render.background(0, 0, 0, 0)
     WordCloud.Render.juliacircles(sz ÷ 4)
     WordCloud.Render.finish()
-    juliacirclessvg
+    WordCloud.SVG(WordCloud.Render.svgstring(), d.height, d.width)
 end
 
 docs = (readdir(joinpath(dirname(Sys.BINDIR), "share/doc/julia/html/en", dir), join=true) for dir in ["manual", "base", "stdlib"])
