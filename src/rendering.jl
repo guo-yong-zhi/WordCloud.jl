@@ -20,36 +20,30 @@ parsecolor(sc::AbstractArray) = parsecolor.(sc)
 Base.size(s::Drawing) = (s.height, s.width)
 issvg(d) = d isa SVG
 tosvg(s::SVG) = s
-tosvg(d::Drawing) = SVG(String(copy(d.bufferdata)), d.height, d.width)
-tosvg(img::AbstractMatrix) = todrawing(img) |> tosvg
-todrawing(d::Drawing) = d
-function todrawing(img::AbstractMatrix)
+function tosvg(img::AbstractMatrix)
     d = Drawing(size(img)..., :svg)
     Luxor.background(1, 1, 1, 0)
     placeimage(img)
     finish()
-    d
+    SVG(svgstring(), d.height, d.width)
 end
-todrawing(s::SVG) = loaddrawing(string(s))
 tobitmap(img::AbstractMatrix) = img
-function tobitmap(svg::Drawing)
-    Drawing(ceil(svg.width), ceil(svg.height), :image)
-    placeimage(svg)
+function tobitmap(svg::SVG)
+    p = readsvg(string(svg))
+    Drawing(ceil(p.width), ceil(p.height), :image)
+    placeimage(p)
     m = image_as_matrix()
     finish()
     m
 end
-tobitmap(svg::SVG) = tobitmap(todrawing(svg))
 
-
-function loaddrawing(svg)
+function loadsvg(svg)
     p = readsvg(svg)
     d = Drawing(p.width, p.height, :svg)
     placeimage(p)
     finish()
-    d
+    SVG(svgstring(), d.height, d.width)
 end
-loadsvg(svg) = loaddrawing(svg) |> tosvg
 function load(fn::AbstractString)
     if endswith(fn, r".svg|.SVG")
         loadsvg(fn)
@@ -93,11 +87,11 @@ function boundingbox(p::AbstractMatrix, bgcolor; border=0)
     return a, b, c, d
 end
 
-function clipdrawing(m, a, b, c, d) # a, b, c, d are all inclusive
+function cropdrawing_tosvg(m, a, b, c, d) # a, b, c, d are all inclusive
     m2 = Drawing(d - c + 1, b - a + 1, :svg)
     placeimage(m, Point(-c + 1, -a + 1))
     finish()
-    imgnew
+    SVG(svgstring(), m2.height, m2.width)
 end
 crop(img::AbstractMatrix, a, b, c, d) = img[a:b, c:d] # a, b, c, d are all inclusive
 
@@ -116,7 +110,7 @@ function imresize(img::AbstractMatrix, sz...; ratio=1)
         ImageTransformations.imresize(img, ceil.(Int, sz2)...)
     end
 end
-function imresize(svg::SVGImageType, sz...; ratio=1)
+function imresize(svg::SVG, sz...; ratio=1)
     sz1 = reverse(size(svg))
     if isempty(sz)
         sz2 = sz1
@@ -128,9 +122,9 @@ function imresize(svg::SVGImageType, sz...; ratio=1)
     sz2 = sz2 .* ratio
     svgnew = Drawing(sz2..., :svg)
     scale((sz2 ./ sz1)...)
-    placeimage(svg)
+    placeimage(readsvg(string(svg)))
     finish()
-    svgnew
+    SVG(svgstring(), svgnew.height, svgnew.width)
 end
 
 function drawtext(t, size, pos, angle=0, color="black", font="")
@@ -159,7 +153,7 @@ function rendertext(str::AbstractString, size::Real;
     end
     finish()
     if type != :bitmap
-        mat = tobitmap(drawing)
+        mat = tobitmap(SVG(svgstring(), drawing.height, drawing.width))
     end
     #     bgcolor = Luxor.ARGB32(bgcolor...) #https://github.com/JuliaGraphics/Luxor.jl/issues/107
     bgcolor = mat[1]
@@ -168,9 +162,9 @@ function rendertext(str::AbstractString, size::Real;
     if type == :bitmap
         return mat
     elseif type == :svg
-        return tosvg(clipdrawing(drawing, box...))
+        return cropdrawing_tosvg(drawing, box...)
     else
-        return mat, tosvg(clipdrawing(drawing, box...))
+        return mat, cropdrawing_tosvg(drawing, box...)
     end
 end
 
@@ -225,9 +219,9 @@ function imagemask(img::AbstractMatrix, transparent=:auto)
     end
     img .!= convert(eltype(img), parsecolor(transparent))
 end
-imagemask(img::SVGImageType, istransparent::Function) = imagemask(tobitmap(img), istransparent)
-imagemask(img::SVGImageType, transparent::AbstractArray{Bool,2}) = .!transparent
-imagemask(img::SVGImageType, transparent=:auto) = imagemask(tobitmap(img), transparent)
+imagemask(img::SVG, istransparent::Function) = imagemask(tobitmap(img), istransparent)
+imagemask(img::SVG, transparent::AbstractArray{Bool,2}) = .!transparent
+imagemask(img::SVG, transparent=:auto) = imagemask(tobitmap(img), transparent)
 
 function dilate!(mat, r)
     r == 0 && return mat
@@ -298,17 +292,18 @@ function pad(img::AbstractMatrix, r=maximum(size(img)) ÷ 10; backgroundcolor=:a
     bg = fill(color, size(img) .+ 2 .* r)
     overlay!(bg, img, reverse((0, 0) .+ r)...)
 end
-function pad(img::Drawing, r=maximum(size(img)) ÷ 10; backgroundcolor=(0, 0, 0, 0))
+
+function pad(img::SVG, r=maximum(size(img)) ÷ 10; backgroundcolor=(0, 0, 0, 0))
     color = parsecolor(backgroundcolor)
     sz = size(img) .+ 2 .* ceil.(Int, r)
+    p = readsvg(string(img))
     m2 = Drawing(reverse(sz)..., :svg)
     origin()
     background(color)
-    placeimage(img, centered=true)
+    placeimage(p, centered=true)
     finish()
-    m2
+    SVG(svgstring(), m2.height, m2.width)
 end
-padding(img::SVG, args...; kargs...) = padding(todrawing(img), args...; kargs...) |> tosvg
 "Return the intersecting region `view`s of img1 and img2, where img2 is positioned in img1 with its top left corner located at coordinates (x, y)."
 function intersection_region(img1, img2, x=1, y=1)
     h1, w1 = size(img1)
@@ -354,7 +349,7 @@ function overlay(imgs, poss; backgroundcolor=(1, 1, 1, 0), size=size(imgs[1]))
     bg = Drawing(size..., :svg)
     Luxor.background(parsecolor(backgroundcolor))
     finish()
-    bg = tosvg(bg)
+    bg = SVG(svgstring(), bg.height, bg.width)
     # (x,y)=(1,1)时左上角重合，此时Point(0,0)
     svgs = (svg_wrap(img, ["svg"=>[("x", string(x-1)), ("y", string(y-1))]]) for (img, (x, y)) in zip(imgs, poss))
     bg = svg_stack(Iterators.flatten(((bg,), svgs)))
@@ -458,7 +453,7 @@ function shape(shape_, width, height, args...;
     setcolor(parsecolor(color))
     shape_(Point(0, 0), width, height, args...; action=:fill, kargs...)
     finish()
-    d |> tosvg
+    SVG(svgstring(), d.height, d.width)
 end
 
 using Printf

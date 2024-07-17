@@ -2,8 +2,8 @@ using XML
 
 struct SVG
     data::String
-    height::Int
-    width::Int
+    height::Float64
+    width::Float64
 end
 Base.string(svg::SVG) = svg.data
 Base.size(s::SVG) = (s.height, s.width)

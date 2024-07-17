@@ -138,7 +138,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:scale] = -1
     params[:wordids] = collect(1:length(words))
     l = length(words)
-    wc = WC(copy(words), float.(weights), Vector(undef, l), Vector{SVGImageType}(undef, l), 
+    wc = WC(copy(words), float.(weights), Vector(undef, l), Vector{SVG}(undef, l), 
     mask, svgmask, Vector{Stuffing.QTrees.U8SQTree}(undef, l), maskqtree, params)
     if state != wordcloud
         state(wc)
