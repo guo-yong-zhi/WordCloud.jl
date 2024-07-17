@@ -21,7 +21,7 @@ Base.size(s::Drawing) = (s.height, s.width)
 issvg(d) = d isa SVG
 tosvg(s::SVG) = s
 function tosvg(img::AbstractMatrix)
-    d = Drawing(size(img)..., :svg)
+    d = Drawing(reverse(size(img))..., :svg)
     Luxor.background(1, 1, 1, 0)
     placeimage(img)
     finish()

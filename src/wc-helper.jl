@@ -101,11 +101,14 @@ function paintsvg(wc::WC; background=true)
             bgcolor in DEFAULTSYMBOLS && (bgcolor = (1,1,1,0))
             background = getsvgmask(wc)
             if background === nothing
-                @warn "embed bitmap into SVG. You can set `background=false` to remove background."
-                background = tosvg(getmask(wc))
+                background = getmask(wc)
             end
         else
             bgcolor = (1,1,1,0)
+        end
+        if !(background isa SVG)
+            @warn "embed bitmap into SVG. You can set `background=false` to remove background."
+            background = tosvg(background)
         end
         imgs = Iterators.flatten(((background,), imgs))
         poss = Iterators.flatten((((1, 1),), poss))
@@ -203,14 +206,14 @@ A node is represented as a String Pair. e.g.
 Arguments `children` and `wrappers` can be a Pair, or a Tuple of Pairs to add multiple nodes to a SVG. 
 Again, giving a list of Tuples of Pairs is ok to edit multiple SVGs corresponding to the index argument.
 """
-function configsvgimages!(wc, w=:, args...; children=nothing, wrappers=nothing, kargs...)
+function configsvgimages!(wc, w=:, args...; children=nothing, wrappers=nothing)
     if children !== nothing
         children isa AbstractVector || (children = Ref(children))
-        svgimages_add!.(wc, index(wc, w), children, args...; kargs...)
+        svgimages_add!.(wc, index(wc, w), children, args...)
     end
     if wrappers !== nothing
         wrappers isa AbstractVector || (wrappers = Ref(wrappers))
-        svgimage_wrap!.(wc, index(wc, w), wrappers, args...; kargs...)
+        svgimage_wrap!.(wc, index(wc, w), wrappers, args...)
     end
 end
 runexample(example=:random) = @time evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")

@@ -2,6 +2,7 @@
     img = WordCloud.rendertext("test", 88.3, color="blue", angle=20, border=2)
     mat, svg = WordCloud.rendertext(Random.randstring(rand(1:8)), rand(5:50), angle=rand(0:180), type=:both)
     @test all(WordCloud.tobitmap(svg) .≈ mat)
+    @test all(WordCloud.tobitmap(svg) .≈ WordCloud.tobitmap(WordCloud.tosvg(mat)))
 
     for i in 1:20
         @test 0.9 < WordCloud.Render.gamma(i+1) / prod(1:i) < 1.1
