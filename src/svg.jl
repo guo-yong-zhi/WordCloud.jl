@@ -1,4 +1,4 @@
-using EzXML
+using XML
 
 struct SVG
     data::String
@@ -12,72 +12,47 @@ Base.broadcastable(s::SVG) = Ref(s)
 function Base.show(f::IO, ::MIME"image/svg+xml", svg::SVG)
     write(f, string(svg))
 end
-function xml_setattrs(ele, attr::AbstractString)
-    an = TextNode(attr)
-    link!(ele, an)
-    ele
-end
-function xml_setattrs(ele, attr)
-    isempty(attr) || link!(ele, AttributeNode(attr...))
-    ele
-end
-xml_setattrs(ele, attrs::AbstractVector) = xml_setattrs.(Ref(ele), attrs)
-function xml_addchildren(parent, children)
+function xml_addchildren!(svgdoc::Node, children)
     children isa Pair && (children = (children,))
     for (e, attrs) in children
-        ele = ElementNode(e)
-        xml_setattrs(ele, attrs)
-        link!(parent, ele)
+        push!(svgdoc[end], Node(XML.Element, e, Dict(attrs)))
     end
-    parent
+    svgdoc
 end
-function xml_wrapper(wrappers)
-    # @show wrappers
-    parent = child = nothing
+function xml_wrapchildren!(svgdoc::Node, wrappers)
     wrappers isa Pair && (wrappers = (wrappers,))
     for (e, attrs) in wrappers
-        ele = ElementNode(e)
-        if child !== nothing
-            ele = ElementNode(e)
-            link!(child, ele)
-        end
-        if parent === nothing
-            parent = ele
-        end
-        xml_setattrs(ele, attrs)
-        child = ele
+        attrs isa Pair && (attrs = (attrs,))
+        we = Node(XML.Element, e, Dict(attrs), nothing, children(svgdoc[end]))
+        svgnode = Node(XML.nodetype(svgdoc[end]), tag(svgdoc[end]), XML.attributes(svgdoc[end]), value(svgdoc[end]), we)
+        svgdoc[end] = svgnode
     end
-    parent, child
+    svgdoc
 end
-function xml_wrapchildren(parent, wrappers)
-    wrapper_parent, wrapper_child = xml_wrapper(wrappers)
-    for c in collect(eachelement(parent))
-        unlink!(c)
-        link!(wrapper_child, c)
+function xml_stack!(svgs::AbstractVector{Node})
+    @assert !isempty(svgs)
+    bg, rest = Iterators.peel(svgs)
+    rt = bg[end]
+    for svg in rest
+        for c in children(svg[end])
+            push!(rt, c)
+        end
     end
-    link!(parent, wrapper_parent)
-    parent
+    bg
 end
 function svg_add(svg::SVG, children)
     sz = size(svg)
-    svg = xml_addchildren(root(svg|>string|>parsexml), children)
-    SVG(string(svg), sz...)
+    svg = xml_addchildren!(parse(string(svg), Node), children)
+    SVG(XML.write(svg), sz...)
 end
 function svg_wrap(svg::SVG, wrappers)
     sz = size(svg)
-    svg = xml_wrapchildren(root(svg|>string|>parsexml), wrappers)
-    SVG(string(svg), sz...)
+    svg = xml_wrapchildren!(parse(string(svg), Node), wrappers)
+    SVG(XML.write(svg), sz...)
 end
-function svg_stack(svgs)#::AbstractVector{SVG}
-    @assert !isempty(svgs)
-    bg, rest = Iterators.peel(svgs)
-    sz = size(bg)
-    rt = root(bg|>string|>parsexml)
-    for svg in rest
-        for c in collect(eachelement(root(svg|>string|>parsexml)))
-            unlink!(c)
-            link!(rt, c)
-        end
-    end
-    SVG(string(rt), sz...)
+function svg_stack(svgs)#::AbstractVector{SVG})
+    sz = size(first(svgs))
+    svgs = [parse(string(s), Node) for s in svgs]
+    bg = xml_stack!(svgs)
+    SVG(XML.write(bg), sz...)
 end
