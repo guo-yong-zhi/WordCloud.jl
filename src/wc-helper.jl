@@ -187,8 +187,9 @@ The nodes in `children` will be linked under the root node of the SVG.
 The nodes in `wrappers` will be inserted between the SVG root node and all its child nodes. The children will be wraped by the wrapper node.
 A node is represented as a String Pair. e.g.
 * child `"title"=>"word"` for `<title>word</title>`
-* wrapper `"a"=>("href"=>"https://www.google.com")` for `<a href="https://www.google.com">` and `</a>`
+* child `"title"=>("word", :lang=>"en-us")` for `<title lang="en-us">word</title>`
 * child `"animate" => ["attributeName"=>"opacity", "to"=>"0", "dur"=>"6s"]` for `<animate attributeName="opacity" to="0" dur="6s"/>`
+* wrapper `"a"=>("href"=>"https://www.google.com")` for `<a href="https://www.google.com">` and `</a>`
 Arguments `children` and `wrappers` can be a Pair, or a Tuple of Pairs to add multiple nodes to a SVG. 
 Again, giving a list of Tuples of Pairs is ok to edit multiple SVGs corresponding to the index argument.
 """

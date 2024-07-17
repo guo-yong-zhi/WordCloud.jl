@@ -12,20 +12,34 @@ Base.broadcastable(s::SVG) = Ref(s)
 function Base.show(f::IO, ::MIME"image/svg+xml", svg::SVG)
     write(f, string(svg))
 end
+
+function xmlnode(tag, attrs, children=nothing)
+    if !(attrs isa Tuple || attrs isa Vector)
+        attrs = (attrs,)
+    end
+    if (!isempty(attrs)) && first(attrs) isa AbstractString
+        c, attrs = Iterators.peel(attrs)
+        ch = isnothing(children) ? XML.Text(c) : [XML.Text(c), children...]
+        n = Node(XML.Element, tag, Dict(attrs), nothing, ch)
+    else
+        n = Node(XML.Element, tag, Dict(attrs), nothing, children)
+    end
+    n
+end
 function xml_addchildren!(svgdoc::Node, children)
     children isa Pair && (children = (children,))
     for (e, attrs) in children
-        push!(svgdoc[end], Node(XML.Element, e, Dict(attrs)))
+        pushfirst!(svgdoc[end].children, xmlnode(e, attrs))
     end
     svgdoc
 end
+
 function xml_wrapchildren!(svgdoc::Node, wrappers)
     wrappers isa Pair && (wrappers = (wrappers,))
     for (e, attrs) in wrappers
-        attrs isa Pair && (attrs = (attrs,))
-        we = Node(XML.Element, e, Dict(attrs), nothing, children(svgdoc[end]))
-        svgnode = Node(XML.nodetype(svgdoc[end]), tag(svgdoc[end]), XML.attributes(svgdoc[end]), value(svgdoc[end]), we)
-        svgdoc[end] = svgnode
+        we = xmlnode(e, attrs, copy(children(svgdoc[end])))
+        empty!(svgdoc[end].children)
+        push!(svgdoc[end].children, we)
     end
     svgdoc
 end
@@ -35,9 +49,14 @@ function xml_stack!(svgs::AbstractVector{Node})
     rt = bg[end]
     for svg in rest
         for c in children(svg[end])
-            push!(rt, c)
+            if isempty(children(rt))
+                rt = Node(XML.nodetype(rt), tag(rt), XML.attributes(rt), value(rt), c)
+            else
+                push!(rt, c)
+            end
         end
     end
+    bg[end] = rt
     bg
 end
 function svg_add(svg::SVG, children)
