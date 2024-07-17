@@ -36,7 +36,7 @@ wc = wordcloud("It's easy to generate word clouds") |> generate! # from a string
 wc = wordcloud(open(pkgdir(WordCloud)*"/res/alice.txt")) |> generate! # from a file
 ```
 ```julia
-wc = wordcloud(["中文", "需要", "提前", "分词"], fonts="") |> generate! # from a list
+wc = wordcloud(["中文", "需要", "提前", "分词"]) |> generate! # from a list
 ```
 ```julia
 wc = wordcloud(["the"=>1.0, "to"=>0.51, "and"=>0.50,
