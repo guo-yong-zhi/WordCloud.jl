@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.42
+# v0.19.45
 
 using Markdown
 using InteractiveUtils
@@ -80,7 +80,7 @@ md"""**average font size:** $(@bind avgfontsize NumberField(1:100, default=12))�
 md"""###### ✿ Mask Style"""
 
 # ╔═╡ f4844a5f-260b-4713-84bf-69cd8123c7fc
-md"""**mask shape:** $(@bind mask_ Select([:auto, :customsvg, box, ellipse, squircle, ngon, star, bezingon, bezistar])) $(@bind configshape　　CheckBox(default=false))additional config
+md"""**mask shape:** $(@bind mask_ Select([:auto, :customsvg, box, ellipse, squircle, ngon, star, bezingon, bezistar])) $(@bind configshape CheckBox(default=false))additional config
 """
 
 # ╔═╡ 1aa632dc-b3e8-4a9d-9b9e-c13cd05cf97e
@@ -153,7 +153,7 @@ else
 end
 
 # ╔═╡ 14666dc2-7ae4-4808-9db3-456eb26cd435
-md"**text colors:** $(@bind colors_ Select([:auto; WordCloud.Schemes])) $(@bind colorstyle Select([:random, :gradient]))　[*Browse colorschemes in `ColorSchemes.jl`*](https://juliagraphics.github.io/ColorSchemes.jl/stable/catalogue)"
+md"**text colors:** $(@bind colors_ Select([:auto; WordCloud.Schemes])) $(@bind colorstyle Select([:random, :gradient])) $(@bind glinting CheckBox(default=false))✨　[*Browse colorschemes*](https://juliagraphics.github.io/ColorSchemes.jl/stable/catalogue)"
 
 # ╔═╡ 2870a2ee-aa99-48ec-a26d-fed7b040e6de
 @bind go Button("    🎲 Try again !    ")
@@ -423,6 +423,12 @@ begin
     end
     @time wc = gen_cloud(words_weights)
     if wc !== nothing
+        if glinting
+            animates = ["animate" => [:attributeName => "opacity", :values => "1;0.5;1", 
+                :begin => "$(rand(0:1000))ms", :dur => "1s", 
+                :repeatCount => "indefinite"] for _ in 1:length(wc)]
+            configsvgimages!(wc, children=animates)
+        end
         paintsvg(wc, background=showbackground)
     end
 end
