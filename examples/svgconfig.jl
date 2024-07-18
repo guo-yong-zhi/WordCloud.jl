@@ -19,4 +19,5 @@ println("results are saved to svgconfig.svg")
 paint(wc, "svgconfig.svg")
 wc
 #eval# runexample(:svgconfig)
+#md# (Right click on the image and open it in a new tab)
 #md# ![svgconfig](svgconfig.svg)  

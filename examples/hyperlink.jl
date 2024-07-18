@@ -9,4 +9,5 @@ println("results are saved to hyperlink.svg")
 paint(wc, "hyperlink.svg")
 wc
 #eval# runexample(:hyperlink)
+#md# (Right click on the image and open it in a new tab)
 #md# ![hyperlink](hyperlink.svg)  
