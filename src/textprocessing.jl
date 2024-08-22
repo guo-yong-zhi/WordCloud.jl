@@ -294,9 +294,10 @@ function processtext(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}
 end
 function html2text(content::AbstractString)
     patterns = [
-        r"\"[\s\S]*?\"" => " ",
         r"<[\s]*?script[^>]*?>[\s\S]*?<[\s]*?/[\s]*?script[\s]*?>" => " ",
         r"<[\s]*?style[^>]*?>[\s\S]*?<[\s]*?/[\s]*?style[\s]*?>" => " ",
+        r"<!--[\s\S]*?-->" => " ",
+        r"<[\s\S]*?=\s*?\"[\s\S]*?\"\s*?>" => " ",
         "<br>" => "\n",
         r"<[\s\S]*?>" => " ",
     ]
