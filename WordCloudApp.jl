@@ -405,7 +405,7 @@ begin
                 colors=colors,
                 angles=angles,
                 fonts=fonts,
-				avgfontsize=avgfontsize,
+                avgfontsize=avgfontsize,
                 mask=mask,
                 masksize=masksize,
                 maskcolor=maskcolor,
