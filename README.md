@@ -1,7 +1,7 @@
 # <div><img src="docs/src/assets/logo.svg" height="25px"><span> [WordCloud.jl](https://github.com/guo-yong-zhi/WordCloud.jl)</span></div>  
 ![juliadoc](res/juliadoc.png)  
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://guo-yong-zhi.github.io/WordCloud.jl/dev) [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/guo-yong-zhi/WordCloud.jl/master?filepath=examples.ipynb) [![CI](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci.yml) [![CI-nightly](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci-nightly.yml/badge.svg)](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci-nightly.yml) [![codecov](https://codecov.io/gh/guo-yong-zhi/WordCloud.jl/branch/master/graph/badge.svg?token=2U0X769Z51)](https://codecov.io/gh/guo-yong-zhi/WordCloud.jl) [![DOI](https://zenodo.org/badge/211266031.svg)](https://zenodo.org/badge/latestdoi/211266031)  
-Word cloud (tag cloud or wordle) is a novelty visual representation of text data. The importance of each word is shown with its font size, position, or color. WordCloud.jl is the perfect tool for generating word clouds, offering several advantages:
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://guo-yong-zhi.github.io/WordCloud.jl/dev) [![CI](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci.yml) [![CI-nightly](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci-nightly.yml/badge.svg)](https://github.com/guo-yong-zhi/WordCloud.jl/actions/workflows/ci-nightly.yml) [![codecov](https://codecov.io/gh/guo-yong-zhi/WordCloud.jl/branch/master/graph/badge.svg?token=2U0X769Z51)](https://codecov.io/gh/guo-yong-zhi/WordCloud.jl) [![DOI](https://zenodo.org/badge/211266031.svg)](https://zenodo.org/badge/latestdoi/211266031)  
+Word cloud (tag cloud or wordle) is a novelty visual representation of text data. The importance of each word is shown with its font size, position, or color. `WordCloud.jl` is an ideal tool in the [Julia language](https://julialang.org/) for creating word clouds, offering several key benefits:
 * ***Flexible*** - You have control over every aspect of generating a word cloud. You can customize the shape, color, angle, position, distribution, density, and spacing to align with your preferences and artistic style.
 * ***Faithful*** - This visualization solution guarantees precise results. Each word appears only once, and its font size is determined solely by the provided weight. Words are never repeated or shrunk artificially to fill empty spaces.
 * ***Efficient*** - It utilizes intelligent strategies and efficient nesting algorithms, implemented entirely in Julia (see [Stuffing.jl](https://github.com/guo-yong-zhi/Stuffing.jl)). As a result, it can easily generate high-resolution word clouds.
@@ -60,7 +60,7 @@ wc = wordcloud(
     fonts = "Tahoma",
     density = 0.55,
     spacing = 3,) |> generate!
-paint(wc, "alice.png", ratio=0.5)
+paint(wc, "alice.png")
 ```
 *try `runexample(:alice)` or `showexample(:alice)`*  
 [![alice](res/alice.png)](./examples/alice.jl)
@@ -82,9 +82,9 @@ WordCloud.jl stands out from other tools due to its unique approach based on ima
 * [x] 基于四叉树（层次包围盒）的碰撞检测
 * [x] 根据局部灰度梯度平移单词（训练迭代）
 * [x] 引入动量加速训练
-* [x] 分代检测优化性能（for pairwise trainer)
+* [x] 分代检测优化性能（for pairwise trainer）
 * [x] 区域四叉树批量碰撞检测
-* [x] LRU优化性能（for element-wise trainer)
+* [x] LRU优化性能（for element-wise trainer）
 * [x] 控制字体大小和填充密度的策略
 * [x] 使用重新放置策略跳出局部最优
 * [x] 使用缩放策略降低训练难度
