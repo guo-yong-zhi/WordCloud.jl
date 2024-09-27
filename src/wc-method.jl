@@ -146,11 +146,8 @@ end
 Resize all words proportionally. Use a ratio < 1 to shrink the size, and a ratio > 1 to expand the size.
 """
 function rescale!(wc::WC, ratio::Real)
-    qts = wc.qtrees
-    centers = getcenter.(qts)
     wc.params[:scale] *= ratio
     initialize!(wc, :)
-    setcenter!.(wc.qtrees, centers)
     wc
 end
 
