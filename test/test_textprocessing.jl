@@ -78,6 +78,10 @@
 
     htstr = """&pound;abcd<div x-component-name="DisasterSokuho" x-component-data="{&quot;earthquake&quot;:&quot;&lt;!-- 地震速報のメッセージを消しました （2024-04-25 12:00:08）-->\n&quot;,&quot;tsunami&quot;:&quot;&lt;!-- 津波速報のメッセージを消しました （2024-04-25 12:05:35）-->\n&quot;}"><div class="tYQVs"><div>"""
     @test strip(html2text(htstr)) == "abcd"
+    htstr = """<div x-component-name='code1:<' x-component-data="code2:>">"""
+    @test strip(html2text(htstr)) == ""
+    htstr = """<p>abc</p><pre data-code-wrap="julia">"""
+    @test strip(html2text(htstr)) == "abc"
     htstr= """<span class="reference-text">"<a rel="nofollow" class="external text" href="不应该出现">something</a>." <i>"""
     @test replace(html2text(htstr), r"\s"=>"") == "\"something.\""
 end
