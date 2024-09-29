@@ -59,6 +59,7 @@ For more sophisticated text processing, please utilize the function [`processtex
 * transparent = c->(c[1]+c[2]+c[3])/3*(c[4]/255)>128) # set transparency using a function. `c` is an (r,g,b,a) Tuple.
 ---
 * Notes
+  * [`getscheme`](@ref) is useful when you want to create a new word cloud with the same style as an existing word cloud.
   * Some arguments depend on whether the `mask` is provided or on the type of the provided `mask`.
 ### other keyword arguments
 * style, centralword, reorder, rt, level: Configure the layout style of word cloud. Refer to the documentation of [`layout!`](@ref).
@@ -82,20 +83,21 @@ end
 wordcloud(words, weight::Number; kargs...) = wordcloud(words, repeat([weight], length(words)); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=:auto, angles=:auto, 
-                mask=:auto, masksize=:auto, fonts=:auto, language=:auto,
+                mask=:auto, svgmask=nothing, masksize=:auto, fonts=:auto, language=:auto,
                 transparent=:auto, minfontsize=:auto, maxfontsize=:auto, avgfontsize=12,
-                spacing=:auto, density=0.5,
-                state=layout!, style=:auto, centralword=:auto, reorder=:auto, level=:auto, kargs...)
+                spacing=:auto, density=0.5, state=layout!,
+                style=:auto, centralword=:auto, reorder=:auto, level=:auto, rt=:auto, kargs...)
     @assert length(words) == length(weights) > 0
     params = Dict{Symbol,Any}()
 
     # parameters for layout!
-    params[:style] = style
-    params[:centralword] = centralword
-    params[:reorder] = reorder
-    params[:level] = level
+    style != :auto && (params[:style] = style)
+    centralword != :auto && (params[:centralword] = centralword)
+    reorder != :auto && (params[:reorder] = reorder)
+    level != :auto && (params[:level] = level)
+    rt != :auto && (params[:rt] = rt)
 
-    colors, angles, mask, svgmask, fonts, transparent = getstylescheme(words, weights; colors=colors, angles=angles, mask=mask, masksize=masksize,
+    colors, angles, mask, svgmask, fonts, transparent = processscheme(words, weights; colors=colors, angles=angles, mask=mask, svgmask=svgmask, masksize=masksize,
                                                     fonts=fonts, avgfontsize=avgfontsize, language=language, transparent=transparent, params=params, kargs...)
     params[:colors] = Any[colors...]
     params[:angles] = angles
@@ -145,7 +147,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     end
     wc
 end
-function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
+function processscheme(words, weights; colors=:auto, angles=:auto, mask=:auto, svgmask=nothing,
                 masksize=:auto, maskcolor=:default, keepmaskarea=:auto,
                 backgroundcolor=:default, padding=:default,
                 outline=:default, linecolor=:auto, fonts=:auto, avgfontsize=12, language=:auto,
@@ -153,11 +155,16 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
     merge!(params, kargs)
     colors in DEFAULTSYMBOLS && (colors = randomscheme(weights))
     angles in DEFAULTSYMBOLS && (angles = randomangles())
+    fonts in DEFAULTSYMBOLS && (fonts = randomfonts(detect_language(words, language)))
     maskcolor0 = maskcolor
     backgroundcolor0 = backgroundcolor
     colors isa Symbol && (colors = (colorschemes[colors].colors...,))
+    params[:colors_scheme] = colors
+    params[:angles_scheme] = angles
+    params[:fonts_scheme] = fonts
     colors = Iterators.take(iter_expand(colors), length(words)) |> collect
     angles = Iterators.take(iter_expand(angles), length(words)) |> collect
+    fonts = Iterators.take(iter_expand(fonts), length(words)) |> collect
     if mask == :auto || mask isa Function
         if maskcolor in DEFAULTSYMBOLS
             if backgroundcolor in DEFAULTSYMBOLS || backgroundcolor == :maskcolor
@@ -236,7 +243,7 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
         end
         padding in DEFAULTSYMBOLS && (padding = outline)
         mask, binarymask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, 
-            outline=outline, linecolor=linecolor,padding=padding, return_bitmask=true, preservevolume=keepmaskarea, kargs...)
+            outline=outline, linecolor=linecolor, padding=padding, return_bitmask=true, preservevolume=keepmaskarea, kargs...)
         binarymask === nothing || (transparent = .!binarymask)
     end
     # under this line: both mask == :auto or not
@@ -251,17 +258,43 @@ function getstylescheme(words, weights; colors=:auto, angles=:auto, mask=:auto,
     params[:outline] = outline
     params[:linecolor] = linecolor
     params[:padding] = padding
-    svgmask = nothing
     if issvg(mask)
-        svgmask = mask
+        if svgmask === nothing
+            svgmask = mask
+        end
         mask = tobitmap(mask)
         if maskcolor ∉ DEFAULTSYMBOLS && (:outline ∉ keys(params) || params[:outline] <= 0)
             Render.recolor!(mask, maskcolor) # tobitmap后有杂色 https://github.com/JuliaGraphics/Luxor.jl/issues/160
         end
     end
-    fonts in DEFAULTSYMBOLS && (fonts = randomfonts(detect_language(words, language)))
-    fonts = Iterators.take(iter_expand(fonts), length(words)) |> collect
     colors, angles, mask, svgmask, fonts, transparent
+end
+
+"""
+    getscheme(wc::WC)
+Returns the scheme of an existing word cloud, which can be used to create a new word cloud with the same styling.
+e.g., `wc1 = wordcloud("a word cloud"); wc2 = wordcloud("a new word cloud"; getscheme(wc1)...)`
+"""
+function getscheme(wc::WC)
+    sc = [
+        :colors => getparameter(wc, :colors_scheme),
+        :angles => getparameter(wc, :angles_scheme),
+        :fonts => getparameter(wc, :fonts_scheme),
+        :mask => wc.mask,
+        :svgmask => wc.svgmask,
+        :masksize => :original,
+        :maskcolor => :original,
+        :backgroundcolor => :original,
+        :outline => :original,
+        :padding => :original,
+        :transparent => getparameter(wc, :transparent),
+    ]
+    for p in (:style, :centralword, :reorder, :level, :rt)
+        if hasparameter(wc, p)
+            push!(sc, p => getparameter(wc, p))
+        end
+    end
+    sc
 end
 Base.length(wc::WC) = length(wc.words)
 Base.getindex(wc::WC, i::Integer) = wc.words[i] => wc.weights[i]

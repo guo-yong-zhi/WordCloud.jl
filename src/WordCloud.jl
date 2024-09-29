@@ -16,7 +16,7 @@ export parsecolor, rendertext, shape, ellipse, box, squircle, star, ngon, bezist
 export imageof, showmask, showmask!
 export record, @record, layout!, rescale!, recolor!, keep, ignore, pin, runexample, showexample, generate!, fit!
 export getparameter, setparameter!, hasparameter, getstate, setstate!,
-    getcolors, getangles, getwords, getweights, setcolors!, setangles!, setwords!, setweights!,
+    getscheme, getcolors, getangles, getwords, getweights, setcolors!, setangles!, setwords!, setweights!,
     getpositions, setpositions!, getimages, getsvgimages, setimages!, setsvgimages!, getmask, getsvgmask, 
     getfontsizes, setfontsizes!, getfonts, setfonts!, getmaskcolor, getbackgroundcolor, setbackgroundcolor!, 
     initialize!, configsvgimages!
