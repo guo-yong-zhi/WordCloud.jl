@@ -83,7 +83,7 @@ end
 wordcloud(words, weight::Number; kargs...) = wordcloud(words, repeat([weight], length(words)); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
                 colors=:auto, angles=:auto, 
-                mask=:auto, svgmask=nothing, masksize=:auto, fonts=:auto, language=:auto,
+                mask=:auto, svgmask=nothing, edit_mask=true, masksize=:auto, fonts=:auto, language=:auto,
                 transparent=:auto, minfontsize=:auto, maxfontsize=:auto, avgfontsize=12,
                 spacing=:auto, density=0.5, state=layout!,
                 style=:auto, centralword=:auto, reorder=:auto, level=:auto, rt=:auto, kargs...)
@@ -97,7 +97,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     level != :auto && (params[:level] = level)
     rt != :auto && (params[:rt] = rt)
 
-    colors, angles, mask, svgmask, fonts, transparent = processscheme(words, weights; colors=colors, angles=angles, mask=mask, svgmask=svgmask, masksize=masksize,
+    colors, angles, mask, svgmask, fonts, transparent = processscheme(words, weights; colors=colors, angles=angles, mask=mask, svgmask=svgmask, edit_mask=edit_mask, masksize=masksize,
                                                     fonts=fonts, avgfontsize=avgfontsize, language=language, transparent=transparent, params=params, kargs...)
     params[:colors] = Any[colors...]
     params[:angles] = angles
@@ -147,7 +147,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     end
     wc
 end
-function processscheme(words, weights; colors=:auto, angles=:auto, mask=:auto, svgmask=nothing,
+function processscheme(words, weights; colors=:auto, angles=:auto, mask=:auto, svgmask=nothing, edit_mask=true,
                 masksize=:auto, maskcolor=:default, keepmaskarea=:auto,
                 backgroundcolor=:default, padding=:default,
                 outline=:default, linecolor=:auto, fonts=:auto, avgfontsize=12, language=:auto,
@@ -201,7 +201,7 @@ function processscheme(words, weights; colors=:auto, angles=:auto, mask=:auto, s
          preservevolume=keepmaskarea, returnkwargs=true, kg..., kargs...)
         merge!(params, maskkw)
         transparent = c -> c != torgba(maskcolor)
-    else
+    elseif edit_mask
         if masksize == :auto
             ms = volumeproposal(words, weights, avgfontsize)
         elseif masksize in DEFAULTSYMBOLS
@@ -245,6 +245,8 @@ function processscheme(words, weights; colors=:auto, angles=:auto, mask=:auto, s
         mask, binarymask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, 
             outline=outline, linecolor=linecolor, padding=padding, return_bitmask=true, preservevolume=keepmaskarea, kargs...)
         binarymask === nothing || (transparent = .!binarymask)
+    else
+        mask =  loadmask(mask)
     end
     # under this line: both mask == :auto or not
     if transparent == :auto
@@ -282,11 +284,9 @@ function getscheme(wc::WC)
         :fonts => getparameter(wc, :fonts_scheme),
         :mask => wc.mask,
         :svgmask => wc.svgmask,
-        :masksize => :original,
-        :maskcolor => :original,
-        :backgroundcolor => :original,
-        :outline => :original,
-        :padding => :original,
+        :maskcolor => getparameter(wc, :maskcolor),
+        :backgroundcolor => getparameter(wc, :backgroundcolor),
+        :edit_mask => false,
         :transparent => getparameter(wc, :transparent),
     ]
     for p in (:style, :centralword, :reorder, :level, :rt)
