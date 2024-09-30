@@ -41,6 +41,11 @@ include("test_textprocessing.jl")
             mask=shape(squircle, 200, 150, color=0.15, rt=2.2), density=0.45, transparent=(1, 1, 1, 0)) # String & small mask
     @test_throws AssertionError wordcloud(["1"], [2,3], density=0.1) |> generate! # length unmatch
     @test_throws AssertionError wordcloud(String[], Int[], density=0.1) |> generate! # empty inputs
+    wc2 = wordcloud("a new word cloud"; getscheme(wc)...)
+    @test wc.mask === wc2.mask
+    @test wc.svgmask === wc2.svgmask
+    @test getscheme(wc) == getscheme(wc2)
+    
     ##############no mask file
     wc = wordcloud(["test"], [1], maskcolor="green", outline=5)
     @test WordCloud.alpha(parsecolor(getbackgroundcolor(wc))) == 0
