@@ -107,7 +107,7 @@ function paintsvg(wc::WC; background=true)
             bgcolor = (1,1,1,0)
         end
         if !(background isa SVG)
-            @warn "embed bitmap into SVG. You can set `background=false` to remove background."
+            @warn "Embedding bitmap into SVG. Set `background=false` in `paintsvg` to remove the background."
             background = tosvg(background)
         end
         imgs = Iterators.flatten(((background,), imgs))
