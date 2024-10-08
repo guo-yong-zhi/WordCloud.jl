@@ -81,10 +81,10 @@ function wordcloud(text; language=:auto, stopwords=:auto, stopwords_extra=nothin
     wordcloud(processtext(text, language=language, stopwords=stopwords, stopwords_extra=stopwords_extra, maxnum=maxnum); language=language, kargs...)
 end
 wordcloud(words, weight::Number; kargs...) = wordcloud(words, repeat([weight], length(words)); kargs...)
-function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real}; 
-                colors=:auto, angles=:auto, 
-                mask=:auto, svgmask=nothing, editmask=true, masksize=:auto, fonts=:auto, language=:auto,
-                transparent=:auto, minfontsize=:auto, maxfontsize=:auto, avgfontsize=12,
+function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real};
+                colors=:auto, angles=:auto, fonts=:auto, language=:auto,
+                mask=:auto, svgmask=nothing, editmask=true, transparent=:auto, masksize=:auto,
+                avgfontsize=12, minfontsize=:auto, maxfontsize=:auto,
                 spacing=:auto, density=0.5, state=layout!,
                 style=:auto, centralword=:auto, reorder=:auto, level=:auto, rt=:auto, kargs...)
     @assert length(words) == length(weights) > 0
@@ -97,10 +97,12 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     level != :auto && (params[:level] = level)
     rt != :auto && (params[:rt] = rt)
 
-    colors, angles, mask, svgmask, fonts, transparent = processscheme(words, weights; colors=colors, angles=angles, mask=mask, svgmask=svgmask, editmask=editmask, masksize=masksize,
-                                                    fonts=fonts, avgfontsize=avgfontsize, language=language, transparent=transparent, params=params, kargs...)
+    colors, angles, fonts, mask, svgmask, transparent = processscheme(words, weights; colors=colors, angles=angles, fonts=fonts, language=language,
+                                                    mask=mask, svgmask=svgmask, editmask=editmask, transparent=transparent, masksize=masksize,
+                                                    avgfontsize=avgfontsize, params=params, kargs...)
     params[:colors] = Any[colors...]
     params[:angles] = angles
+    params[:fonts] = fonts
     params[:transparent] = transparent
     mask, maskqtree, groundsize, volume = preparemask(mask, transparent)
     params[:groundsize] = groundsize
@@ -130,8 +132,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     end
     params[:spacing] = spacing
     params[:density] = density
-    params[:fonts] = fonts
-    
+
     params[:state] = nameof(wordcloud)
     params[:epoch] = 0
     params[:word2index] = nothing
@@ -140,31 +141,35 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
     params[:scale] = -1
     params[:wordids] = collect(1:length(words))
     l = length(words)
-    wc = WC(copy(words), float.(weights), Vector(undef, l), Vector{SVG}(undef, l), 
+    wc = WC(copy(words), float.(weights), Vector(undef, l), Vector{SVG}(undef, l),
     mask, svgmask, Vector{Stuffing.QTrees.U8SQTree}(undef, l), maskqtree, params)
     if state != wordcloud
         state(wc)
     end
     wc
 end
-function processscheme(words, weights; colors=:auto, angles=:auto, mask=:auto, svgmask=nothing, editmask=true,
-                masksize=:auto, maskcolor=:default, keepmaskarea=:auto,
-                backgroundcolor=:default, padding=:default,
-                outline=:default, linecolor=:auto, fonts=:auto, avgfontsize=12, language=:auto,
-                transparent=:auto, params=Dict{Symbol,Any}(), kargs...)
+function processscheme(words, weights; colors=:auto, angles=:auto, fonts=:auto, language=:auto,
+    mask=:auto, svgmask=nothing, editmask=true, transparent=:auto,
+    masksize=:auto, maskcolor=:default, keepmaskarea=:auto, avgfontsize=12,
+    backgroundcolor=:default, padding=:default, outline=:default, linecolor=:auto,
+    params=Dict{Symbol,Any}(), kargs...)
     merge!(params, kargs)
-    colors in DEFAULTSYMBOLS && (colors = randomscheme(weights))
-    angles in DEFAULTSYMBOLS && (angles = randomangles())
-    fonts in DEFAULTSYMBOLS && (fonts = randomfonts(detect_language(words, language)))
+
     maskcolor0 = maskcolor
     backgroundcolor0 = backgroundcolor
+
+    colors in DEFAULTSYMBOLS && (colors = randomscheme(weights))
+    angles in DEFAULTSYMBOLS && (angles = randomangles())
+    fonts in DEFAULTSYMBOLS && (language = detect_language(words, language); fonts = randomfonts(language))
     colors isa Symbol && (colors = (colorschemes[colors].colors...,))
     params[:colors_scheme] = colors
     params[:angles_scheme] = angles
     params[:fonts_scheme] = fonts
+    params[:language] = language
     colors = Iterators.take(iter_expand(colors), length(words)) |> collect
     angles = Iterators.take(iter_expand(angles), length(words)) |> collect
     fonts = Iterators.take(iter_expand(fonts), length(words)) |> collect
+
     if mask == :auto || mask isa Function
         if maskcolor in DEFAULTSYMBOLS
             if backgroundcolor in DEFAULTSYMBOLS || backgroundcolor == :maskcolor
@@ -243,10 +248,10 @@ function processscheme(words, weights; colors=:auto, angles=:auto, mask=:auto, s
         end
         padding in DEFAULTSYMBOLS && (padding = outline)
         if svgmask !== nothing
-            svgmask = loadmask(svgmask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, 
+            svgmask = loadmask(svgmask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc,
                 outline=outline, linecolor=linecolor, padding=padding, preservevolume=keepmaskarea, kargs...)
         end
-        mask, binarymask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc, 
+        mask, binarymask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc,
             outline=outline, linecolor=linecolor, padding=padding, return_bitmask=true, preservevolume=keepmaskarea, kargs...)
         binarymask === nothing || (transparent = .!binarymask)
     else
@@ -275,7 +280,7 @@ function processscheme(words, weights; colors=:auto, angles=:auto, mask=:auto, s
             Render.recolor!(mask, maskcolor) # tobitmap后有杂色 https://github.com/JuliaGraphics/Luxor.jl/issues/160
         end
     end
-    colors, angles, mask, svgmask, fonts, transparent
+    colors, angles, fonts, mask, svgmask, transparent
 end
 
 """
@@ -309,7 +314,7 @@ Base.lastindex(wc::WC) = lastindex(wc.words)
 Base.broadcastable(wc::WC) = Ref(wc)
 getstate(wc::WC) = wc.params[:state]
 setstate!(wc::WC, st::Symbol) = wc.params[:state] = st
-struct ID{T} 
+struct ID{T}
     id::T
 end
 wordids(wc, i::Integer) = wc.params[:wordids][i]
@@ -355,7 +360,7 @@ setdoc = "This function accepts three positional arguments: a wordcloud object, 
 function setfonts!(wc::WC, w, v::Union{AbstractString,AbstractVector{<:AbstractString}})
     @view(wc.params[:fonts][index(wc, w)]) .= v
 end
-@doc setdoc 
+@doc setdoc
 function setwords!(wc::WC, w, v::Union{AbstractString,AbstractVector{<:AbstractString}})
     m = word2index(wc)
     @assert !any(v .∈ Ref(keys(m)))
@@ -368,7 +373,7 @@ end
 @doc getdoc getimages(wc::WC, w=:) = wc.imgs[index(wc, w)]
 @doc getdoc getsvgimages(wc::WC, w=:) = wc.svgs[index(wc, w)]
 
-@doc setdoc 
+@doc setdoc
 function setimages!(wc::WC, w, v::AbstractMatrix)
     @view(wc.imgs[index(wc, w)]) .= Ref(v)
     initqtree!(wc, w)
