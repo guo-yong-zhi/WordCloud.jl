@@ -150,7 +150,7 @@ function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVec
 end
 function processscheme(words, weights; colors=:auto, angles=:auto, fonts=:auto, language=:auto,
     mask=:auto, svgmask=nothing, editmask=true, transparent=:auto,
-    masksize=:auto, maskcolor=:default, keepmaskarea=:auto, avgfontsize=12,
+    masksize=:auto, maskcolor=:default, preservevolume=:auto, avgfontsize=12,
     backgroundcolor=:default, padding=:default, outline=:default, linecolor=:auto,
     params=Dict{Symbol,Any}(), kargs...)
     merge!(params, kargs)
@@ -178,8 +178,8 @@ function processscheme(words, weights; colors=:auto, angles=:auto, fonts=:auto, 
                 maskcolor = backgroundcolor
             end
         end
-        if keepmaskarea in DEFAULTSYMBOLS
-            keepmaskarea = masksize in DEFAULTSYMBOLS
+        if preservevolume in DEFAULTSYMBOLS
+            preservevolume = masksize in DEFAULTSYMBOLS
         end
         masksize in DEFAULTSYMBOLS && (masksize = volumeproposal(words, weights, avgfontsize))
         if backgroundcolor in DEFAULTSYMBOLS
@@ -203,7 +203,7 @@ function processscheme(words, weights; colors=:auto, angles=:auto, fonts=:auto, 
         end
         padding in DEFAULTSYMBOLS && (padding = round(Int, maximum(masksize) ÷ 10))
         mask, maskkw = randommask(masksize; maskshape=mask, color=maskcolor, padding=padding,
-         preservevolume=keepmaskarea, returnkwargs=true, kg..., kargs...)
+         preservevolume=preservevolume, returnkwargs=true, kg..., kargs...)
         merge!(params, maskkw)
         transparent = c -> c != torgba(maskcolor)
     elseif editmask
@@ -214,8 +214,8 @@ function processscheme(words, weights; colors=:auto, angles=:auto, fonts=:auto, 
         else
             ms = masksize
         end
-        if keepmaskarea in DEFAULTSYMBOLS
-            keepmaskarea = masksize == :auto
+        if preservevolume in DEFAULTSYMBOLS
+            preservevolume = masksize == :auto
         end
         if backgroundcolor == :auto
             if maskcolor == :default
@@ -249,10 +249,10 @@ function processscheme(words, weights; colors=:auto, angles=:auto, fonts=:auto, 
         padding in DEFAULTSYMBOLS && (padding = outline)
         if svgmask !== nothing
             svgmask = loadmask(svgmask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc,
-                outline=outline, linecolor=linecolor, padding=padding, preservevolume=keepmaskarea, kargs...)
+                outline=outline, linecolor=linecolor, padding=padding, preservevolume=preservevolume, kargs...)
         end
         mask, binarymask = loadmask(mask, ms...; color=maskcolor, transparent=transparent, backgroundcolor=bc,
-            outline=outline, linecolor=linecolor, padding=padding, return_bitmask=true, preservevolume=keepmaskarea, kargs...)
+            outline=outline, linecolor=linecolor, padding=padding, return_bitmask=true, preservevolume=preservevolume, kargs...)
         binarymask === nothing || (transparent = .!binarymask)
     else
         mask =  loadmask(mask)
