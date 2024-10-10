@@ -35,10 +35,10 @@ function lemmatizer_eng(word)
     return word[1:prevind(word, end, 1)]
 end
 
-function groupwords!(d::AbstractDict, remap)
+function lemmatize!(d::AbstractDict, lemmatizer)
     for w in keys(d)
-        w2 = remap(w)
-        if w2 != w
+        w2 = lemmatizer(w)
+        if w2 != w && (w2 in keys(d) || lowercase(w2) in keys(d) || d[w] < 3)
             d[w2] = get(d, w2, 0) + d[w]
             pop!(d, w)
         end
@@ -114,7 +114,7 @@ function countwords(words, counts; language=:auto,
         end
     end
     lemmatizer_ = get(LEMMATIZERS, language, LEMMATIZERS["_default_"])
-    groupwords!(counter, lemmatizer_)
+    lemmatize!(counter, lemmatizer_)
     counter
 end
 function countwords(text::AbstractString; language=:auto, kargs...)
@@ -142,7 +142,7 @@ function casemerge!(d)
     for w in keys(d)
         if length(w) > 0 && isuppercase(w[1]) && islowercase(w[end])
             lw = lowercase(w)
-            if lw != w &&lw in keys(d) && d[lw] > d[w]
+            if lw != w && lw in keys(d) && d[lw] > d[w]
                 d[lw] += d[w]
                 pop!(d, w)
             end

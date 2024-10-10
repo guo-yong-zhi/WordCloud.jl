@@ -10,7 +10,7 @@
     @test !("to" in words) # stopwords
 
     lemmatizer_eng = WordCloud.TextProcessing.lemmatizer_eng
-    groupwords! = WordCloud.TextProcessing.groupwords!
+    lemmatize! = WordCloud.TextProcessing.lemmatize!
     @test lemmatizer_eng("Cars") == "Car"
     @test lemmatizer_eng("monkeys") == "monkey"
     @test lemmatizer_eng("politics") == "politics"
@@ -33,8 +33,9 @@
     @test lemmatizer_eng("lives") in ("life", "live")
     @test lemmatizer_eng("cos") == "cos"
     @test lemmatizer_eng("中文") == "中文"
-    @test groupwords!(Dict("dog" => 1, "dogs" => 2), lemmatizer_eng) == Dict("dog" => 3)
-    @test groupwords!(Dict("cat" => 1, "dogs" => 2), lemmatizer_eng) == Dict("dog" => 2, "cat" => 1)
+    @test lemmatize!(Dict("dog" => 1, "dogs" => 2), lemmatizer_eng) == Dict("dog" => 3)
+    @test lemmatize!(Dict("cat" => 1, "dogs" => 2), lemmatizer_eng) == Dict("dog" => 2, "cat" => 1)
+    @test lemmatize!(Dict("Meggs" => 10), lemmatizer_eng) == Dict("Meggs" => 10)
 
     @test countwords(" cat cats dogs Dog dog dogs is \t", language="english")|>values|>sum == 7 # count, no-stopwords
     @test countwords(["# 1994 "]) |> isempty # pure punctuation and number string
