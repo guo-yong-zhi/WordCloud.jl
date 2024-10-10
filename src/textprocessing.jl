@@ -141,9 +141,12 @@ end
 function casemerge!(d)
     for w in keys(d)
         if length(w) > 0 && isuppercase(w[1]) && islowercase(w[end])
-            lw = lowercase(w)
-            if lw != w && lw in keys(d) && d[lw] > d[w]
-                d[lw] += d[w]
+            w2 = lowercase(w)
+            if w2 != w && w2 in keys(d)
+                if d[w2] < d[w]
+                    w, w2 = w2, w
+                end
+                d[w2] += d[w]
                 pop!(d, w)
             end
         end

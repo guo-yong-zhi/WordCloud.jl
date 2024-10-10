@@ -1,4 +1,6 @@
 #md# Test the performance of different trainers
+#md# <details>
+#md# 
 using WordCloud
 using Random
 # Random.seed!(8)
@@ -37,3 +39,5 @@ for (i, (wc, e)) in enumerate(zip(wcs, es))
     println("##$(i - 1) $(length(wc))@$(size(wc.mask)):")
     println(repr("text/plain", e))
 end
+#md# </details>
+#md# 

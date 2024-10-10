@@ -112,7 +112,7 @@ include("test_textprocessing.jl")
             angles=(0, 90));
     rescale!(wc, 1.23)
     @test getwords(wc, WordCloud.ID(2)) == words[2]
-    pin(wc, ["head", "cat"]) do 
+    pin(wc, ["head", "voice"]) do 
         @test length(wc) == 298
         setpositions!(wc, 1, (2, 2))
         setpositions!(wc, [1, "Alice", "eye"], (-1, -2))
