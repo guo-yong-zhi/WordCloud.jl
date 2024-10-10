@@ -50,7 +50,7 @@ function tokenizer(text::AbstractString, regexp=r"\w+")
     [text[i] for i in findall(regexp, text)]
 end
 
-function tokenizer_eng(text::AbstractString, regexp=r"\w[\w']*")
+function tokenizer_eng(text::AbstractString, regexp=r"\b\w+(?:'\w+)*\b")
     indices = findall(regexp, text)
     [endswith(text[i], "'s") ? text[i][1:prevind(text[i], end, 2)] : text[i] for i in indices]
 end
