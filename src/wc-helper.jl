@@ -1,5 +1,5 @@
 using Colors
-DEFAULTSYMBOLS = [:original, :auto, :default]
+const DEFAULTSYMBOLS = [:original, :auto, :default]
 iter_expand(e) = Base.Iterators.repeated(e)
 iter_expand(l::Vector) = Base.Iterators.cycle(l)
 iter_expand(r::AbstractRange) = IterGen(st->rand(r))
@@ -218,11 +218,11 @@ function configsvgimages!(wc, w=:, args...; children=nothing, wrappers=nothing)
 end
 runexample(example=:random) = @time evalfile(pkgdir(WordCloud)*"/examples/$(example).jl")
 showexample(example=:random) = read(pkgdir(WordCloud)*"/examples/$(example).jl", String)|>print
-examples = [e[1:prevind(e, end, 3)] for e in basename.(readdir(pkgdir(WordCloud)*"/examples")) if endswith(e, ".jl")]
-exampledoc = "Available values: [" * join(":".*examples, ", ") * "]"
-@doc exampledoc runexample
-@doc exampledoc showexample
-function runexamples(examples=examples)
+const EXAMPLES = [e[1:prevind(e, end, 3)] for e in basename.(readdir(pkgdir(WordCloud)*"/examples")) if endswith(e, ".jl")]
+const _EXAMPLE_DOC = "Available values: [" * join(":" .* EXAMPLES, ", ") * "]"
+@doc _EXAMPLE_DOC runexample
+@doc _EXAMPLE_DOC showexample
+function runexamples(examples=EXAMPLES)
     println(length(examples), " examples: ", examples)
     for (i,e) in enumerate(examples)
         println("="^20, "\n# ",i,"/",length(examples), "\t", e, "\n", "="^20)

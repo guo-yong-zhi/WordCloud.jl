@@ -176,5 +176,5 @@ include("test_textprocessing.jl")
     WordCloud.setfontcandidates!("zh", ["CJK"])
     @test WordCloud.getfontcandidates("zh") == WordCloud.getfontcandidates("zho") == ["CJK"]
 
-    @show keys(WordCloud.FontCandidates)
+    @show keys(WordCloud.FONT_NAMES)
 end

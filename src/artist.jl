@@ -2,8 +2,8 @@ using Random
 import Fontconfig: list, Pattern, format
 using StopWords
 
-FontCandidates::Dict{String, Vector{String}} = Dict{String, Vector{String}}()
-WeightCandidates::Vector{String} = ["", " Regular", " Normal", " Medium", " Bold", " Light"]
+const FONT_NAMES::Dict{String, Vector{String}} = Dict{String, Vector{String}}()
+const FONT_WEIGHTS::Vector{String} = ["", " Regular", " Normal", " Medium", " Bold", " Light"]
 
 function listfonts(lang="")
     if !isempty(lang)
@@ -23,14 +23,14 @@ function reverse_dict(d)
     end
     return rd
 end
-const id_part1 = reverse_dict(StopWords.part1_id)
-const mid_iid = reverse_dict(StopWords.iid_mid)
+const _ID_PART1 = reverse_dict(StopWords.part1_id)
+const _MID_IID = reverse_dict(StopWords.iid_mid)
 function expandlangcode(c)
     c in StopWords.id_all || (c = get(StopWords.name_id, c, c))
     c in StopWords.id_all || (c = get(StopWords.name_id, titlecase(c), c))
     cs = []
-    for c1 in Iterators.flatten((get(mid_iid, c, []), [c]))
-        for c2 in Iterators.flatten((get(id_part1, c1, []), [c1]))
+    for c1 in Iterators.flatten((get(_MID_IID, c, []), [c]))
+        for c2 in Iterators.flatten((get(_ID_PART1, c1, []), [c1]))
             push!(cs, c2)
         end
     end
@@ -41,12 +41,12 @@ function fontsof(lang)
 end
 function getfontcandidates(lang)
     lang = StopWords.normcode(String(lang))
-    if haskey(FontCandidates, lang)
-        return FontCandidates[lang]
+    if haskey(FONT_NAMES, lang)
+        return FONT_NAMES[lang]
     else
         fs = fontsof(lang)
         push!(fs, "")
-        FontCandidates[lang] = fs
+        FONT_NAMES[lang] = fs
         return fs
     end
 end
@@ -57,37 +57,39 @@ end
 Customize font candidates for language `lang`
 """
 function setfontcandidates!(lang::AbstractString, str_list)
-    FontCandidates[StopWords.normcode(String(lang))] = str_list
+    FONT_NAMES[StopWords.normcode(String(lang))] = str_list
 end
 
-Schemes_colorbrewer = filter(s -> occursin("colorbrewer", colorschemes[s].category), collect(keys(colorschemes)))
-Schemes_colorbrewer =  filter(s -> (occursin("Accent", String(s)) 
-        || occursin("Dark", String(s))
-        || occursin("Paired", String(s))
-        || occursin("Pastel", String(s))
-        || occursin("Set", String(s))
-        || occursin("Spectral", String(s))
-        ), Schemes_colorbrewer)
-Schemes_seaborn = filter(s -> occursin("seaborn", colorschemes[s].category), collect(keys(colorschemes)))
-Schemes_tableau = filter(s -> occursin("tableau", colorschemes[s].category), collect(keys(colorschemes)))
-Schemes_cvd = filter(s -> occursin("cvd", colorschemes[s].category), collect(keys(colorschemes)))
-Schemes_gnuplot = filter(s -> occursin("gnuplot", colorschemes[s].category), collect(keys(colorschemes)))
-Schemes_MetBrewer = filter(s -> occursin("MetBrewer", colorschemes[s].category), collect(keys(colorschemes)))
-Schemes_general = [:bluegreenyellow, :cmyk, :darkrainbow, :deepsea, :dracula, :fall, :rainbow, :turbo]
-Schemes = [Schemes_colorbrewer; Schemes_seaborn; Schemes_tableau; Schemes_cvd; Schemes_gnuplot; Schemes_MetBrewer; Schemes_general]
-
+function getcolorschemes()
+    schemes_colorbrewer = filter(s -> occursin("colorbrewer", colorschemes[s].category), collect(keys(colorschemes)))
+    schemes_colorbrewer =  filter(s -> (occursin("Accent", String(s)) 
+            || occursin("Dark", String(s))
+            || occursin("Paired", String(s))
+            || occursin("Pastel", String(s))
+            || occursin("Set", String(s))
+            || occursin("Spectral", String(s))
+            ), schemes_colorbrewer)
+    schemes_seaborn = filter(s -> occursin("seaborn", colorschemes[s].category), collect(keys(colorschemes)))
+    schemes_tableau = filter(s -> occursin("tableau", colorschemes[s].category), collect(keys(colorschemes)))
+    schemes_cvd = filter(s -> occursin("cvd", colorschemes[s].category), collect(keys(colorschemes)))
+    schemes_gnuplot = filter(s -> occursin("gnuplot", colorschemes[s].category), collect(keys(colorschemes)))
+    schemes_MetBrewer = filter(s -> occursin("MetBrewer", colorschemes[s].category), collect(keys(colorschemes)))
+    schemes_general = [:bluegreenyellow, :cmyk, :darkrainbow, :deepsea, :dracula, :fall, :rainbow, :turbo]
+    [schemes_colorbrewer; schemes_seaborn; schemes_tableau; schemes_cvd; schemes_gnuplot; schemes_MetBrewer; schemes_general]
+end
+const COLOR_SCHEMES = getcolorschemes()
 function displayschemes()
-    for scheme in Schemes
+    for scheme in COLOR_SCHEMES
         display(scheme)
         colors = Render.colorschemes[scheme].colors
         display(colors)
     end
 end
-function gradient(weights_or_num; scheme=rand(Schemes), section=(0,1))
+function gradient(weights_or_num; colorscheme=rand(COLOR_SCHEMES), section=(0,1))
     @assert length(section) == 2
     a,b = section
     @assert a <= b
-    C = Render.colorschemes[scheme]
+    C = Render.colorschemes[colorscheme]
     if weights_or_num isa Number
         inds = range(a, b, length=max(2, weights_or_num))
     else
@@ -102,9 +104,9 @@ function gradient(weights_or_num; scheme=rand(Schemes), section=(0,1))
     end
     return get.(Ref(C), inds)
 end
-function randomscheme(weights_or_num=100)
+function randomcolorscheme(weights_or_num=100)
     if rand() < 0.95
-        scheme = rand(Schemes)
+        scheme = rand(COLOR_SCHEMES)
         C = Render.colorschemes[scheme]
         if length(C) < 64 && rand() < 0.95
             colors = randsubseq(C.colors, rand())
@@ -131,7 +133,7 @@ function randomscheme(weights_or_num=100)
                 a, b = round.(minmax(rand(), rand()), digits=3)
                 rand() < 0.2 && (a = 0.; b = 1.)
                 print(", random section: $a:$b")
-                colors = gradient(weights_or_num; scheme=scheme, section=(a,b))
+                colors = gradient(weights_or_num; colorscheme=scheme, section=(a,b))
             end
         end
         if rand() > 0.5
@@ -145,14 +147,14 @@ function randomscheme(weights_or_num=100)
     end
     colors
 end
-function randomfilteredscheme(args...; filter=colors->Gray(parsecolor(randommaskcolor(colors)))>0.5, maxiter=100)
-    for _ in 1:maxiter
-        colors = randomscheme(args...)
-        filter(colors) && return colors
-    end
-    @warn "randomfilteredscheme reach the `maxiter`."
-    return colors
-end
+# function randomfilteredcolorscheme(args...; filter=colors->Gray(parsecolor(randommaskcolor(colors)))>0.5, maxiter=100)
+#     for _ in 1:maxiter
+#         colors = randomcolorscheme(args...)
+#         filter(colors) && return colors
+#     end
+#     @warn "randomfilteredcolorscheme reach the `maxiter`."
+#     return colors
+# end
 function randomwh(sz::Number=800)
     s = sz * sz
     ratio = (9/16 + rand()*7/16)
@@ -354,10 +356,10 @@ randomoutline() = rand((0, 0, 0, rand(2:10)))
 function randomfonts(lang="")
     if rand() < 0.8
         fonts = rand(getfontcandidates(lang))
-        fonts = fonts * rand(WeightCandidates)
+        fonts = fonts * rand(FONT_WEIGHTS)
     else
         fonts = rand(getfontcandidates(lang), 2 + floor(Int, 2randexp()))
-        fonts = [f * rand(WeightCandidates) for f in fonts]
+        fonts = [f * rand(FONT_WEIGHTS) for f in fonts]
         rand() > 0.5 && (fonts = tuple(fonts...))
     end
     @show fonts

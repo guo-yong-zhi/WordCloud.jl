@@ -153,7 +153,7 @@ else
 end
 
 # ╔═╡ 14666dc2-7ae4-4808-9db3-456eb26cd435
-md"**text colors:** $(@bind colors_ Select([:auto; WordCloud.Schemes])) $(@bind colorstyle Select([:random, :gradient])) $(@bind glinting CheckBox(default=false))✨　[*Browse colorschemes*](https://juliagraphics.github.io/ColorSchemes.jl/stable/catalogue)"
+md"**text colors:** $(@bind colors_ Select([:auto; WordCloud.COLOR_SCHEMES])) $(@bind colorstyle Select([:random, :gradient])) $(@bind glinting CheckBox(default=false))✨　[*Browse colorschemes*](https://juliagraphics.github.io/ColorSchemes.jl/stable/catalogue)"
 
 # ╔═╡ 2870a2ee-aa99-48ec-a26d-fed7b040e6de
 @bind go Button("    🎲 Try again !    ")
@@ -282,7 +282,7 @@ begin
     colors__ = colors_
     if colorstyle == :gradient
         if colors__ == :auto
-            colors__ = rand(WordCloud.Schemes)
+            colors__ = rand(WordCloud.COLOR_SCHEMES)
         end
         md"""
         **gradient range:** $(@bind colorstart NumberField(0.:0.01:1., default=0.)) to $(@bind colorstop NumberField(0.:0.01:1., default=1.)). $wordsnum colors of $colors__
@@ -307,7 +307,7 @@ begin
             colors = tuple(colors_vec...)
             colors_vec
         elseif colorstyle == :gradient
-            colors = WordCloud.gradient(words_weights[end], scheme=colors, section=(colorstart, max(colorstart, colorstop)))
+            colors = WordCloud.gradient(words_weights[end], colorscheme=colors, section=(colorstart, max(colorstart, colorstop)))
         else
             C
         end

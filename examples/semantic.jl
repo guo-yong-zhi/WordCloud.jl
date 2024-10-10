@@ -6,18 +6,18 @@ words_weights = Dict(zip(words_weights...))
 #md# The positions of words can be initialized with pre-trained word vectors so that similar words will appear near each other.
 using Embeddings
 using TSne
-const embtable = load_embeddings(GloVe{:en})
-const get_word_index = Dict(word => ii for (ii, word) in enumerate(embtable.vocab))
+const EMB = load_embeddings(GloVe{:en})
+const WORDS_INDICES = Dict(word => ii for (ii, word) in enumerate(EMB.vocab))
 function get_embedding(word)
-    ind = get_word_index[word]
-    emb = embtable.embeddings[:,ind]
+    ind = WORDS_INDICES[word]
+    emb = EMB.embeddings[:,ind]
     return emb
 end
 wordvec = Dict()
 for k in keys(words_weights)
-    if k in keys(get_word_index)
+    if k in keys(WORDS_INDICES)
         wordvec[k] = get_embedding(k)
-    elseif lowercase(k) in keys(get_word_index)
+    elseif lowercase(k) in keys(WORDS_INDICES)
         wordvec[k] = get_embedding(lowercase(k))
     else
         pop!(words_weights, k)

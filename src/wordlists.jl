@@ -3,7 +3,7 @@
 # top5000nv = df[(df[!, :PoS] .== "v") .| (df[!, :PoS] .== "n"), :lemma];
 
 # top5000[endswith.(top5000, "s").&(.!endswith.(top5000, "ss"))] + "has", "is", "was"
-const s_ending_words = Set(["numerous", "serious", "towards", "clothes", "focus", "bonus", "sometimes", "suspicious", "his", 
+const S_ENDING_WORDS = Set(["numerous", "serious", "towards", "clothes", "focus", "bonus", "sometimes", "suspicious", "his", 
         "species", "thanks", "hers", "as", "aids", "proceedings", "analysis", "bus", "us", "gas", "lots", "versus", 
         "emphasis", "nervous", "upstairs", "dangerous", "curious", "delicious", "anonymous", "various", "yours", 
         "lens", "physics", "dynamics", "indigenous", "besides", "anxious", "always", "works", "ours", "news", "bias", 
@@ -15,9 +15,9 @@ const s_ending_words = Set(["numerous", "serious", "towards", "clothes", "focus"
         "this", "status", "series", "olympics", "famous", "campus", "census", "ethics", "terms", "has", "is", "was"]) 
 
 # top5000nv[endswith.(top5000nv, r"xe|che|she|oe|ie")]
-const xe_ending_words = Set(["tie", "lie", "rookie", "pie", "cookie", "toe", "movie", "calorie", "headache", "die", "shoe"])
+const XE_ENDING_WORDS = Set(["tie", "lie", "rookie", "pie", "cookie", "toe", "movie", "calorie", "headache", "die", "shoe"])
 
 # top5000nv[endswith.(top5000nv, r"fe|f")]
-const f_ending_words = Set(["beef", "stuff", "wolf", "gulf", "sheriff", "grief", "chief", "life", "shelf", "relief", "roof",
+const F_ENDING_WORDS = Set(["beef", "stuff", "wolf", "gulf", "sheriff", "grief", "chief", "life", "shelf", "relief", "roof",
         "proof", "wildlife", "playoff", "wife", "belief", "leaf", "knife", "self", "staff", "thief", "chef", "half", 
         "golf", "cliff", "cafe"])

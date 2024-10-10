@@ -158,7 +158,7 @@ function processscheme(words, weights; colors=:auto, angles=:auto, fonts=:auto, 
     maskcolor0 = maskcolor
     backgroundcolor0 = backgroundcolor
 
-    colors in DEFAULTSYMBOLS && (colors = randomscheme(weights))
+    colors in DEFAULTSYMBOLS && (colors = randomcolorscheme(weights))
     angles in DEFAULTSYMBOLS && (angles = randomangles())
     fonts in DEFAULTSYMBOLS && (language = detect_language(words, language); fonts = randomfonts(language))
     colors isa Symbol && (colors = (colorschemes[colors].colors...,))
@@ -347,20 +347,20 @@ index(wc::WC, i) = i
 getparameter(wc, args...) = getindex(wc.params, args...)
 setparameter!(wc, args...) = setindex!(wc.params, args...)
 hasparameter(wc, args...) = haskey(wc.params, args...)
-getdoc = "This function accepts two positional arguments: a wordcloud object and an index. The index can be a string, number, list, or any other supported type of index. The index argument is optional, and omitting it will retrieve all the values."
-setdoc = "This function accepts three positional arguments: a wordcloud object, an index, and a value. The index can be a string, number, list, or any other supported type of index."
-@doc getdoc getcolors(wc::WC, w=:) = wc.params[:colors][index(wc, w)]
-@doc getdoc getangles(wc::WC, w=:) = wc.params[:angles][index(wc, w)]
-@doc getdoc getfonts(wc::WC, w=:) = wc.params[:fonts][index(wc, w)]
-@doc getdoc getwords(wc::WC, w=:) = wc.words[index(wc, w)]
-@doc getdoc getweights(wc::WC, w=:) = wc.weights[index(wc, w)]
-@doc setdoc setcolors!(wc::WC, w, c) = @view(wc.params[:colors][index(wc, w)]) .= parsecolor(c)
-@doc setdoc setangles!(wc::WC, w, a::Union{Number,AbstractVector{<:Number}}) = @view(wc.params[:angles][index(wc, w)]) .= a
-@doc setdoc
+const _GET_DOC = "This function accepts two positional arguments: a wordcloud object and an index. The index can be a string, number, list, or any other supported type of index. The index argument is optional, and omitting it will retrieve all the values."
+const _SET_DOC = "This function accepts three positional arguments: a wordcloud object, an index, and a value. The index can be a string, number, list, or any other supported type of index."
+@doc _GET_DOC getcolors(wc::WC, w=:) = wc.params[:colors][index(wc, w)]
+@doc _GET_DOC getangles(wc::WC, w=:) = wc.params[:angles][index(wc, w)]
+@doc _GET_DOC getfonts(wc::WC, w=:) = wc.params[:fonts][index(wc, w)]
+@doc _GET_DOC getwords(wc::WC, w=:) = wc.words[index(wc, w)]
+@doc _GET_DOC getweights(wc::WC, w=:) = wc.weights[index(wc, w)]
+@doc _SET_DOC setcolors!(wc::WC, w, c) = @view(wc.params[:colors][index(wc, w)]) .= parsecolor(c)
+@doc _SET_DOC setangles!(wc::WC, w, a::Union{Number,AbstractVector{<:Number}}) = @view(wc.params[:angles][index(wc, w)]) .= a
+@doc _SET_DOC
 function setfonts!(wc::WC, w, v::Union{AbstractString,AbstractVector{<:AbstractString}})
     @view(wc.params[:fonts][index(wc, w)]) .= v
 end
-@doc setdoc
+@doc _SET_DOC
 function setwords!(wc::WC, w, v::Union{AbstractString,AbstractVector{<:AbstractString}})
     m = word2index(wc)
     @assert !any(v .∈ Ref(keys(m)))
@@ -369,24 +369,24 @@ function setwords!(wc::WC, w, v::Union{AbstractString,AbstractVector{<:AbstractS
     @view(wc.words[i]) .= v
     v
 end
-@doc setdoc setweights!(wc::WC, w, v::Union{Number,AbstractVector{<:Number}}) = @view(wc.weights[index(wc, w)]) .= v
-@doc getdoc getimages(wc::WC, w=:) = wc.imgs[index(wc, w)]
-@doc getdoc getsvgimages(wc::WC, w=:) = wc.svgs[index(wc, w)]
+@doc _SET_DOC setweights!(wc::WC, w, v::Union{Number,AbstractVector{<:Number}}) = @view(wc.weights[index(wc, w)]) .= v
+@doc _GET_DOC getimages(wc::WC, w=:) = wc.imgs[index(wc, w)]
+@doc _GET_DOC getsvgimages(wc::WC, w=:) = wc.svgs[index(wc, w)]
 
-@doc setdoc
+@doc _SET_DOC
 function setimages!(wc::WC, w, v::AbstractMatrix)
     @view(wc.imgs[index(wc, w)]) .= Ref(v)
     initqtree!(wc, w)
     v
 end
 setimages!(wc::WC, w, v::AbstractVector) = setimages!.(wc, index(wc, w), v)
-@doc setdoc
+@doc _SET_DOC
 function setsvgimages!(wc::WC, w, v)
     @view(wc.svgs[index(wc, w)]) .= v
     setimages!(wc::WC, w, tobitmap.(v))
 end
 
-@doc getdoc
+@doc _GET_DOC
 function getfontsizes(wc::WC, w=:)
     inds = index(wc, w)
     ids = wordids(wc, inds)
@@ -399,7 +399,7 @@ function getfontsizes(wc::WC, w=:)
         end
     end
 end
-@doc setdoc
+@doc _SET_DOC
 function setfontsizes!(wc::WC, w, v::Union{Number,AbstractVector{<:Number}})
     push!.(Ref(wc.params[:custom][:fontsize]), wordids(wc, w) .=> v)
 end
@@ -411,12 +411,12 @@ function getbackgroundcolor(wc::WC)
     c == :maskcolor ? getmaskcolor(wc) : c
 end
 setbackgroundcolor!(wc::WC, v) = (setparameter!(wc, v, :backgroundcolor); v)
-@doc getdoc * " The keyword argument `mode` can be either `getshift` or `getcenter`."
+@doc _GET_DOC * " The keyword argument `mode` can be either `getshift` or `getcenter`."
 function getpositions(wc::WC, w=:; mode=getshift)
     Stuffing.getpositions(wc.maskqtree, wc.qtrees, index(wc, w), mode=mode)
 end
 
-@doc setdoc * " The keyword argument `mode` can be either `setshift!` or `setcenter!`."
+@doc _SET_DOC * " The keyword argument `mode` can be either `setshift!` or `setcenter!`."
 function setpositions!(wc::WC, w, x_y; mode=setshift!)
     Stuffing.setpositions!(wc.maskqtree, wc.qtrees, index(wc, w), x_y, mode=mode)
 end

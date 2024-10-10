@@ -74,7 +74,7 @@ paint(wc, "alice.png")
 ## Semantic
 [![semantic](res/semantic.png)](./examples/semantic.jl)  
 *try `runexample(:semantic)` or `showexample(:semantic)`*  
-The variable `WordCloud.examples` holds all available examples.   
+The variable `WordCloud.EXAMPLES` holds all available examples.   
 
 # About Implementation
 WordCloud.jl stands out from other tools due to its unique approach based on image local gradient optimization. Unlike conventional algorithms, WordCloud.jl utilizes a non-greedy algorithm that enables words to be [repositioned](res/animation2.gif) even after their initial placement. This dynamic adjustment process provides unparalleled freedom in assigning words to any desired position, irrespective of potential overlaps. Furthermore, it eliminates the necessity of scaling words during the adjustment phase. This ingenious design choice maximizes the generator's flexibility, opening up boundless possibilities for customization. For a more detailed understanding of the algorithm, you can refer to the [Stuffing.jl - Algorithm Description](https://github.com/guo-yong-zhi/Stuffing.jl#algorithm-description). 

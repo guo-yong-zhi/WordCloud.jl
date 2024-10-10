@@ -12,23 +12,23 @@ function lemmatizer_eng(word)
         return word
     end
     w = lowercase(word)
-    if w in s_ending_words || (length(word) <= 3 && w == word) || uppercase(word) == word
+    if w in S_ENDING_WORDS || (length(word) <= 3 && w == word) || uppercase(word) == word
         return word
-    elseif endswith(w, "ies") && !(w[1:prevind(w, end, 1)] in xe_ending_words)
+    elseif endswith(w, "ies") && !(w[1:prevind(w, end, 1)] in XE_ENDING_WORDS)
         return word[1:prevind(word, end, 3)] * "y"
     elseif endswith(w, "ses")
         wh = w[1:prevind(w, end, 2)]
-        if wh in s_ending_words || endswith(wh, "ss")
+        if wh in S_ENDING_WORDS || endswith(wh, "ss")
             return word[1:prevind(word, end, 2)]
         end
-    elseif endswith(w, r"xes|ches|shes|oes") && !(w[1:prevind(w, end, 1)] in xe_ending_words)
+    elseif endswith(w, r"xes|ches|shes|oes") && !(w[1:prevind(w, end, 1)] in XE_ENDING_WORDS)
         return word[1:prevind(word, end, 2)]
     elseif endswith(w, "ves")
         wh = w[1:prevind(w, end, 3)]
         wordh = word[1:prevind(word, end, 3)]
-        if wh * "fe" in f_ending_words
+        if wh * "fe" in F_ENDING_WORDS
             return wordh * "fe"
-        elseif wh * "f" in f_ending_words
+        elseif wh * "f" in F_ENDING_WORDS
             return wordh * "f"
         end
     end
@@ -56,12 +56,12 @@ function tokenizer_eng(text::AbstractString, regexp=r"\w[\w']*")
 end
 
 # ISO 639-3 macrolanguages
-STOPWORDS = stopwords
-TOKENIZERS = Dict(
+const STOPWORDS = stopwords
+const TOKENIZERS = Dict(
     "_default_" => tokenizer,
     "eng" => tokenizer_eng,
 )
-LEMMATIZERS = Dict(
+const LEMMATIZERS = Dict(
     "_default_" => identity,
     "eng" => lemmatizer_eng,
 )
