@@ -47,12 +47,12 @@ function lemmatize!(d::AbstractDict, lemmatizer)
 end
 
 function tokenizer(text::AbstractString, regexp=r"\w+")
-    [text[i] for i in findall(regexp, text)]
+    (m.match for m in eachmatch(regexp, text))
 end
 
-function tokenizer_eng(text::AbstractString, regexp=r"\b\w+(?:'\w+)*\b")
-    indices = findall(regexp, text)
-    [endswith(text[i], "'s") ? text[i][1:prevind(text[i], end, 2)] : text[i] for i in indices]
+function tokenizer_eng(text::AbstractString, regexp=r"\b[\w']+\b")
+    ms = eachmatch(regexp, text)
+    (endswith(m.match, "'s") ? m.match[1:prevind(m.match, end, 2)] : m.match for m in ms)
 end
 
 # ISO 639-3 macrolanguages
@@ -98,10 +98,9 @@ Count words in text. And save results into `counter`.
 `text_or_counter` can be a String, a Vector of Strings, an opend file (IO) or a Dict.  
 `regexp` is a regular expression to partially match and filter words. For example, `regexp=r"\S(?:[\s\S]*\S)?"` will trim whitespaces then eliminate empty words.  
 """
-function countwords(words, counts; language=:auto,
+function countwords(words, counts; lemmatizer=:auto, language=:auto,
     regexp=r"(?:\S[\s\S]*)?[^0-9_\W](?:[\s\S]*\S)?", counter=Dict{String,Int}())
     # strip whitespace and filter out pure punctuation and number string
-    language = detect_language(words, language)
     for (w, c) in zip(words, counts)
         if regexp !== nothing
             m = match(regexp, w)
@@ -113,21 +112,26 @@ function countwords(words, counts; language=:auto,
             counter[w] = get(counter, w, 0) + c
         end
     end
-    lemmatizer_ = get(LEMMATIZERS, language, LEMMATIZERS["_default_"])
-    lemmatize!(counter, lemmatizer_)
+    if lemmatizer == :auto
+        language = detect_language(words, language)
+        lemmatizer = get(LEMMATIZERS, language, LEMMATIZERS["_default_"])
+    end
+    lemmatize!(counter, lemmatizer)
     counter
 end
-function countwords(text::AbstractString; language=:auto, kargs...)
-    language = detect_language(text, language)
-    if !haskey(TOKENIZERS, language)
-        @warn "No built-in tokenizer for $(language)!"
+function countwords(text::AbstractString; tokenizer=:auto, language=:auto, kargs...)
+    if tokenizer == :auto
+        language = detect_language(text, language)
+        if !haskey(TOKENIZERS, language)
+            @info "No dedicated built-in tokenizer for $(language); using basic tokenizer instead"
+        end
+        tokenizer = get(TOKENIZERS, language, TOKENIZERS["_default_"])
     end
-    tokenizer_ = get(TOKENIZERS, language, TOKENIZERS["_default_"])
-    countwords(tokenizer_(text); language=language, kargs...)
+    countwords(tokenizer(text); language=language, kargs...)
 end
-countwords(words::AbstractVector{<:AbstractString}; kargs...) = countwords(words, Iterators.repeated(1); kargs...)
 countwords(counter::AbstractDict{<:AbstractString,<:Real}; kargs...) = countwords(keys(counter), values(counter); kargs...)
 countwords(wordscounts::Tuple; kargs...) = countwords(wordscounts...; kargs...)
+countwords(words; kargs...) = countwords(words, Iterators.repeated(1); kargs...)
 function countwords(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}; kargs...)
     countwords(first.(counter), [v[2] for v in counter]; kargs...)
 end
@@ -234,7 +238,7 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
 
     language = detect_language(keys(counter), language)
     if !haskey(STOPWORDS, language)
-        @warn "No built-in stopwords for $(language)!"
+        @info "No built-in stopwords for $(language)!"
     end
     stopwords == :auto && (stopwords = get(STOPWORDS, language, nothing))
     stopwords === nothing && (stopwords = Set{String}())
@@ -277,7 +281,7 @@ end
 
 function processtext(text; language=:auto, kargs...)
     language = detect_language(text, language)
-    cwkw = (:counter, :regexp)
+    cwkw = (:counter, :regexp, :tokenizer, :lemmatizer)
     processtext(
         countwords(text; language=language, filter(kw -> first(kw) ∈ cwkw, kargs)...);
         language=language,

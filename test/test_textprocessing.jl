@@ -9,6 +9,19 @@
     words, weights = WordCloud.TextProcessing.processtext(c)
     @test !("to" in words) # stopwords
 
+    tokenizer_eng = WordCloud.TextProcessing.tokenizer_eng
+    tokenizer_default = WordCloud.TextProcessing.tokenizer
+    @test tokenizer_default(" a man の 书本\n 1234") .|> strip == ["a", "man", "の", "书本", "1234"]
+    @test tokenizer_eng(" a book in 1994\n") .|> strip == ["a", "book", "in", "1994"]
+    @test tokenizer_eng(" the 'best-book' in 1994\n") .|> strip == ["the", "best", "book", "in", "1994"]
+    @test tokenizer_eng("")|>collect == tokenizer_eng(" ")|>collect == tokenizer_eng(" ,")|>collect == []
+    @test tokenizer_eng(" a _int_var3") .|> strip == ["a", "_int_var3"]
+    @test tokenizer_eng("bob's book") .|> strip == ["bob", "book"]
+    @test tokenizer_eng("bob's 'book' 'book'") .|> strip == ["bob", "book", "book"]
+    @test tokenizer_eng("abc'de fg'h'ij k'l") .|> strip == ["abc'de", "fg'h'ij", "k'l"]
+    @test tokenizer_eng("abc'de', fg'h'ij' k'l'") .|> strip == ["abc'de", "fg'h'ij", "k'l"]
+    @test tokenizer_eng(" abc'de'. fg'h'ij',k'l'") .|> strip == ["abc'de", "fg'h'ij", "k'l"]
+    
     lemmatizer_eng = WordCloud.TextProcessing.lemmatizer_eng
     lemmatize! = WordCloud.TextProcessing.lemmatize!
     @test lemmatizer_eng("Cars") == "Car"
