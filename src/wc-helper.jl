@@ -88,7 +88,7 @@ function loadmask(file, args...; kargs...)
     loadmask(mask, args...; kargs...)
 end
 
-"Similar to `paint`, but exports SVG"
+"Similar to [`paint`](@ref), but exports SVG"
 function paintsvg(wc::WC; background=true)
     imgs = getsvgimages(wc)
     poss = getpositions(wc)
@@ -123,6 +123,8 @@ function paintsvg(wc::WC, file, args...; kargs...)
 end
 
 """
+Paint the [`wordcloud`](@ref) generated object into an image or an SVG file.
+See also: [`paintsvg`](@ref)
 # Examples
 * paint(wc::WC)
 * paint(wc::WC, background=false) # without background
@@ -159,7 +161,37 @@ function paint(wc::WC, file, args...; kargs...)
     Render.save(file, img)
     img
 end
-        
+
+"""
+Generate a word cloud image from text. This function serves as a shortcut for `paint(generate!(wordcloud(...))...)`.
+For details on supported arguments, see:
+- [`wordcloud`](@ref)
+- [`paint`](@ref)
+See also: [`paintsvgcloud`](@ref)
+# Examples
+* paintcloud("holly bible")
+* paintcloud("holly bible", "result.svg")
+* paintcloud(["holly", "bible"], [0.7, 0.3], "result.png", background=false)
+* paintcloud("holly bible", angles=(0, 90), ratio=0.5)
+"""
+function paintcloud(args...; paintfunc=paint, kargs...)
+    if length(args) > 1 && last(args) isa AbstractString
+        args_w, args_p = args[1:end-1], args[end:end]
+    else
+    	args_w, args_p = args, ()
+    end
+    pkw = (:background, :ratio)
+    kargs_w = filter(kw -> first(kw) ∉ pkw, kargs)
+    kargs_p = filter(kw -> first(kw) ∈ pkw, kargs)
+    redirect_stdio(stdout=devnull, stderr=devnull) do
+        paintfunc(generate!(wordcloud(args_w...; kargs_w...)), args_p...; kargs_p...)
+    end
+end
+"Similar to [`paintcloud`](@ref), but exports SVG"
+function paintsvgcloud(args...; paintfunc=paintsvg, kargs...)
+    paintcloud(args...; paintfunc=paintfunc, kargs...)
+end
+
 function frame(wc::WC, label::AbstractString, args...; kargs...)
     overlay!(paint(wc, args...; kargs...), rendertextoutlines(label, 32, color="black", linecolor="white", linewidth=1), 20, 20)
 end

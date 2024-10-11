@@ -72,6 +72,7 @@ For more sophisticated text processing, please utilize the function [`processtex
 * Notes
   * After obtaining the wordcloud object, the following steps are required to obtain the resulting picture: initialize! -> layout! -> generate! -> paint
   * You can skip `initialize!` and/or `layout!`, and these operations will be automatically performed with default parameters
+  * You can use [`paintcloud`](@ref) and [`paintsvgcloud`](@ref) to obtain the final picture directly.
 """
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter) |> collect, values(counter) |> collect; kargs...)

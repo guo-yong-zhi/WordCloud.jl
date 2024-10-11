@@ -39,8 +39,10 @@ wc = wordcloud(open(pkgdir(WordCloud)*"/res/alice.txt")) |> generate! # from a f
 wc = wordcloud(["中文", "需要", "提前", "分词"]) |> generate! # from a list
 ```
 ```julia
-wc = wordcloud(["the"=>1.0, "to"=>0.51, "and"=>0.50,
-                  "of"=>0.47, "a"=>0.44, "in"=>0.33]) |> generate! # from pairs or a dict
+wc = wordcloud(["the"=>1.0, "to"=>0.51, "and"=>0.50]) |> generate! # from pairs or a dict
+```
+```julia
+paintcloud("It's easy to generate word clouds") # obtain the final picture directly
 ```
 # Advanced Usage
 ```julia

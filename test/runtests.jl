@@ -16,6 +16,8 @@ include("test_textprocessing.jl")
     paint(wc, "test.jpg", background=outline(wc.mask, color=(1, 0, 0.2, 0.7), linewidth=2), ratio=0.5)
     paint(wc, "test.svg", background=WordCloud.tobitmap(wc.mask))
     paint(wc, "test.svg")
+    paintsvgcloud("holly bible", "test.svg")
+    paintcloud("holly bible", angles=(0, 90), ratio=0.5)
     show(wc)
     @test getparameter(wc, :volume) == WordCloud.occupancy(WordCloud.QTrees.kernel(wc.maskqtree[1]), WordCloud.QTrees.FULL)
     # animation
