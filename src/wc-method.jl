@@ -19,7 +19,7 @@ function initialize!(wc, i::Integer; backgroundcolor=(0, 0, 0, 0), spacing=getpa
     initqtree!(wc, i, backgroundcolor=backgroundcolor, spacing=spacing)
     nothing
 end
-initialize!(wc, i; kargs...) = initialize!.(wc, index(wc, i); kargs...)
+initialize!(wc, ind; kargs...) = fetch.([Threads.@spawn initialize!(wc, i; kargs...) for i in WordCloud.index(wc, ind)]);
 function initialize!(wc::WC; maxiter=5, tolerance=0.02)
     params = wc.params
     weights = wc.weights

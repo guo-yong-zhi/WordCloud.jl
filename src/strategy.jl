@@ -55,12 +55,13 @@ function wordsoccupancy!(wc)
     sizemax = size(wc.mask) .* √(getparameter(wc, :volume) / prod(size(wc.mask))) .* 0.9
     check = getparameter(wc, :maxfontsize0) == :auto
     check && setparameter!(wc, minimum(sizemax), :maxfontsize)
-    imgs = []
+    imgs = Vector(undef, length(words))
     for i in 1:3
-        empty!(imgs)
         fontsizes = getfontsizes(wc)
         success = true
-        for (c, sz, ft, θ) in zip(words, fontsizes, fonts, angles)
+        Threads.@threads for j in 1:length(words)
+            success || break
+            c, sz, ft, θ = words[j], fontsizes[j], fonts[j], angles[j]
             img = Render.rendertext(string(c), sz, backgroundcolor=(0, 0, 0, 0), font=ft, border=border)
             a, b = size(img)
             imsz = max(a*abs(cos(θ)), b*abs(sin(θ))), max(a*abs(sin(θ)), b*abs(cos(θ)))
@@ -70,10 +71,9 @@ function wordsoccupancy!(wc)
                     setparameter!(wc, mfz, :maxfontsize)
                     println("The word \"$c\"($sz) is too big. Set maxfontsize = $mfz.")
                     success = false
-                    break
                 end
             end
-            push!(imgs, img)
+            imgs[j] = img
         end
         success && break
     end
