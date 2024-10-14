@@ -163,18 +163,19 @@ function paint(wc::WC, file, args...; kargs...)
 end
 
 """
-Generate a word cloud image from text. This function serves as a shortcut for `paint(generate!(wordcloud(...))...)`.
-For details on supported arguments, see:
-- [`wordcloud`](@ref)
-- [`paint`](@ref)
+Generate a word cloud image from text. This function acts as a convenient shortcut for `paint(generate!(wordcloud(...))...)`. 
+It accepts the same arguments as [`wordcloud`](@ref) and [`paint`](@ref). 
+# other arguments
+- quiet: suppresses the output of the generation process. defaults to true.
+
 See also: [`paintsvgcloud`](@ref)
 # Examples
 * paintcloud("holly bible")
-* paintcloud("holly bible", "result.svg")
+* paintcloud("holly bible", "result.svg", quiet=false)
 * paintcloud(["holly", "bible"], [0.7, 0.3], "result.png", background=false)
 * paintcloud("holly bible", angles=(0, 90), ratio=0.5)
 """
-function paintcloud(args...; paintfunc=paint, kargs...)
+function paintcloud(args...; quiet=true, paintfunc=paint, kargs...)
     if length(args) > 1 && last(args) isa AbstractString
         args_w, args_p = args[1:end-1], args[end:end]
     else
@@ -183,7 +184,11 @@ function paintcloud(args...; paintfunc=paint, kargs...)
     pkw = (:background, :ratio)
     kargs_w = filter(kw -> first(kw) ∉ pkw, kargs)
     kargs_p = filter(kw -> first(kw) ∈ pkw, kargs)
-    redirect_stdio(stdout=devnull, stderr=devnull) do
+    if quiet
+        redirect_stdio(stdout=devnull, stderr=devnull) do
+            paintfunc(generate!(wordcloud(args_w...; kargs_w...)), args_p...; kargs_p...)
+        end
+    else
         paintfunc(generate!(wordcloud(args_w...; kargs_w...)), args_p...; kargs_p...)
     end
 end

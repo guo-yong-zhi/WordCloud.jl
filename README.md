@@ -28,7 +28,7 @@ wc = wordcloud(words, weights)
 generate!(wc)
 paint(wc, "random.svg")
 ```
-Alternatively, it could be
+Different inputs are supported:
 ```julia
 wc = wordcloud("It's easy to generate word clouds") |> generate! # from a string
 ```
@@ -41,8 +41,9 @@ wc = wordcloud(["中文", "需要", "提前", "分词"]) |> generate! # from a l
 ```julia
 wc = wordcloud(["the"=>1.0, "to"=>0.51, "and"=>0.50]) |> generate! # from pairs or a dict
 ```
+And you can get the word cloud picture in one step:
 ```julia
-paintcloud("It's easy to generate word clouds") # obtain the final picture directly
+paintcloud("obtain the final picture directly")
 ```
 # Advanced Usage
 ```julia

@@ -277,7 +277,7 @@ function printcollisions(wc)
     colllist = first.(totalcollisions(qtrees))
     get_text(i) = i > 1 ? wc.words[i - 1] : "#MASK#"
     if length(colllist) > 0
-        @warn "Have $(length(colllist)) collisions. Try setting a larger `epochs` and `retry`, or lower `density` and `spacing` in `wordcloud` to fix it."
+        @warn "There are $(length(colllist)) collisions detected. To address this, you might consider increasing the `epochs` or `retry` parameters within the `generate!` function, or reducing the `density` or `spacing` parameters in the `wordcloud` function."
         print("These words collide: ")
         foreach(ij->print(get_text(ij[1]), " & ", get_text(ij[2]), ", "), colllist)
         println()

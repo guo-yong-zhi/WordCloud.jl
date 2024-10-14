@@ -74,6 +74,7 @@ For more sophisticated text processing, please utilize the function [`processtex
   * You can skip `initialize!` and/or `layout!`, and these operations will be automatically performed with default parameters
   * You can use [`paintcloud`](@ref) and [`paintsvgcloud`](@ref) to obtain the final picture directly.
 """
+wordcloud(wc::WC) = wc
 wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter) |> collect, values(counter) |> collect; kargs...)
 wordcloud(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
