@@ -59,7 +59,7 @@ function wordsoccupancy!(wc)
     for i in 1:3
         fontsizes = getfontsizes(wc)
         success = true
-        Threads.@threads for j in 1:length(words)
+        Threads.@threads :static for j in 1:length(words)
             success || break
             c, sz, ft, θ = words[j], fontsizes[j], fonts[j], angles[j]
             img = Render.rendertext(string(c), sz, backgroundcolor=(0, 0, 0, 0), font=ft, border=border)
