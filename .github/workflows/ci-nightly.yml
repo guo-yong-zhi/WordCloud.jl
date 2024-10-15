@@ -2,10 +2,10 @@ name: CI-nightly
 on:
   pull_request:
     branches:
-      - master
+      - '*'
   push:
     branches:
-      - master
+      - '*'
     tags: '*'
 env:
   JULIA_NUM_THREADS: 2
