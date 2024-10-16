@@ -79,8 +79,8 @@ wordcloud(wordsweights::Tuple; kargs...) = wordcloud(wordsweights...; kargs...)
 wordcloud(counter::AbstractDict; kargs...) = wordcloud(keys(counter) |> collect, values(counter) |> collect; kargs...)
 wordcloud(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}; kargs...) = wordcloud(first.(counter), [v[2] for v in counter]; kargs...)
 function wordcloud(text; language=:auto, stopwords=:auto, stopwords_extra=nothing, maxnum=500, kargs...)
-    language = detect_language(text, language)
-    wordcloud(processtext(text, language=language, stopwords=stopwords, stopwords_extra=stopwords_extra, maxnum=maxnum); language=language, kargs...)
+    words_weights, language = processtext(text, language=language, stopwords=stopwords, stopwords_extra=stopwords_extra, maxnum=maxnum, return_language=true)
+    wordcloud(words_weights; language=language, kargs...)
 end
 wordcloud(words, weight::Number; kargs...) = wordcloud(words, repeat([weight], length(words)); kargs...)
 function wordcloud(words::AbstractVector{<:AbstractString}, weights::AbstractVector{<:Real};

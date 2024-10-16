@@ -99,7 +99,7 @@ Count words in text. And save results into `counter`.
 `regexp` is a regular expression to partially match and filter words. For example, `regexp=r"\S(?:[\s\S]*\S)?"` will trim whitespaces then eliminate empty words.  
 """
 function countwords(words, counts; lemmatizer=:auto, language=:auto,
-    regexp=r"(?:\S[\s\S]*)?[^0-9_\W](?:[\s\S]*\S)?", counter=Dict{String,Int}())
+    regexp=r"(?:\S[\s\S]*)?[^0-9_\W](?:[\s\S]*\S)?", counter=Dict{String,Int}(), return_language=false)
     # strip whitespace and filter out pure punctuation and number string
     for (w, c) in zip(words, counts)
         if regexp !== nothing
@@ -117,7 +117,7 @@ function countwords(words, counts; lemmatizer=:auto, language=:auto,
         lemmatizer = get(LEMMATIZERS, language, LEMMATIZERS["_default_"])
     end
     lemmatize!(counter, lemmatizer)
-    counter
+    return_language ? (counter, language) : counter
 end
 function countwords(text::AbstractString; tokenizer=:auto, language=:auto, kargs...)
     if tokenizer == :auto
@@ -135,11 +135,14 @@ countwords(words; kargs...) = countwords(words, Iterators.repeated(1); kargs...)
 function countwords(counter::AbstractVector{<:Union{Pair,Tuple,AbstractVector}}; kargs...)
     countwords(first.(counter), [v[2] for v in counter]; kargs...)
 end
-function countwords(textfile::IO; counter=Dict{String,Int}(), kargs...)
-    for l in eachline(textfile)
-        countwords(l; counter=counter, kargs...)
+function countwords(textfile::IO; counter=Dict{String,Int}(), lemmatizer=:auto, tokenizer=:auto, language=:auto, return_language=false, kargs...)
+    if lemmatizer == :auto || tokenizer == :auto # detect language globally
+        language = detect_language(textfile, language)
     end
-    counter
+    for l in eachline(textfile)
+        countwords(l; counter=counter, language=language, return_language=false, kargs...)
+    end
+    return_language ? (counter, language) : counter
 end
 
 function casemerge!(d)
@@ -234,16 +237,20 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
     minfrequency=0,
     maxnum=500,
     minweight=:auto, maxweight=:auto,
-    process=rescaleweights(identity, 0) ∘ casemerge!)
+    process=rescaleweights(identity, 0) ∘ casemerge!,
+    return_language=false)
 
-    language = detect_language(keys(counter), language)
-    if !haskey(STOPWORDS, language)
-        @info "No built-in stopwords for $(language)!"
+    if stopwords == :auto
+        language = detect_language(keys(counter), language)
+        if !haskey(STOPWORDS, language)
+            @info "No built-in stopwords for $(language)!"
+        end
+        stopwords = get(STOPWORDS, language, nothing)
     end
-    stopwords == :auto && (stopwords = get(STOPWORDS, language, nothing))
     stopwords === nothing && (stopwords = Set{String}())
     stopwords isa AbstractSet || (stopwords = Set(stopwords))
     stopwords_extra === nothing || (stopwords = stopwords ∪ stopwords_extra)
+
     counter = process(counter)
     print("Total words: $(round(sum(values(counter)), digits=2)). ")
     print("Unique words: $(length(counter)). ")
@@ -276,14 +283,14 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
         print("The weights of the biggest $nhuge words have been reduced.")
     end
     print("\n")
-    words, weights
+    return_language ? ((words, weights), language) : (words, weights)
 end
 
 function processtext(text; language=:auto, kargs...)
-    language = detect_language(text, language)
     cwkw = (:counter, :regexp, :tokenizer, :lemmatizer)
+    counter, language = countwords(text; language=language, filter(kw -> first(kw) ∈ cwkw, kargs)..., return_language=true)
     processtext(
-        countwords(text; language=language, filter(kw -> first(kw) ∈ cwkw, kargs)...);
+        counter;
         language=language,
         filter(kw -> first(kw) ∉ cwkw, kargs)...)
 end
