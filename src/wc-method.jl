@@ -20,8 +20,13 @@ function initialize!(wc, i::Integer; backgroundcolor=(0, 0, 0, 0), spacing=getpa
     nothing
 end
 function initialize!(wc, ind; kargs...)
-    Threads.@threads :static for i in index(wc, ind)
-        initialize!(wc, i; kargs...)
+    ind = collect(index(wc, ind))
+    nind = length(ind)
+    nchunk = min(Threads.nthreads(), max(1, nind))
+    Threads.@threads :static for ichunk in 1:nchunk
+        for i in ichunk:nchunk:nind
+            initialize!(wc, ind[i]::Integer; kargs...)
+        end
     end
     nothing
 end
