@@ -28,7 +28,7 @@ wc = wordcloud(words, weights)
 generate!(wc)
 paint(wc, "random.svg")
 ```
-Different inputs are supported:
+Other input types are also supported:
 ```julia
 wc = wordcloud("It's easy to generate word clouds") |> generate! # from a string
 ```
