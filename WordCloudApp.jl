@@ -15,7 +15,6 @@ macro bind(def, element)
 end
 
 # ╔═╡ daf38998-c448-498a-82e2-b48a6a2b9c27
-# ╠═╡ show_logs = false
 begin
     import Pkg
     Pkg.activate(homedir())
