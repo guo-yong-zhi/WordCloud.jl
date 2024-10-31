@@ -91,6 +91,7 @@ function layout!(wc::WC; style=:auto, rt=:auto, centralword=:auto, reorder=:auto
     end
     @assert style in [:uniform, :gathering, :auto]
     centralword == :auto && hasparameter(wc, :centralword) && (centralword = getparameter(wc, :centralword))
+    centralword != :auto && setparameter!(wc, centralword, :centralword)
     if centralword == :auto || centralword === true
         max_i = argmax(wc.weights)
         max_i2 = length(wc)>1 ? partialsortperm(wc.weights, 2, rev=true) : max_i
@@ -119,11 +120,13 @@ function layout!(wc::WC; style=:auto, rt=:auto, centralword=:auto, reorder=:auto
     end
     reorder == :auto && hasparameter(wc, :reorder) && (reorder = getparameter(wc, :reorder))
     reorder == :auto && (reorder=identity)
+    reorder != :auto && setparameter!(wc, reorder, :reorder)
     qtrees = reorder(qtrees)
     centralword !== false && (qtrees = [wc.qtrees[centralword], qtrees...])
     if length(wc.qtrees) > 0 + (centralword !== false)
         style == :auto && hasparameter(wc, :style) && (style = getparameter(wc, :style))
         style == :auto && (style = rand()<0.8 ? :uniform : :gathering)
+        style != :auto && setparameter!(wc, style, :style)
         if style == :gathering
             if rt == :auto
                 if hasparameter(wc, :rt)
@@ -133,9 +136,11 @@ function layout!(wc::WC; style=:auto, rt=:auto, centralword=:auto, reorder=:auto
                     rt = 1
                     println("gathering style: rt = 1, ellipse")
                 end
+                rt != :auto && setparameter!(wc, rt, :rt)
             end
             p = min(50, 2 / rt)
             level == :auto && hasparameter(wc, :level) && (level = getparameter(wc, :level))
+            level != :auto && setparameter!(wc, level, :level)
             level == :auto && (level=5)
             ind = Stuffing.place!(deepcopy(wc.maskqtree), qtrees, arg...; 
                     roomfinder=findroom_gathering, p=p, level=level, callback=callback, kargs...)
