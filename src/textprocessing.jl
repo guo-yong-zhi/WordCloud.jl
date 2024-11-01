@@ -242,10 +242,12 @@ function processtext(counter::AbstractDict{<:AbstractString,<:Real};
 
     if stopwords == :auto
         language = detect_language(keys(counter), language)
+        lk = language
         if !haskey(STOPWORDS, language)
             @info "No built-in stopwords for $(language)!"
+            lk = "eng"
         end
-        stopwords = get(STOPWORDS, language, nothing)
+        stopwords = STOPWORDS[lk]
     end
     stopwords === nothing && (stopwords = Set{String}())
     stopwords isa AbstractSet || (stopwords = Set(stopwords))

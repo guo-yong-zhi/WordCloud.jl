@@ -73,6 +73,7 @@
     @test processtext("word cloud is a cloud", language="en", stopwords_extra=["word"])[1] |> only == "cloud"
     # settokenizer! ...
     WordCloud.settokenizer!("mylang", t->split(t, "a"))
+    WordCloud.setstopwords!("mylang", [])
     @test Set(processtext("bananais", language="mylang")[1]) == Set(["b", "n", "is"])
     WordCloud.setlemmatizer!("mylang", uppercase)
     @test Set(processtext("bananais", language="mylang")[1]) == Set(["B", "N", "IS"])
