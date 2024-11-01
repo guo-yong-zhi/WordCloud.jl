@@ -111,6 +111,7 @@ function randomcolorscheme(weights_or_num=100)
         if length(C) < 64 && rand() < 0.95
             colors = randsubseq(C.colors, rand())
             isempty(colors) && (colors = C.colors)
+            shuffle!(colors)
             print("color scheme: ", repr(scheme), ", random size: ", length(colors))
         else
             if rand() < 0.3
