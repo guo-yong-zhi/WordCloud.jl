@@ -28,18 +28,26 @@ function xmlnode(tag, attrs, children=nothing)
 end
 function xml_addchildren!(svgdoc::Node, children)
     children isa Pair && (children = (children,))
+    rt = svgdoc[end]
     for (e, attrs) in children
-        pushfirst!(svgdoc[end].children, xmlnode(e, attrs))
+        c = xmlnode(e, attrs)
+        if isempty(XML.children(rt))
+            rt = Node(nodetype(rt), tag(rt), attributes(rt), value(rt), c)
+        else
+            pushfirst!(rt.children, c)
+        end
     end
+    svgdoc[end] = rt
     svgdoc
 end
 
 function xml_wrapchildren!(svgdoc::Node, wrappers)
     wrappers isa Pair && (wrappers = (wrappers,))
     for (e, attrs) in wrappers
-        we = xmlnode(e, attrs, copy(children(svgdoc[end])))
-        empty!(svgdoc[end].children)
-        push!(svgdoc[end].children, we)
+        lastnode = svgdoc[end]
+        we = xmlnode(e, attrs, children(lastnode))
+        we = Node(nodetype(lastnode), tag(lastnode), attributes(lastnode), value(lastnode), we)
+        svgdoc[end] = we
     end
     svgdoc
 end
@@ -50,7 +58,7 @@ function xml_stack!(svgs::AbstractVector{Node})
     for svg in rest
         for c in children(svg[end])
             if isempty(children(rt))
-                rt = Node(XML.nodetype(rt), tag(rt), XML.attributes(rt), value(rt), c)
+                rt = Node(nodetype(rt), tag(rt), attributes(rt), value(rt), c)
             else
                 push!(rt, c)
             end
