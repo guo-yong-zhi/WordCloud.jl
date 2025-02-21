@@ -11,7 +11,9 @@ using FileIO
 using  ImageTransformations
 include("svg.jl")
 # because of float error, (randommask(color=Gray(0.3))|>tobitmap)[300,300]|>torgba != Gray(0.3)|>torgba
-parsecolor(c) = ARGB{Colors.N0f8}(parse(Colorant, c))
+parsecolor(c) = parsecolor(parse(Colorant, c))
+parsecolor(c::Colorant) = ARGB{Colors.N0f8}(c)
+parsecolor(c::ARGB{Colors.N0f8}) = c
 parsecolor(tp::Tuple) = ARGB{Colors.N0f8}(tp...)
 parsecolor(gray::Real) = ARGB{Colors.N0f8}(Gray(gray))
 parsecolor(sc::Symbol) = parsecolor.(colorschemes[sc].colors)
