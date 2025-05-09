@@ -308,47 +308,93 @@ function randomangles()
     end
     angles
 end
+
+# https://github.com/JuliaStats/StatsBase.jl/blob/master/src/sampling.jl
+function sample(wv)
+    1 == firstindex(wv) ||
+        throw(ArgumentError("non 1-based arrays are not supported"))
+    wsum = sum(wv)
+    isfinite(wsum) || throw(ArgumentError("only finite weights are supported"))
+    t = rand() * wsum
+    n = length(wv)
+    i = 1
+    cw = wv[1]
+    while cw < t && i < n
+        i += 1
+        @inbounds cw += wv[i]
+    end
+    return i
+end
+function rand_argmin(a, tor=50)
+    th = minimum(a) * tor
+    ind_weight = [(i, 1 / (ai + 1e-6)^2) for (i, ai) in enumerate(a) if ai <= th]
+    i = sample(last.(ind_weight))
+    ind_weight[i] |> first
+end
+function array_max!(a, b)
+    a .= max.(a, b)
+end
+function window(k, h=1)
+    r = k ÷ 2
+    w = collect(-(k - 1 - r):1.0:r)
+    w .= h .* (1 .- (abs.(w) ./ r) .^ 2)
+end
 function randommaskcolor(colors)
     colors = parsecolor.(unique(colors))
-    try
-        g = Gray.(colors) |> sort
-        m = g[1]
-        M = g[end]
-        if length(g) > 1
-            d = diff(g)
-            I = maximum(d)
-            i = findlast(isequal(I), d)
-        else
-            I = 0
-            i = -1
+    colors = HSL.(colors)
+    colors = [(c.h, c.s, c.l) for c in colors]
+    rl = 77 # 256*0.3
+    rl2 = 102 # 256*0.4
+    l_slots = zeros(256 + 2rl2) .+ 0.01
+    rh = 30
+    h_slots = zeros(360) .+ 0.05
+    s2max = 0.6
+    win_l = window(2rl + 1)
+    win_l2 = window(2rl2 + 1)
+    win_h = window(2rh + 1)
+    for c in colors
+        li = clamp(round(Int, c[3] * 255), 0, 255) + 1
+        array_max!(@view(l_slots[li-rl+rl2:li+rl+rl2]), win_l) # 明度避让以保证对比度
+        s = c[2]
+        if s > 0.5 # 饱和度匹配
+            s2max = min(s2max, 0.3)
+        elseif s > 0.3
+            s2max = min(s2max, (2.1 - 3s) / 2)
         end
-        # @show I, m, M
-        if I > 3(1 - M) && I > 3m
-            middle = (g[i] + g[i+1]) / 2
-            th1 = clamp(max(g[i] + 0.15, middle - rand(0:0.001:0.05)), 0, middle)
-            th2 = clamp(min(g[i+1] - 0.15, middle + rand(0:0.001:0.05)), middle, 1)
-            default = middle
-        elseif sum(g) / length(g) < 0.7 && (m + M) / 2 < 0.7 && !(m > 2(1 - M))# 明亮
-            th1 = clamp(max(M + 0.15, rand(0.85:0.001:1.0)), 0, 1)
-            th2 = clamp(th1 + 0.1, 0, 1)
-            default = 1.0
-        else    # 黑暗
-            th2 = clamp(min(m - 0.15, rand(0.0:0.001:0.3)), 0, 1) # 对深色不敏感，+0.15
-            th1 = clamp(th2 - 0.15, 0, 1)
-            default = 0.0
+        if s > 0.7 # 高饱和互补色禁止，避免视觉疲劳
+            hi = round(Int, c[1]) + 180
+            b = mod(hi - rh, 360) + 1
+            e = mod(hi + rh, 360) + 1
+            if b < e
+                array_max!(@view(h_slots[b:e]), win_h)
+            else
+                array_max!(@view(h_slots[1:e]), win_h[1+end-e:end])
+                array_max!(@view(h_slots[b:360]), win_h[1:end-e])
+            end
         end
-        maskcolor = rand((default,
-            (round(rand(th1:0.001:th2), digits=3),
-                round(rand(th1:0.001:th2), digits=3),
-                round(rand(th1:0.001:th2), digits=3))))
-        # @show maskcolor
-        return maskcolor
-    catch e
-        @show e
-        @show "colors sum failed", colors
-        return "white"
     end
+    h2 = rand_argmin(h_slots)
+    for c in colors # 邻近色的明度饱和度避让
+        hdiff = mod(c[1] - h2, 360)
+        hdiff = hdiff > 180 ? 360 - hdiff : hdiff
+        if hdiff < 30
+            s2max = min(s2max, c[2] / 2)
+        end
+        if hdiff < 15
+            li = clamp(round(Int, c[3] * 255), 0, 255) + 1
+            array_max!(@view(l_slots[li-rl2+rl2:li+rl2+rl2]), win_l2)
+        end
+    end
+    l_slots = l_slots[1+rl2:256+rl2]
+    w = ones(length(l_slots))
+    w[51:end-51] .+= window(256 - 101, 7) # 中间调回避
+    array_max!(@view(w[1:end÷2]), 3) # 高亮偏好
+    l_slots .*= w
+    l2 = rand_argmin(l_slots) / 255
+    s2 = rand() * s2max
+    HSL(h2, s2, l2)
 end
+
 function randomlinecolor(colors)
     if rand() < 0.8
         linecolor = rand((colors[1], colors[1], rand(colors)))

@@ -173,7 +173,8 @@ include("test_textprocessing.jl")
     wordcloud(["the"=>1.0, "to"=>0.51, "and"=>0.50,
               "of"=>0.47, "a"=>0.44, "in"=>0.33]) |> generate!
     wordcloud("It's easy to generate word clouds", maxnum=10) |> generate!
-    
+    text = "天地玄黄 宇宙洪荒 The universe is vast and boundless. a b c d e f g h i j k l m n o p q"
+    wordcloud(text, language="zh", avgfontsize=50, density=0.4, mask=box, backgroundcolor=:maskcolor, angles=0) |> generate!
     # font
     WordCloud.setfontcandidates!("zh", ["CJK"])
     @test WordCloud.getfontcandidates("zh") == WordCloud.getfontcandidates("zho") == ["CJK"]
