@@ -392,20 +392,16 @@ function randommaskcolor(colors)
     l_slots .*= w
     l2 = rand_argmin(l_slots) / 255
     s2 = rand() * s2max
-    HSL(h2, s2, l2)
+    "#" * hex(HSL(h2, s2, l2))
 end
 
 function randomlinecolor(colors)
     if rand() < 0.8
         linecolor = rand((colors[1], colors[1], rand(colors)))
     else
-        linecolor = (
-            round(rand(), digits=3),
-            round(rand(), digits=3),
-            round(rand(), digits=3),
-            min(1.0, round(0.5 + rand() / 2, digits=3)))
+        linecolor = (rand(), rand(), rand(), min(1.0, 0.5 + rand() / 2))
     end
-    linecolor
+    "#" * hex(parsecolor(linecolor))
 end
 randomoutline() = rand((0, 0, 0, rand(2:10)))
 function randomfonts(lang="")
