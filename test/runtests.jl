@@ -50,9 +50,9 @@ include("test_textprocessing.jl")
     
     ##############no mask file
     wc = wordcloud(["test"], [1], maskcolor="green", outline=5)
-    @test WordCloud.alpha(parsecolor(getbackgroundcolor(wc))) == 0
+    @test WordCloud.alpha(ascolor(getbackgroundcolor(wc))) == 0
     wc = wordcloud(["test"], [1], backgroundcolor="blue", outline=5)
-    @test parsecolor(getmaskcolor(wc)) == parsecolor("blue")
+    @test ascolor(getmaskcolor(wc)) == ascolor("blue")
     wc = wordcloud(["test"], [1], maskcolor="green")
     @test getparameter(wc, :outline) == 0
     wc = wordcloud(["test"], [1], backgroundcolor="blue")
@@ -84,8 +84,8 @@ include("test_textprocessing.jl")
     wc = wordcloud(["test"], [1], colors="#DE2910", mask=pngfile, backgroundcolor=0)
     @test getmaskcolor(wc) == getbackgroundcolor(wc)
     wc = wordcloud(["test"], [1], colors="#DE2910", mask=pngfile, maskcolor=1, backgroundcolor=0)
-    @test parsecolor(getmaskcolor(wc)) == parsecolor(1)
-    @test parsecolor(getbackgroundcolor(wc)) == parsecolor(0)
+    @test ascolor(getmaskcolor(wc)) == ascolor(1)
+    @test ascolor(getbackgroundcolor(wc)) == ascolor(0)
     wordcloud(["test"], [1], mask=pngfile, backgroundcolor=:maskcolor) # backgroundcolor=maskcolor=:default, didn't change anything
     wordcloud(["test"], [1], mask=pngfile, maskcolor="#faeef8", backgroundcolor=:maskcolor)
     wordcloud(["test"], [1], mask=pngfile, maskcolor="#faeef8", backgroundcolor=:maskcolor, outline=3)

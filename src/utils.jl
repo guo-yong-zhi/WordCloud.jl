@@ -5,7 +5,7 @@ function imageof(layer::AbstractMatrix{UInt8})
 end
 function showmask!(img, mask; highlight=ARGB(1, 0, 0, 0.3))
     mask = .!mask
-    hl = convert(eltype(img), parsecolor(highlight))
+    hl = convert(eltype(img), ascolor(highlight))
     img[mask] .= Render.overlay.(img[mask], hl)
     img
 end

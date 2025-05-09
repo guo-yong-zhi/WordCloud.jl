@@ -44,7 +44,7 @@ mixstyleimg = paint(wc, background=background2)
 #md# 
 h, w = size(avgimg)
 lw = 21
-lc = eltype(avgimg)(parsecolor(0.1))
+lc = eltype(avgimg)(ascolor(0.1))
 vbar = zeros(eltype(avgimg), (h, lw))
 hbar = zeros(eltype(avgimg), (lw, 2w + lw))
 vbar[:, lw ÷ 2 + 1] .= lc

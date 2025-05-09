@@ -1,7 +1,7 @@
 module Render
 export rendertext, overlay!,
     shape, ellipse, box, squircle, star, ngon, bezistar, bezingon, ellipse_area, box_area, squircle_area,
-    star_area, ngon_area, GIF, generate, parsecolor, rendertextoutlines,
+    star_area, ngon_area, GIF, generate, ascolor, rendertextoutlines,
     colorschemes, torgba, imagemask, outline, pad, dilate!, imresize, recolor!, recolor
 export issvg, save, load, tobitmap, tosvg, SVG, svg_wrap, svg_add, svg_stack
 using Luxor
@@ -11,13 +11,13 @@ using FileIO
 using  ImageTransformations
 include("svg.jl")
 # because of float error, (randommask(color=Gray(0.3))|>tobitmap)[300,300]|>torgba != Gray(0.3)|>torgba
-parsecolor(c) = parsecolor(parse(Colorant, c))
-parsecolor(c::Colorant) = ARGB{Colors.N0f8}(c)
-parsecolor(c::ARGB{Colors.N0f8}) = c
-parsecolor(tp::Tuple) = ARGB{Colors.N0f8}(tp...)
-parsecolor(gray::Real) = ARGB{Colors.N0f8}(Gray(gray))
-parsecolor(sc::Symbol) = parsecolor.(colorschemes[sc].colors)
-parsecolor(sc::AbstractArray) = parsecolor.(sc)
+ascolor(c) = ascolor(parse(Colorant, c))
+ascolor(c::Colorant) = ARGB{Colors.N0f8}(c)
+ascolor(c::ARGB{Colors.N0f8}) = c
+ascolor(tp::Tuple) = ARGB{Colors.N0f8}(tp...)
+ascolor(gray::Real) = ARGB{Colors.N0f8}(Gray(gray))
+ascolor(sc::Symbol) = ascolor.(colorschemes[sc].colors)
+ascolor(sc::AbstractArray) = ascolor.(sc)
 
 Base.size(s::Drawing) = (s.height, s.width)
 issvg(d) = d isa SVG
@@ -130,7 +130,7 @@ function imresize(svg::SVG, sz...; ratio=1)
 end
 
 function drawtext(t, size, pos, angle=0, color="black", font="")
-    setcolor(parsecolor(color))
+    setcolor(ascolor(color))
     setfont(font, size)
     settext(t, Point(pos...), halign="center", valign="center"; angle=angle)
 end
@@ -146,7 +146,7 @@ function rendertext(str::AbstractString, size::Real;
         drawing = Drawing(l, l, :svg) # svg is slow
     end
     origin()
-    bgcolor = parsecolor(backgroundcolor)
+    bgcolor = ascolor(backgroundcolor)
     bgcolor = background(bgcolor)
 
     drawtext(str, size, pos, angle, color, font)
@@ -175,10 +175,10 @@ function rendertextoutlines(str::AbstractString, size::Real; color="black", bgco
     l = length(str)
     Drawing(ceil(Int, 2l * (size + 2linewidth) + 2), ceil(Int, 2 * (size + 2linewidth) + 2), :image)
     origin()
-    bgcolor = parsecolor(bgcolor)
+    bgcolor = ascolor(bgcolor)
     bgcolor = background(bgcolor)
     # bgcolor = Luxor.ARGB32(bgcolor...)
-    setcolor(parsecolor(color))
+    setcolor(ascolor(color))
     #     setfont(font, size)
     fontface(font)
     fontsize(size)
@@ -193,7 +193,7 @@ function rendertextoutlines(str::AbstractString, size::Real; color="black", bgco
 end
 
 function torgba(c)
-    c = Colors.RGBA{Colors.N0f8}(parsecolor(c))
+    c = Colors.RGBA{Colors.N0f8}(ascolor(c))
     rgba = (Colors.red(c), Colors.green(c), Colors.blue(c), Colors.alpha(c))
     reinterpret.(UInt8, rgba)
 end
@@ -219,7 +219,7 @@ function imagemask(img::AbstractMatrix, transparent=:auto)
     if transparent === nothing
         return trues(size(img))
     end
-    img .!= convert(eltype(img), parsecolor(transparent))
+    img .!= convert(eltype(img), ascolor(transparent))
 end
 imagemask(img::SVG, istransparent::Function) = imagemask(tobitmap(img), istransparent)
 imagemask(img::SVG, transparent::AbstractArray{Bool,2}) = .!transparent
@@ -281,7 +281,7 @@ function outline(img; transparent=:auto, color="black", linewidth=2, smoothness=
     r = 2 * linewidth * smoothness
     # @show r
     mask2 = dilate2(mask, max(linewidth, round(r)), smoothness=smoothness)
-    c = ARGB(parsecolor(color)) # https://github.com/JuliaGraphics/Colors.jl/issues/500
+    c = ARGB(ascolor(color)) # https://github.com/JuliaGraphics/Colors.jl/issues/500
     bg = convert.(eltype(img), coloralpha.(c, mask2))
     bg = overlay!(copy(img), bg)
     @views bg[mask] .= overlay.(bg[mask], img[mask])
@@ -289,14 +289,14 @@ function outline(img; transparent=:auto, color="black", linewidth=2, smoothness=
 end
 
 function pad(img::AbstractMatrix, r=maximum(size(img)) ÷ 10; backgroundcolor=:auto)
-    color = convert(eltype(img), parsecolor(_backgroundcolor(img, backgroundcolor)))
+    color = convert(eltype(img), ascolor(_backgroundcolor(img, backgroundcolor)))
     r = ceil.(Int, r)
     bg = fill(color, size(img) .+ 2 .* r)
     overlay!(bg, img, reverse((0, 0) .+ r)...)
 end
 
 function pad(img::SVG, r=maximum(size(img)) ÷ 10; backgroundcolor=(0, 0, 0, 0))
-    color = parsecolor(backgroundcolor)
+    color = ascolor(backgroundcolor)
     sz = size(img) .+ 2 .* ceil.(Int, r)
     p = readsvg(string(img))
     m2 = Drawing(reverse(sz)..., :svg)
@@ -349,7 +349,7 @@ end
 
 function overlay(imgs, poss; backgroundcolor=(1, 1, 1, 0), size=size(imgs[1]))
     bg = Drawing(size..., :svg)
-    Luxor.background(parsecolor(backgroundcolor))
+    Luxor.background(ascolor(backgroundcolor))
     finish()
     bg = SVG(svgstring(), bg.height, bg.width)
     # (x,y)=(1,1)时左上角重合，此时Point(0,0)
@@ -358,11 +358,11 @@ function overlay(imgs, poss; backgroundcolor=(1, 1, 1, 0), size=size(imgs[1]))
     bg
 end
 function recolor!(img::AbstractArray, color)
-    c = parsecolor(color)
+    c = ascolor(color)
     img .= convert.(eltype(img), Colors.alphacolor.(c, Colors.alpha.(img)))
 end
 function recolor(img::AbstractArray, color)
-    c = parsecolor(color)
+    c = ascolor(color)
     convert.(eltype(img), Colors.alphacolor.(c, Colors.alpha.(img)))
 end
 
@@ -446,13 +446,13 @@ function shape(shape_, width, height, args...;
     kargs...)
     d = Drawing(ceil.(backgroundsize)..., :svg)
     origin()
-    background(parsecolor(backgroundcolor))
+    background(ascolor(backgroundcolor))
     if outline > 0
         setline(outline)
-        setcolor(parsecolor(linecolor))
+        setcolor(ascolor(linecolor))
         shape_(Point(0, 0), width, height, args...; action=:stroke, kargs...)
     end
-    setcolor(parsecolor(color))
+    setcolor(ascolor(color))
     shape_(Point(0, 0), width, height, args...; action=:fill, kargs...)
     finish()
     SVG(svgstring(), d.height, d.width)

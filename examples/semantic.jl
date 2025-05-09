@@ -66,7 +66,7 @@ tree = hclust(D, linkage=:ward)
 lb = cutree(tree, h=3, k=8)
 println("$(length(lb)) words are divided into $(length(unique(lb))) groups")
 #md# 
-colors = parsecolor(:seaborn_dark)
+colors = ascolor(:seaborn_dark)
 setcolors!(wc, words, colors[lb .% length(colors) .+ 1])
 recolor!(wc, style=:reset)
 paint(wc, "semantic_clustering.png")

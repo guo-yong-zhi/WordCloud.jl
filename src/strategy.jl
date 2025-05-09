@@ -105,7 +105,7 @@ function prepareword(word, fontsize, color, angle; backgroundcolor=(0, 0, 0, 0),
 end
 
 wordmask(img, bgcolor, border) = dilate!(alpha.(img) .!= 0, border)
-# use `alpha` instead of `convert(eltype(img), parsecolor(bgcolor))`
+# use `alpha` instead of `convert(eltype(img), ascolor(bgcolor))`
 # https://github.com/JuliaGraphics/Luxor.jl/issues/107
 function ternary_wordmask(img, bgcolor, border)
     tmask = fill(Stuffing.EMPTY, size(img))

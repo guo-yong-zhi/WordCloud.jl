@@ -11,7 +11,7 @@ Please visit the repository at: <https://github.com/guo-yong-zhi/WordCloud.jl>
 """
 module WordCloud
 export wordcloud, processtext, html2text, countwords, casemerge!, rescaleweights
-export parsecolor, rendertext, shape, ellipse, box, squircle, star, ngon, bezistar, bezingon,
+export ascolor, rendertext, shape, ellipse, box, squircle, star, ngon, bezistar, bezingon,
     loadmask, outline, padding, paint, paintsvg, paintcloud, paintsvgcloud, svgstring
 export imageof, showmask, showmask!
 export record, @record, layout!, rescale!, recolor!, keep, ignore, pin, runexample, showexample, generate!, fit!

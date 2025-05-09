@@ -356,7 +356,7 @@ const _SET_DOC = "This function accepts three positional arguments: a wordcloud 
 @doc _GET_DOC getfonts(wc::WC, w=:) = wc.params[:fonts][index(wc, w)]
 @doc _GET_DOC getwords(wc::WC, w=:) = wc.words[index(wc, w)]
 @doc _GET_DOC getweights(wc::WC, w=:) = wc.weights[index(wc, w)]
-@doc _SET_DOC setcolors!(wc::WC, w, c) = @view(wc.params[:colors][index(wc, w)]) .= parsecolor(c)
+@doc _SET_DOC setcolors!(wc::WC, w, c) = @view(wc.params[:colors][index(wc, w)]) .= ascolor(c)
 @doc _SET_DOC setangles!(wc::WC, w, a::Union{Number,AbstractVector{<:Number}}) = @view(wc.params[:angles][index(wc, w)]) .= a
 @doc _SET_DOC
 function setfonts!(wc::WC, w, v::Union{AbstractString,AbstractVector{<:AbstractString}})

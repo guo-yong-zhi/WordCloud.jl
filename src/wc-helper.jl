@@ -36,7 +36,7 @@ function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...;
         img = imresize(img, args...; ratio=ratio .* vf)
         copied = true
     end
-    backgroundcolor ∉ DEFAULTSYMBOLS && (backgroundcolor = parsecolor(backgroundcolor))
+    backgroundcolor ∉ DEFAULTSYMBOLS && (backgroundcolor = ascolor(backgroundcolor))
     if padding != 0 # padding before cal imagemask
         bc = backgroundcolor in DEFAULTSYMBOLS ? :auto : backgroundcolor
         img = pad(img, padding, backgroundcolor=bc)
@@ -47,7 +47,7 @@ function loadmask(img::AbstractMatrix{<:TransparentRGB}, args...;
     if color ∉ DEFAULTSYMBOLS || backgroundcolor ∉ DEFAULTSYMBOLS
         copied || (img = copy(img))
         if color ∉ DEFAULTSYMBOLS
-            color = parsecolor(color)
+            color = ascolor(color)
             alpha(color) == 1 || @warn "the alpha channel is ignored"
             m = @view img[mask]
             Render.recolor!(m, color) # 保持透明度
@@ -137,10 +137,10 @@ function paint(wc::WC, args...; background=true, kargs...)
     if background == true
         bgcolor = getbackgroundcolor(wc)
         bgcolor in DEFAULTSYMBOLS && (bgcolor = (1,1,1,0))
-        background = fill(convert(eltype(wc.mask), parsecolor(bgcolor)), size(wc.mask))
+        background = fill(convert(eltype(wc.mask), ascolor(bgcolor)), size(wc.mask))
         overlay!(background, wc.mask)
     elseif background == false || background === nothing
-        background = fill(convert(eltype(wc.mask), parsecolor((1,1,1,0))), size(wc.mask))
+        background = fill(convert(eltype(wc.mask), ascolor((1,1,1,0))), size(wc.mask))
     else
         background = copy(background)
     end

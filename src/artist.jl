@@ -148,7 +148,7 @@ function randomcolorscheme(weights_or_num=100)
     end
     colors
 end
-# function randomfilteredcolorscheme(args...; filter=colors->Gray(parsecolor(randommaskcolor(colors)))>0.5, maxiter=100)
+# function randomfilteredcolorscheme(args...; filter=colors->Gray(ascolor(randommaskcolor(colors)))>0.5, maxiter=100)
 #     for _ in 1:maxiter
 #         colors = randomcolorscheme(args...)
 #         filter(colors) && return colors
@@ -340,7 +340,7 @@ function window(k, h=1)
     w .= h .* (1 .- (abs.(w) ./ r) .^ 2)
 end
 function randommaskcolor(colors)
-    colors = parsecolor.(unique(colors))
+    colors = ascolor.(unique(colors))
     colors = HSL.(colors)
     colors = [(c.h, c.s, c.l) for c in colors]
     rl = 77 # 256*0.3
@@ -401,7 +401,7 @@ function randomlinecolor(colors)
     else
         linecolor = (rand(), rand(), rand(), min(1.0, 0.5 + rand() / 2))
     end
-    "#" * hex(parsecolor(linecolor))
+    "#" * hex(ascolor(linecolor))
 end
 randomoutline() = rand((0, 0, 0, rand(2:10)))
 function randomfonts(lang="")
