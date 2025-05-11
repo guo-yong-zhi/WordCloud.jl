@@ -3,8 +3,9 @@ import Fontconfig: list, Pattern, format
 using StopWords
 
 const FONT_NAMES::Dict{String,Vector{String}} = Dict{String,Vector{String}}()
-const FONT_WEIGHTS::Vector{String} = ["", " Regular", " Normal", " Medium", " Bold", " Light"]
-
+const FONT_WEIGHTS::Vector{String} = ["", " Regular", " Normal", " Medium", " Bold", " Light", " Extra Bold", " Black"]
+const FONT_WEIGHTS_WEIGHTS = [1, 0.5, 0.5, 2, 3, 0.5, 0.3, 0.3]
+@assert length(FONT_WEIGHTS) == length(FONT_WEIGHTS_WEIGHTS)
 function listfonts(lang="")
     if !isempty(lang)
         ps = list(Pattern(lang=lang))
@@ -404,12 +405,19 @@ function randomlinecolor(colors)
 end
 randomoutline() = rand((0, 0, 0, rand(2:10)))
 function randomfonts(lang="")
+    function randfw(font)
+        if any((!isempty(w)) && contains(lowercase(font), lowercase(w)) for w in FONT_WEIGHTS)
+            ""
+        else
+            FONT_WEIGHTS[sample(FONT_WEIGHTS_WEIGHTS)]
+        end
+    end
     if rand() < 0.8
         fonts = rand(getfontcandidates(lang))
-        fonts = fonts * rand(FONT_WEIGHTS)
+        fonts = fonts * randfw(fonts)
     else
         fonts = rand(getfontcandidates(lang), 2 + floor(Int, 2randexp()))
-        fonts = [f * rand(FONT_WEIGHTS) for f in fonts]
+        fonts = [f * randfw(f) for f in fonts]
         rand() > 0.5 && (fonts = tuple(fonts...))
     end
     @show fonts
