@@ -335,9 +335,10 @@ end
 function array_max!(a, b)
     a .= max.(a, b)
 end
-function gausswin(n, h=1)
-    g(x, σ) = exp(-0.5 * (x / σ)^2)
-    h * g.(range(-0.5, 0.5, n), 0.5 / 2.5)
+function window(k, h=1)
+    r = k ÷ 2
+    w = collect(-(k - 1 - r):1.0:r)
+    w .= h .* (1 .- (abs.(w) ./ r) .^ 2)
 end
 function randommaskcolor(colors)
     colors = ascolor.(unique(colors))
@@ -349,9 +350,9 @@ function randommaskcolor(colors)
     rh = 30
     h_slots = zeros(360) .+ 0.05
     s2max = 0.6
-    win_l = gausswin(2rl + 1)
-    win_l2 = gausswin(2rl2 + 1)
-    win_h = gausswin(2rh + 1)
+    win_l = window(2rl + 1)
+    win_l2 = window(2rl2 + 1)
+    win_h = window(2rh + 1)
     for c in colors
         li = clamp(round(Int, c[3] * 255), 0, 255) + 1
         array_max!(@view(l_slots[li-rl+rl2:li+rl+rl2]), win_l) # 明度避让以保证对比度
@@ -387,7 +388,7 @@ function randommaskcolor(colors)
     end
     l_slots = l_slots[1+rl2:256+rl2]
     w = ones(length(l_slots))
-    w[51:end-51] .+= gausswin(256 - 101, 7) # 中间调回避
+    w[51:end-51] .+= window(256 - 101, 7) # 中间调回避
     array_max!(@view(w[1:end÷2]), 3) # 高亮偏好
     l_slots .*= w
     l2 = rand_argmin(l_slots) / 255
