@@ -326,7 +326,7 @@ function sample(wv)
     end
     return i
 end
-function rand_argmin(a, tor=50)
+function rand_argmin(a, tor=10)
     th = minimum(a) * tor
     ind_weight = [(i, 1 / (ai + 1e-6)^2) for (i, ai) in enumerate(a) if ai <= th]
     i = sample(last.(ind_weight))
@@ -346,9 +346,9 @@ function randommaskcolor(colors)
     colors = [(c.h, c.s, c.l) for c in colors]
     rl = 77 # 256*0.3
     rl2 = 102 # 256*0.4
-    l_slots = zeros(256 + 2rl2) .+ 0.01
+    l_slots = zeros(256 + 2rl2) .+ 0.00625
     rh = 30
-    h_slots = zeros(360) .+ 0.05
+    h_slots = zeros(360) .+ 0.00625
     s2max = 0.6
     win_l = window(2rl + 1)
     win_l2 = window(2rl2 + 1)
@@ -391,7 +391,10 @@ function randommaskcolor(colors)
     w[51:end-51] .+= window(256 - 101, 7) # 中间调回避
     array_max!(@view(w[1:end÷2]), 3) # 高亮偏好
     l_slots .*= w
-    l2 = rand_argmin(l_slots) / 255
+    l2 = (rand_argmin(l_slots, 10) - 1) / 255
+    # 10 > max(3, 1+7)，不会截断概率，故高亮和中间调仅是偏好策略
+    # 0.00625*8*10=0.5，截断最高能达到明度避让策略最高点（1.0）的一半，
+    # 相对应地，保证明度差起码有sqrt(1-0.5/1.0)*(77/256)=0.21
     s2 = rand() * s2max
     "#" * hex(HSL(h2, s2, l2))
 end
