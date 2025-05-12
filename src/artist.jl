@@ -328,17 +328,20 @@ function sample(wv)
 end
 function rand_argmin(a, tor=10)
     th = minimum(a) * tor
-    ind_weight = [(i, 1 / (ai + 1e-6)^2) for (i, ai) in enumerate(a) if ai <= th]
+    ind_weight = [(i, 1 / (ai + 1e-6)) for (i, ai) in enumerate(a) if ai <= th]
     i = sample(last.(ind_weight))
     ind_weight[i] |> first
 end
 function array_max!(a, b)
     a .= max.(a, b)
 end
-function window(k, h=1)
-    r = k ÷ 2
-    w = collect(-(k - 1 - r):1.0:r)
-    w .= h .* (1 .- (abs.(w) ./ r) .^ 2)
+function expwin(n, h=1, λ=3)
+    f(x, λ) = 10.0^(-λ * abs(x))
+    h * f.(range(-1.0, 1.0, n), λ)
+end
+function gausswin(n, h=1)
+    g(x, σ) = exp(-0.5 * (x / σ)^2)
+    h * g.(range(-0.5, 0.5, n), 0.5 / 2.5)
 end
 function randommaskcolor(colors)
     colors = ascolor.(unique(colors))
@@ -346,13 +349,13 @@ function randommaskcolor(colors)
     colors = [(c.h, c.s, c.l) for c in colors]
     rl = 77 # 256*0.3
     rl2 = 102 # 256*0.4
-    l_slots = zeros(256 + 2rl2) .+ 0.00625
+    l_slots = zeros(256 + 2rl2) .+ 1e-3
     rh = 30
-    h_slots = zeros(360) .+ 0.00625
+    h_slots = zeros(360) .+ 1e-3
     s2max = 0.6
-    win_l = window(2rl + 1)
-    win_l2 = window(2rl2 + 1)
-    win_h = window(2rh + 1)
+    win_l = expwin(2rl + 1, 1, 3)
+    win_l2 = expwin(2rl2 + 1, 1, 3)
+    win_h = expwin(2rh + 1, 1, 3)
     for c in colors
         li = clamp(round(Int, c[3] * 255), 0, 255) + 1
         array_max!(@view(l_slots[li-rl+rl2:li+rl+rl2]), win_l) # 明度避让以保证对比度
@@ -388,13 +391,10 @@ function randommaskcolor(colors)
     end
     l_slots = l_slots[1+rl2:256+rl2]
     w = ones(length(l_slots))
-    w[51:end-51] .+= window(256 - 101, 7) # 中间调回避
-    array_max!(@view(w[1:end÷2]), 3) # 高亮偏好
+    w[51:end-51] .+= gausswin(256 - 101, 7) # 中间调回避
+    array_max!(@view(w[1:end÷2]), 4) # 高亮偏好
     l_slots .*= w
     l2 = (rand_argmin(l_slots, 10) - 1) / 255
-    # 10 > max(3, 1+7)，不会截断概率，故高亮和中间调仅是偏好策略
-    # 0.00625*8*10=0.5，截断最高能达到明度避让策略最高点（1.0）的一半，
-    # 相对应地，保证明度差起码有sqrt(1-0.5/1.0)*(77/256)=0.21
     s2 = rand() * s2max
     "#" * hex(HSL(h2, s2, l2))
 end
