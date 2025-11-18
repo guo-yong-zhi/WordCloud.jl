@@ -59,29 +59,25 @@ function wordsoccupancy!(wc, cache=(-ones(length(wc)), Vector(undef, length(wc))
     for i in 1:3
         fontsizes = getfontsizes(wc)
         success = true
-        nchunk = min(Threads.nthreads(), max(1, length(words)))
-        Threads.@threads :static for ichunk in 1:nchunk
-            for j in ichunk:nchunk:length(words) # it is a more balance split strategy since the words is sorted by size
-                success || break
-                c, sz, ft, θ = words[j], fontsizes[j], fonts[j], angles[j]
-                if szcache[j] == sz # only check the fontsize, assume the font won't change
-                    continue
-                end
-                img = Render.rendertext(string(c), sz, backgroundcolor=(0, 0, 0, 0), font=ft, border=border)
-                a, b = size(img)
-                imsz = max(a*abs(cos(θ)), b*abs(sin(θ))), max(a*abs(sin(θ)), b*abs(cos(θ)))
-                if check && i < 3 && any(imsz .> sizemax)
-                    mfz = sz * minimum(sizemax ./ imsz) * 0.95
-                    if mfz < getparameter(wc, :maxfontsize)
-                        setparameter!(wc, mfz, :maxfontsize)
-                        println("The word \"$c\"($sz) is too big. Set maxfontsize = $mfz.")
-                        success = false
-                    end
-                end
-                imgs[j] = img
-                szcache[j] = sz
-            end
+        for j in 1:length(words)
             success || break
+            c, sz, ft, θ = words[j], fontsizes[j], fonts[j], angles[j]
+            if szcache[j] == sz # only check the fontsize, assume the font won't change
+                continue
+            end
+            img = Render.rendertext(string(c), sz, backgroundcolor=(0, 0, 0, 0), font=ft, border=border)
+            a, b = size(img)
+            imsz = max(a*abs(cos(θ)), b*abs(sin(θ))), max(a*abs(sin(θ)), b*abs(cos(θ)))
+            if check && i < 3 && any(imsz .> sizemax)
+                mfz = sz * minimum(sizemax ./ imsz) * 0.95
+                if mfz < getparameter(wc, :maxfontsize)
+                    setparameter!(wc, mfz, :maxfontsize)
+                    println("The word \"$c\"($sz) is too big. Set maxfontsize = $mfz.")
+                    success = false
+                end
+            end
+            imgs[j] = img
+            szcache[j] = sz
         end
         success && break
     end

@@ -19,15 +19,8 @@ function initialize!(wc, i::Integer; backgroundcolor=(0, 0, 0, 0), spacing=getpa
     initqtree!(wc, i, backgroundcolor=backgroundcolor, spacing=spacing)
     nothing
 end
-function initialize!(wc, ind; kargs...)
-    ind = collect(index(wc, ind))
-    nind = length(ind)
-    nchunk = min(Threads.nthreads(), max(1, nind))
-    Threads.@threads :static for ichunk in 1:nchunk
-        for i in ichunk:nchunk:nind
-            initialize!(wc, ind[i]::Integer; kargs...)
-        end
-    end
+function initialize!(wc, i; kargs...)
+    initialize!.(wc, index(wc, i); kargs...)
     nothing
 end
 function initialize!(wc::WC; maxiter=5, tolerance=0.02)
